@@ -1,0 +1,813 @@
+     1→'use client';
+     2→
+     3→import { useEffect, useState } from 'react';
+     4→import {
+     5→  AreaChart,
+     6→  Area,
+     7→  BarChart,
+     8→  Bar,
+     9→  XAxis,
+    10→  YAxis,
+    11→  CartesianGrid,
+    12→  Tooltip,
+    13→  ResponsiveContainer,
+    14→  Legend,
+    15→} from 'recharts';
+    16→import {
+    17→  Card,
+    18→  CardContent,
+    19→  CardHeader,
+    20→  CardTitle,
+    21→  CardDescription,
+    22→} from '@/components/ui/card';
+    23→import { Badge } from '@/components/ui/badge';
+    24→import {
+    25→  Table,
+    26→  TableBody,
+    27→  TableCell,
+    28→  TableHead,
+    29→  TableHeader,
+    30→  TableRow,
+    31→} from '@/components/ui/table';
+    32→import { Skeleton } from '@/components/ui/skeleton';
+    33→import { Progress } from '@/components/ui/progress';
+    34→import {
+    35→  DollarSign,
+    36→  TrendingUp,
+    37→  ArrowDownRight,
+    38→  ArrowUpRight,
+    39→  Users,
+    40→  Eye,
+    41→  Instagram,
+    42→  Twitter,
+    43→  Facebook,
+    44→  ChevronRight,
+    45→  Target,
+    46→  AlertTriangle,
+    47→  XCircle,
+    48→  CheckCircle2,
+    49→} from 'lucide-react';
+    50→
+    51→// ─── Types ───────────────────────────────────────────────────────────────────
+    52→
+    53→interface KpiData {
+    54→  totalSpend: number;
+    55→  totalConversions: number;
+    56→  avgCac: number;
+    57→  avgRoas: number;
+    58→  totalFollowers: number;
+    59→  pageViews: number;
+    60→  bounceRate: number;
+    61→}
+    62→
+    63→interface CampaignRow {
+    64→  id: string;
+    65→  name: string;
+    66→  channel: string;
+    67→  spend: number;
+    68→  conversions: number;
+    69→  cac: number;
+    70→  roas: number;
+    71→  status: string;
+    72→  performance: string | null;
+    73→}
+    74→
+    75→interface GoalItem {
+    76→  id: string;
+    77→  channel: string;
+    78→  metric: string;
+    79→  current: number;
+    80→  target: number;
+    81→  status: string;
+    82→}
+    83→
+    84→interface TrafficPoint {
+    85→  month: string;
+    86→  paid: number;
+    87→  organic: number;
+    88→}
+    89→
+    90→interface FunnelStage {
+    91→  stage: string;
+    92→  value: number;
+    93→  dropRate: number;
+    94→}
+    95→
+    96→interface SocialPlatform {
+    97→  followers: number;
+    98→  posts: number;
+    99→  engagement: number;
+   100→}
+   101→
+   102→interface OverviewData {
+   103→  kpis: KpiData;
+   104→  goalTracking: {
+   105→    onTrack: number;
+   106→    atRisk: number;
+   107→    offTrack: number;
+   108→    total: number;
+   109→  };
+   110→  campaigns: CampaignRow[];
+   111→  goals: GoalItem[];
+   112→  trafficData: TrafficPoint[];
+   113→  funnelData: FunnelStage[];
+   114→  socialMedia: {
+   115→    instagram: SocialPlatform;
+   116→    twitter: SocialPlatform;
+   117→    facebook: SocialPlatform;
+   118→    pinterest: SocialPlatform;
+   119→  };
+   120→}
+   121→
+   122→// ─── Helpers ─────────────────────────────────────────────────────────────────
+   123→
+   124→function formatNumber(n: number): string {
+   125→  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K`;
+   126→  return n.toLocaleString('en-IN');
+   127→}
+   128→
+   129→function formatCurrency(n: number): string {
+   130→  if (n >= 1000) return `₹${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K`;
+   131→  return `₹${n.toLocaleString('en-IN')}`;
+   132→}
+   133→
+   134→function performanceBadgeClass(perf: string | null | undefined): string {
+   135→  if (!perf) return 'badge-yellow';
+   136→  const p = perf.toLowerCase();
+   137→  if (p === 'excellent' || p === 'good' || p === 'great') return 'badge-green';
+   138→  if (p === 'poor' || p === 'bad') return 'badge-red';
+   139→  return 'badge-yellow';
+   140→}
+   141→
+   142→// ─── Custom Tooltip ─────────────────────────────────────────────────────────
+   143→
+   144→function GoldTooltip({
+   145→  active,
+   146→  payload,
+   147→  label,
+   148→}: {
+   149→  active?: boolean;
+   150→  payload?: Array<{ value: number; name: string; color: string }>;
+   151→  label?: string;
+   152→}) {
+   153→  if (!active || !payload?.length) return null;
+   154→  return (
+   155→    <div className="rounded-lg border border-border bg-[#111] px-3 py-2 shadow-lg">
+   156→      <p className="mb-1 text-xs font-medium text-muted-foreground">{label}</p>
+   157→      {payload.map((entry, i) => (
+   158→        <p key={i} className="text-sm font-medium" style={{ color: entry.color }}>
+   159→          {entry.name}: {formatNumber(entry.value)}
+   160→        </p>
+   161→      ))}
+   162→    </div>
+   163→  );
+   164→}
+   165→
+   166→// ─── KPI Cards Skeleton ─────────────────────────────────────────────────────
+   167→
+   168→function KpiSkeleton() {
+   169→  return (
+   170→    <div className="gold-card rounded-xl p-4 space-y-3">
+   171→      <div className="flex items-center justify-between">
+   172→        <Skeleton className="h-4 w-24" />
+   173→        <Skeleton className="h-8 w-8 rounded-full" />
+   174→      </div>
+   175→      <Skeleton className="h-7 w-32" />
+   176→      <Skeleton className="h-4 w-20" />
+   177→    </div>
+   178→  );
+   179→}
+   180→
+   181→// ─── Chart Skeleton ─────────────────────────────────────────────────────────
+   182→
+   183→function ChartSkeleton() {
+   184→  return (
+   185→    <Card className="gold-card border-0">
+   186→      <CardHeader className="pb-2">
+   187→        <Skeleton className="h-5 w-40" />
+   188→        <Skeleton className="h-3 w-56" />
+   189→      </CardHeader>
+   190→      <CardContent>
+   191→        <Skeleton className="h-[260px] w-full rounded-lg" />
+   192→      </CardContent>
+   193→    </Card>
+   194→  );
+   195→}
+   196→
+   197→// ─── Component ──────────────────────────────────────────────────────────────
+   198→
+   199→export default function OverviewTab() {
+   200→  const [data, setData] = useState<OverviewData | null>(null);
+   201→  const [loading, setLoading] = useState(true);
+   202→
+   203→  useEffect(() => {
+   204→    async function fetchData() {
+   205→      try {
+   206→        const res = await fetch('/api/marketing/overview');
+   207→        if (res.ok) {
+   208→          const json = await res.json();
+   209→          setData(json);
+   210→        }
+   211→      } catch {
+   212→        // silently fail — keep showing skeletons
+   213→      } finally {
+   214→        setLoading(false);
+   215→      }
+   216→    }
+   217→    fetchData();
+   218→  }, []);
+   219→
+   220→  // ─── KPI cards config ────────────────────────────────────────────────────
+   221→
+   222→  const kpiCards = loading
+   223→    ? null
+   224→    : [
+   225→        {
+   226→          label: 'Total Spend',
+   227→          value: formatCurrency(data!.kpis.totalSpend),
+   228→          raw: data!.kpis.totalSpend,
+   229→          change: -14.6,
+   230→          icon: DollarSign,
+   231→          positive: false,
+   232→          good: false,
+   233→        },
+   234→        {
+   235→          label: 'Conversions',
+   236→          value: formatNumber(data!.kpis.totalConversions),
+   237→          raw: data!.kpis.totalConversions,
+   238→          change: 8.3,
+   239→          icon: TrendingUp,
+   240→          positive: true,
+   241→          good: true,
+   242→        },
+   243→        {
+   244→          label: 'Avg. CPA',
+   245→          value: `₹${data!.kpis.avgCac.toFixed(2)}`,
+   246→          raw: data!.kpis.avgCac,
+   247→          change: -5.8,
+   248→          icon: Target,
+   249→          positive: false,
+   250→          good: true,
+   251→        },
+   252→        {
+   253→          label: 'ROAS',
+   254→          value: `${data!.kpis.avgRoas.toFixed(2)}x`,
+   255→          raw: data!.kpis.avgRoas,
+   256→          change: 11.2,
+   257→          icon: ArrowUpRight,
+   258→          positive: true,
+   259→          good: true,
+   260→        },
+   261→        {
+   262→          label: 'Total Followers',
+   263→          value: formatNumber(data!.kpis.totalFollowers),
+   264→          raw: data!.kpis.totalFollowers,
+   265→          change: 12.4,
+   266→          icon: Users,
+   267→          positive: true,
+   268→          good: true,
+   269→        },
+   270→        {
+   271→          label: 'Page Views',
+   272→          value: formatNumber(data!.kpis.pageViews),
+   273→          raw: data!.kpis.pageViews,
+   274→          change: -3.2,
+   275→          icon: Eye,
+   276→          positive: false,
+   277→          good: false,
+   278→          extra: `Bounce: ${data!.kpis.bounceRate}%`,
+   279→        },
+   280→      ];
+   281→
+   282→  // ─── Spend by channel (static mock) ──────────────────────────────────────
+   283→
+   284→  const spendByChannel = [
+   285→    { channel: 'Google Ads', spend: 28500 },
+   286→    { channel: 'Instagram', spend: 22000 },
+   287→    { channel: 'YouTube', spend: 12800 },
+   288→    { channel: 'Facebook', spend: 7400 },
+   289→    { channel: 'Email', spend: 1980 },
+   290→    { channel: 'Organic', spend: 0 },
+   291→  ];
+   292→
+   293→  // ─── Social platforms config ─────────────────────────────────────────────
+   294→
+   295→  const socialPlatforms = loading
+   296→    ? null
+   297→    : [
+   298→        {
+   299→          name: 'Instagram',
+   300→          icon: Instagram,
+   301→          color: '#E1306C',
+   302→          data: data!.socialMedia.instagram,
+   303→        },
+   304→        {
+   305→          name: 'Twitter',
+   306→          icon: Twitter,
+   307→          color: '#1DA1F2',
+   308→          data: data!.socialMedia.twitter,
+   309→        },
+   310→        {
+   311→          name: 'Facebook',
+   312→          icon: Facebook,
+   313→          color: '#4267B2',
+   314→          data: data!.socialMedia.facebook,
+   315→        },
+   316→        {
+   317→          name: 'Pinterest',
+   318→          icon: ChevronRight,
+   319→          color: '#E60023',
+   320→          data: data!.socialMedia.pinterest,
+   321→        },
+   322→      ];
+   323→
+   324→  // ─── Render ──────────────────────────────────────────────────────────────
+   325→
+   326→  return (
+   327→    <div className="space-y-6">
+   328→      {/* ── KPI Cards ──────────────────────────────────────────────────── */}
+   329→      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+   330→        {loading ? (
+   331→          Array.from({ length: 6 }).map((_, i) => <KpiSkeleton key={i} />)
+   332→        ) : (
+   333→          kpiCards!.map((kpi, idx) => (
+   334→            <div
+   335→              key={kpi.label}
+   336→              className="stat-animate gold-card gold-shimmer rounded-xl p-4"
+   337→              style={{ animationDelay: `${idx * 80}ms` }}
+   338→            >
+   339→              <div className="flex items-center justify-between mb-2">
+   340→                <span className="text-xs font-medium text-muted-foreground">
+   341→                  {kpi.label}
+   342→                </span>
+   343→                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold-muted">
+   344→                  <kpi.icon className="h-4 w-4 text-gold" />
+   345→                </div>
+   346→              </div>
+   347→              <p className="text-2xl font-bold gold-glow tracking-tight">
+   348→                {kpi.value}
+   349→              </p>
+   350→              <div className="mt-1 flex items-center gap-1.5">
+   351→                {kpi.positive ? (
+   352→                  <ArrowUpRight className="h-3.5 w-3.5 text-green-400" />
+   353→                ) : (
+   354→                  <ArrowDownRight
+   355→                    className={`h-3.5 w-3.5 ${kpi.good ? 'text-green-400' : 'text-red-400'}`}
+   356→                  />
+   357→                )}
+   358→                <span
+   359→                  className={`text-xs font-medium ${
+   360→                    kpi.good ? 'text-green-400' : 'text-red-400'
+   361→                  }`}
+   362→                >
+   363→                  {Math.abs(kpi.change)}%
+   364→                </span>
+   365→                {kpi.extra && (
+   366→                  <span className="ml-1 text-xs text-muted-foreground">
+   367→                    {kpi.extra}
+   368→                  </span>
+   369→                )}
+   370→              </div>
+   371→            </div>
+   372→          ))
+   373→        )}
+   374→      </div>
+   375→
+   376→      {/* ── Charts Grid 2×2 ────────────────────────────────────────────── */}
+   377→      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+   378→        {/* Traffic Trend */}
+   379→        {loading ? (
+   380→          <ChartSkeleton />
+   381→        ) : (
+   382→          <Card className="gold-card border-0">
+   383→            <CardHeader className="pb-2">
+   384→              <div className="flex items-center justify-between">
+   385→                <div>
+   386→                  <CardTitle className="text-sm font-semibold text-foreground">
+   387→                    Traffic Trend
+   388→                  </CardTitle>
+   389→                  <CardDescription className="text-xs text-muted-foreground">
+   390→                    Paid vs Organic traffic over 5 months
+   391→                  </CardDescription>
+   392→                </div>
+   393→              </div>
+   394→            </CardHeader>
+   395→            <CardContent className="pt-0">
+   396→              <div className="h-[260px] w-full">
+   397→                <ResponsiveContainer width="100%" height="100%">
+   398→                  <AreaChart data={data!.trafficData}>
+   399→                    <defs>
+   400→                      <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+   401→                        <stop offset="5%" stopColor="#D4A843" stopOpacity={0.3} />
+   402→                        <stop offset="95%" stopColor="#D4A843" stopOpacity={0} />
+   403→                      </linearGradient>
+   404→                      <linearGradient id="creamGrad" x1="0" y1="0" x2="0" y2="1">
+   405→                        <stop offset="5%" stopColor="#E8C46A" stopOpacity={0.2} />
+   406→                        <stop offset="95%" stopColor="#E8C46A" stopOpacity={0} />
+   407→                      </linearGradient>
+   408→                    </defs>
+   409→                    <CartesianGrid
+   410→                      strokeDasharray="3 3"
+   411→                      stroke="#2a2520"
+   412→                      vertical={false}
+   413→                    />
+   414→                    <XAxis
+   415→                      dataKey="month"
+   416→                      tick={{ fill: '#9a9080', fontSize: 12 }}
+   417→                      axisLine={{ stroke: '#2a2520' }}
+   418→                      tickLine={false}
+   419→                    />
+   420→                    <YAxis
+   421→                      tick={{ fill: '#9a9080', fontSize: 12 }}
+   422→                      axisLine={false}
+   423→                      tickLine={false}
+   424→                      tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}
+   425→                      domain={[0, 50000]}
+   426→                    />
+   427→                    <Tooltip content={<GoldTooltip />} />
+   428→                    <Legend
+   429→                      wrapperStyle={{ fontSize: 12, color: '#9a9080' }}
+   430→                      iconType="circle"
+   431→                      iconSize={8}
+   432→                    />
+   433→                    <Area
+   434→                      type="monotone"
+   435→                      dataKey="paid"
+   436→                      name="Paid Traffic"
+   437→                      stroke="#D4A843"
+   438→                      strokeWidth={2}
+   439→                      fill="url(#goldGrad)"
+   440→                    />
+   441→                    <Area
+   442→                      type="monotone"
+   443→                      dataKey="organic"
+   444→                      name="Organic Traffic"
+   445→                      stroke="#E8C46A"
+   446→                      strokeWidth={2}
+   447→                      fill="url(#creamGrad)"
+   448→                      strokeDasharray="5 5"
+   449→                    />
+   450→                  </AreaChart>
+   451→                </ResponsiveContainer>
+   452→              </div>
+   453→            </CardContent>
+   454→          </Card>
+   455→        )}
+   456→
+   457→        {/* Funnel Breakdown */}
+   458→        {loading ? (
+   459→          <ChartSkeleton />
+   460→        ) : (
+   461→          <Card className="gold-card border-0">
+   462→            <CardHeader className="pb-2">
+   463→              <CardTitle className="text-sm font-semibold text-foreground">
+   464→                Funnel Breakdown
+   465→              </CardTitle>
+   466→              <CardDescription className="text-xs text-muted-foreground">
+   467→                User journey from impression to conversion
+   468→              </CardDescription>
+   469→            </CardHeader>
+   470→            <CardContent className="pt-0">
+   471→              <div className="h-[260px] w-full">
+   472→                <ResponsiveContainer width="100%" height="100%">
+   473→                  <BarChart
+   474→                    data={data!.funnelData}
+   475→                    layout="vertical"
+   476→                    margin={{ left: 20 }}
+   477→                  >
+   478→                    <defs>
+   479→                      <linearGradient id="barGold" x1="0" y1="0" x2="1" y2="0">
+   480→                        <stop offset="0%" stopColor="#B8922F" />
+   481→                        <stop offset="100%" stopColor="#E8C46A" />
+   482→                      </linearGradient>
+   483→                    </defs>
+   484→                    <CartesianGrid
+   485→                      strokeDasharray="3 3"
+   486→                      stroke="#2a2520"
+   487→                      horizontal={false}
+   488→                    />
+   489→                    <XAxis
+   490→                      type="number"
+   491→                      tick={{ fill: '#9a9080', fontSize: 12 }}
+   492→                      axisLine={false}
+   493→                      tickLine={false}
+   494→                      tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}K`}
+   495→                    />
+   496→                    <YAxis
+   497→                      dataKey="stage"
+   498→                      type="category"
+   499→                      tick={{ fill: '#f5f0e8', fontSize: 12 }}
+   500→                      axisLine={false}
+   501→                      tickLine={false}
+   502→                      width={90}
+   503→                    />
+   504→                    <Tooltip content={<GoldTooltip />} />
+   505→                    <Bar
+   506→                      dataKey="value"
+   507→                      name="Count"
+   508→                      fill="url(#barGold)"
+   509→                      radius={[0, 4, 4, 0]}
+   510→                      barSize={24}
+   511→                    />
+   512→                  </BarChart>
+   513→                </ResponsiveContainer>
+   514→              </div>
+   515→            </CardContent>
+   516→          </Card>
+   517→        )}
+   518→
+   519→        {/* Spend by Channel */}
+   520→        {loading ? (
+   521→          <ChartSkeleton />
+   522→        ) : (
+   523→          <Card className="gold-card border-0">
+   524→            <CardHeader className="pb-2">
+   525→              <CardTitle className="text-sm font-semibold text-foreground">
+   526→                Spend by Channel
+   527→              </CardTitle>
+   528→              <CardDescription className="text-xs text-muted-foreground">
+   529→                Budget allocation across marketing channels
+   530→              </CardDescription>
+   531→            </CardHeader>
+   532→            <CardContent className="pt-0">
+   533→              <div className="h-[260px] w-full">
+   534→                <ResponsiveContainer width="100%" height="100%">
+   535→                  <BarChart data={spendByChannel}>
+   536→                    <defs>
+   537→                      <linearGradient id="spendGold" x1="0" y1="0" x2="0" y2="1">
+   538→                        <stop offset="0%" stopColor="#D4A843" />
+   539→                        <stop offset="100%" stopColor="#B8922F" />
+   540→                      </linearGradient>
+   541→                    </defs>
+   542→                    <CartesianGrid
+   543→                      strokeDasharray="3 3"
+   544→                      stroke="#2a2520"
+   545→                      vertical={false}
+   546→                    />
+   547→                    <XAxis
+   548→                      dataKey="channel"
+   549→                      tick={{ fill: '#9a9080', fontSize: 11 }}
+   550→                      axisLine={{ stroke: '#2a2520' }}
+   551→                      tickLine={false}
+   552→                    />
+   553→                    <YAxis
+   554→                      tick={{ fill: '#9a9080', fontSize: 12 }}
+   555→                      axisLine={false}
+   556→                      tickLine={false}
+   557→                      tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}K`}
+   558→                    />
+   559→                    <Tooltip content={<GoldTooltip />} />
+   560→                    <Bar
+   561→                      dataKey="spend"
+   562→                      name="Spend"
+   563→                      fill="url(#spendGold)"
+   564→                      radius={[4, 4, 0, 0]}
+   565→                      barSize={36}
+   566→                    />
+   567→                  </BarChart>
+   568→                </ResponsiveContainer>
+   569→              </div>
+   570→            </CardContent>
+   571→          </Card>
+   572→        )}
+   573→
+   574→        {/* Channel Goal Tracking */}
+   575→        {loading ? (
+   576→          <ChartSkeleton />
+   577→        ) : (
+   578→          <Card className="gold-card border-0">
+   579→            <CardHeader className="pb-3">
+   580→              <CardTitle className="text-sm font-semibold text-foreground">
+   581→                Channel Goal Tracking
+   582→              </CardTitle>
+   583→              <CardDescription className="text-xs text-muted-foreground">
+   584→                {data!.goalTracking.total} total goals across channels
+   585→              </CardDescription>
+   586→            </CardHeader>
+   587→            <CardContent className="pt-0">
+   588→              {/* Status summary */}
+   589→              <div className="mb-4 grid grid-cols-3 gap-3">
+   590→                <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-center">
+   591→                  <CheckCircle2 className="mx-auto mb-1 h-4 w-4 text-green-400" />
+   592→                  <p className="text-lg font-bold text-green-400">
+   593→                    {data!.goalTracking.onTrack}
+   594→                  </p>
+   595→                  <p className="text-[10px] text-green-400/70">On Track</p>
+   596→                </div>
+   597→                <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-3 text-center">
+   598→                  <AlertTriangle className="mx-auto mb-1 h-4 w-4 text-yellow-400" />
+   599→                  <p className="text-lg font-bold text-yellow-400">
+   600→                    {data!.goalTracking.atRisk}
+   601→                  </p>
+   602→                  <p className="text-[10px] text-yellow-400/70">At Risk</p>
+   603→                </div>
+   604→                <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-center">
+   605→                  <XCircle className="mx-auto mb-1 h-4 w-4 text-red-400" />
+   606→                  <p className="text-lg font-bold text-red-400">
+   607→                    {data!.goalTracking.offTrack}
+   608→                  </p>
+   609→                  <p className="text-[10px] text-red-400/70">Off Track</p>
+   610→                </div>
+   611→              </div>
+   612→
+   613→              {/* Individual goals */}
+   614→              <div className="max-h-[140px] space-y-3 overflow-y-auto pr-1 custom-scrollbar">
+   615→                {data!.goals.slice(0, 6).map((goal) => {
+   616→                  const pct = Math.min(
+   617→                    100,
+   618→                    Math.round((goal.current / goal.target) * 100)
+   619→                  );
+   620→                  const statusColor =
+   621→                    goal.status === 'on_track'
+   622→                      ? 'text-green-400'
+   623→                      : goal.status === 'at_risk'
+   624→                        ? 'text-yellow-400'
+   625→                        : 'text-red-400';
+   626→                  const barColor =
+   627→                    goal.status === 'on_track'
+   628→                      ? 'bg-green-400'
+   629→                      : goal.status === 'at_risk'
+   630→                        ? 'bg-yellow-400'
+   631→                        : 'bg-red-400';
+   632→
+   633→                  return (
+   634→                    <div key={goal.id}>
+   635→                      <div className="mb-1 flex items-center justify-between">
+   636→                        <span className="text-xs font-medium text-foreground">
+   637→                          {goal.channel} — {goal.metric}
+   638→                        </span>
+   639→                        <span
+   640→                          className={`text-xs font-semibold ${statusColor}`}
+   641→                        >
+   642→                          {pct}%
+   643→                        </span>
+   644→                      </div>
+   645→                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+   646→                        <div
+   647→                          className={`h-full rounded-full ${barColor} transition-all duration-700`}
+   648→                          style={{ width: `${pct}%` }}
+   649→                        />
+   650→                      </div>
+   651→                    </div>
+   652→                  );
+   653→                })}
+   654→              </div>
+   655→            </CardContent>
+   656→          </Card>
+   657→        )}
+   658→      </div>
+   659→
+   660→      {/* ── Campaign Insights Table ─────────────────────────────────────── */}
+   661→      <Card className="gold-card border-0">
+   662→        <CardHeader className="pb-3">
+   663→          <CardTitle className="text-sm font-semibold text-foreground">
+   664→            Campaign Insights
+   665→          </CardTitle>
+   666→          <CardDescription className="text-xs text-muted-foreground">
+   667→            Performance breakdown of active marketing campaigns
+   668→          </CardDescription>
+   669→        </CardHeader>
+   670→        <CardContent className="pt-0">
+   671→          {loading ? (
+   672→            <div className="space-y-3">
+   673→              {Array.from({ length: 5 }).map((_, i) => (
+   674→                <Skeleton key={i} className="h-10 w-full" />
+   675→              ))}
+   676→            </div>
+   677→          ) : (
+   678→            <div className="max-h-96 overflow-y-auto rounded-lg border border-border">
+   679→              <Table>
+   680→                <TableHeader>
+   681→                  <TableRow className="gold-table-header hover:bg-transparent">
+   682→                    <TableHead className="text-xs font-semibold text-gold">
+   683→                      Campaign
+   684→                    </TableHead>
+   685→                    <TableHead className="text-xs font-semibold text-gold">
+   686→                      Channel
+   687→                    </TableHead>
+   688→                    <TableHead className="text-xs font-semibold text-gold text-right">
+   689→                      Spend
+   690→                    </TableHead>
+   691→                    <TableHead className="text-xs font-semibold text-gold text-right">
+   692→                      Convs.
+   693→                    </TableHead>
+   694→                    <TableHead className="text-xs font-semibold text-gold text-right">
+   695→                      CAC
+   696→                    </TableHead>
+   697→                    <TableHead className="text-xs font-semibold text-gold text-right">
+   698→                      ROAS
+   699→                    </TableHead>
+   700→                    <TableHead className="text-xs font-semibold text-gold text-right">
+   701→                      Performance
+   702→                    </TableHead>
+   703→                  </TableRow>
+   704→                </TableHeader>
+   705→                <TableBody>
+   706→                  {data!.campaigns.slice(0, 10).map((c) => (
+   707→                    <TableRow
+   708→                      key={c.id}
+   709→                      className="border-border/50 transition-colors hover:bg-gold-muted/30"
+   710→                    >
+   711→                      <TableCell className="text-xs font-medium text-foreground">
+   712→                        {c.name}
+   713→                      </TableCell>
+   714→                      <TableCell className="text-xs text-muted-foreground">
+   715→                        <Badge variant="outline" className="text-[10px]">
+   716→                          {c.channel}
+   717→                        </Badge>
+   718→                      </TableCell>
+   719→                      <TableCell className="text-xs text-right text-foreground">
+   720→                        {formatCurrency(c.spend)}
+   721→                      </TableCell>
+   722→                      <TableCell className="text-xs text-right text-foreground">
+   723→                        {c.conversions.toLocaleString()}
+   724→                      </TableCell>
+   725→                      <TableCell className="text-xs text-right text-foreground">
+   726→                        ₹{c.cac.toFixed(2)}
+   727→                      </TableCell>
+   728→                      <TableCell className="text-xs text-right text-foreground">
+   729→                        {c.roas.toFixed(2)}x
+   730→                      </TableCell>
+   731→                      <TableCell className="text-right">
+   732→                        <span
+   733→                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+   734→                            performanceBadgeClass(c.performance)
+   735→                          }`}
+   736→                        >
+   737→                          {c.performance || 'Average'}
+   738→                        </span>
+   739→                      </TableCell>
+   740→                    </TableRow>
+   741→                  ))}
+   742→                </TableBody>
+   743→              </Table>
+   744→            </div>
+   745→          )}
+   746→        </CardContent>
+   747→      </Card>
+   748→
+   749→      {/* ── Social Media Quick Stats ────────────────────────────────────── */}
+   750→      <div>
+   751→        <h3 className="mb-4 text-sm font-semibold text-foreground">
+   752→          Social Media Quick Stats
+   753→        </h3>
+   754→        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   755→          {loading
+   756→            ? Array.from({ length: 4 }).map((_, i) => (
+   757→                <div key={i} className="gold-card rounded-xl p-4 space-y-3">
+   758→                  <Skeleton className="h-5 w-24" />
+   759→                  <Skeleton className="h-7 w-32" />
+   760→                  <div className="space-y-2">
+   761→                    <Skeleton className="h-3 w-20" />
+   762→                    <Skeleton className="h-3 w-24" />
+   763→                  </div>
+   764→                </div>
+   765→              ))
+   766→            : socialPlatforms!.map((sp) => (
+   767→                <div
+   768→                  key={sp.name}
+   769→                  className="stat-animate gold-card gold-shimmer rounded-xl p-4"
+   770→                >
+   771→                  <div className="flex items-center gap-2 mb-3">
+   772→                    <div
+   773→                      className="flex h-8 w-8 items-center justify-center rounded-full"
+   774→                      style={{ backgroundColor: `${sp.color}20` }}
+   775→                    >
+   776→                      <sp.icon className="h-4 w-4" style={{ color: sp.color }} />
+   777→                    </div>
+   778→                    <span className="text-sm font-semibold text-foreground">
+   779→                      {sp.name}
+   780→                    </span>
+   781→                  </div>
+   782→                  <p className="text-xl font-bold gold-glow">
+   783→                    {formatNumber(sp.data.followers)}
+   784→                  </p>
+   785→                  <div className="mt-2 space-y-1">
+   786→                    <div className="flex items-center justify-between">
+   787→                      <span className="text-[11px] text-muted-foreground">
+   788→                        Posts
+   789→                      </span>
+   790→                      <span className="text-[11px] font-medium text-foreground">
+   791→                        {sp.data.posts}
+   792→                      </span>
+   793→                    </div>
+   794→                    <div className="flex items-center justify-between">
+   795→                      <span className="text-[11px] text-muted-foreground">
+   796→                        Engagement
+   797→                      </span>
+   798→                      <span className="text-[11px] font-semibold text-gold">
+   799→                        {sp.data.engagement}%
+   800→                      </span>
+   801→                    </div>
+   802→                    <Progress
+   803→                      value={sp.data.engagement * 10}
+   804→                      className="mt-1 h-1"
+   805→                    />
+   806→                  </div>
+   807→                </div>
+   808→              ))}
+   809→        </div>
+   810→      </div>
+   811→    </div>
+   812→  );
+   813→}

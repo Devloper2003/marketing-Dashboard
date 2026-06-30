@@ -18,6 +18,8 @@ import {
   Users,
   ThumbsUp,
   TrendingUp,
+  Sparkles,
+  Wand2,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -157,6 +159,13 @@ export default function SocialPlannerTab() {
   const [formScheduleTime, setFormScheduleTime] = useState('12:00');
   const [formStatus, setFormStatus] = useState('draft');
 
+  // AI Generator state
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiTone, setAiTone] = useState('');
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiResult, setAiResult] = useState('');
+  const [aiPlatform, setAiPlatform] = useState('Instagram');
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -179,7 +188,7 @@ export default function SocialPlannerTab() {
   const filteredPosts = useMemo(() => {
     if (!data) return [];
     return data.posts.filter((post) => {
-      if (platformTab !== 'all' && post.platform !== platformTab) return false;
+      if (platformTab !== 'all' && post.platform.toLowerCase() !== platformTab) return false;
       if (statusFilter !== 'all' && post.status !== statusFilter) return false;
       return true;
     });
@@ -198,7 +207,7 @@ export default function SocialPlannerTab() {
     };
 
     keys.forEach((key) => {
-      const posts = data.posts.filter((p) => p.platform === key);
+      const posts = data.posts.filter((p) => p.platform.toLowerCase() === key);
       const published = posts.filter((p) => p.status === 'published');
       const totalEng = published.reduce((s, p) => s + p.likes + p.comments + p.shares + p.saves, 0);
       const avgRate =
@@ -264,6 +273,27 @@ export default function SocialPlannerTab() {
     setFormScheduleDate('');
     setFormScheduleTime('12:00');
     setFormStatus('draft');
+  };
+
+  const handleAiGenerate = async () => {
+    if (!aiTopic.trim()) { toast.error('Enter a topic for the AI'); return; }
+    try {
+      setAiGenerating(true);
+      setAiResult('');
+      const res = await fetch('/api/marketing/ai-social', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform: aiPlatform, topic: aiTopic, tone: aiTone || undefined }),
+      });
+      if (!res.ok) throw new Error();
+      const json = await res.json();
+      setAiResult(json.posts);
+      toast.success('Posts generated!');
+    } catch {
+      toast.error('Failed to generate posts');
+    } finally {
+      setAiGenerating(false);
+    }
   };
 
   const handleDuplicate = (post: SocialPost) => {
@@ -438,7 +468,7 @@ export default function SocialPlannerTab() {
               </div>
             ) : (
               filteredPosts.map((post) => {
-                const cfg = PLATFORM_CONFIG[post.platform];
+                const cfg = PLATFORM_CONFIG[post.platform.toLowerCase()];
                 const isPublished = post.status === 'published';
                 const totalEng = post.likes + post.comments + post.shares + post.saves;
 
@@ -452,7 +482,7 @@ export default function SocialPlannerTab() {
                       <div className="flex items-center gap-2">
                         {cfg && (
                           <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium capitalize ${PLATFORM_STATUS_BADGE[post.platform] || 'badge-gold'}`}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${PLATFORM_STATUS_BADGE[post.platform.toLowerCase()] || 'badge-gold'}`}
                           >
                             {cfg.icon}
                             {post.platform}
@@ -550,6 +580,92 @@ export default function SocialPlannerTab() {
           </div>
         )}
       </Tabs>
+
+      {/* ─── AI Post Generator ────────────────────────────────────── */}
+      <Card className="gold-card border-0 mt-6 overflow-hidden">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#D4A843]/15">
+              <Wand2 className="h-4.5 w-4.5 text-[#D4A843]" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">AI Post Generator</h3>
+              <p className="text-[11px] text-muted-foreground">Generate engaging social media content with AI</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+            <Input
+              value={aiTopic}
+              onChange={(e) => setAiTopic(e.target.value)}
+              placeholder="e.g., Diwali collection launch"
+              className="border-[#2a2520] bg-[#0a0a0a] focus-visible:border-[#D4A843] h-9 text-sm"
+            />
+            <Select value={aiPlatform} onValueChange={setAiPlatform}>
+              <SelectTrigger className="border-[#2a2520] bg-[#0a0a0a] h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#111] border-border">
+                {['Instagram', 'Facebook', 'Twitter', 'Pinterest'].map((p) => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex gap-2">
+              <Input
+                value={aiTone}
+                onChange={(e) => setAiTone(e.target.value)}
+                placeholder="Tone (optional)"
+                className="border-[#2a2520] bg-[#0a0a0a] focus-visible:border-[#D4A843] h-9 text-sm flex-1"
+              />
+              <Button
+                onClick={handleAiGenerate}
+                disabled={aiGenerating || !aiTopic.trim()}
+                className="h-9 px-4 bg-gradient-to-r from-[#B8922F] to-[#D4A843] text-[#0a0a0a] hover:from-[#D4A843] hover:to-[#E8C46A] font-semibold text-xs shrink-0"
+              >
+                {aiGenerating ? (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#0a0a0a] animate-pulse" />
+                    Generating
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Generate
+                  </span>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {aiResult && (
+            <div className="mt-3 rounded-xl border border-[#D4A843]/15 bg-[#0a0a0a] p-4 animate-fade-in">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-[#D4A843]">Generated Posts</span>
+                <div className="flex gap-2">
+                  {aiResult.split('---').filter((s: string) => s.includes('POST')).map((post: string, i: number) => {
+                    const content = post.replace(/POST \d+:\s*/g, '').trim();
+                    if (!content) return null;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => { setFormContent(content); setFormPlatform(aiPlatform.toLowerCase()); setDialogOpen(true); }}
+                        className="text-[11px] text-[#D4A843] hover:underline flex items-center gap-1"
+                      >
+                        <Copy className="h-3 w-3" />
+                        Use Post {i + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="text-sm text-foreground/85 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
+                {aiResult}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* ─── Create Post Dialog ─────────────────────────────────────── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

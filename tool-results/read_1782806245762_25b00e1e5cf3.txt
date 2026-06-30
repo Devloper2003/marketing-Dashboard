@@ -1,0 +1,838 @@
+     1→'use client';
+     2→
+     3→import React, { useState, useEffect, useMemo, useCallback } from 'react';
+     4→import { format, parseISO } from 'date-fns';
+     5→import {
+     6→  Plus,
+     7→  Search,
+     8→  Grid3X3,
+     9→  List,
+    10→  Edit3,
+    11→  Trash2,
+    12→  Send,
+    13→  TrendingUp,
+    14→  FileText,
+    15→  Eye,
+    16→  PenLine,
+    17→} from 'lucide-react';
+    18→import { Card, CardContent } from '@/components/ui/card';
+    19→import { Badge } from '@/components/ui/badge';
+    20→import { Button } from '@/components/ui/button';
+    21→import {
+    22→  Dialog,
+    23→  DialogContent,
+    24→  DialogHeader,
+    25→  DialogTitle,
+    26→  DialogFooter,
+    27→  DialogDescription,
+    28→} from '@/components/ui/dialog';
+    29→import {
+    30→  Select,
+    31→  SelectContent,
+    32→  SelectItem,
+    33→  SelectTrigger,
+    34→  SelectValue,
+    35→} from '@/components/ui/select';
+    36→import {
+    37→  Table,
+    38→  TableBody,
+    39→  TableCell,
+    40→  TableHead,
+    41→  TableHeader,
+    42→  TableRow,
+    43→} from '@/components/ui/table';
+    44→import { Input } from '@/components/ui/input';
+    45→import { Textarea } from '@/components/ui/textarea';
+    46→import { Label } from '@/components/ui/label';
+    47→import { Skeleton } from '@/components/ui/skeleton';
+    48→import { toast } from 'sonner';
+    49→import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+    50→import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+    51→
+    52→// ─── Types ───────────────────────────────────────────────────────────
+    53→interface BlogPost {
+    54→  id: string;
+    55→  title: string;
+    56→  content: string | null;
+    57→  status: string;
+    58→  author: string | null;
+    59→  category: string | null;
+    60→  tags: string | null;
+    61→  seoScore: number;
+    62→  publishDate: string | null;
+    63→  createdAt: string;
+    64→  updatedAt: string;
+    65→}
+    66→
+    67→interface BlogData {
+    68→  posts: BlogPost[];
+    69→  categories: string[];
+    70→  statusCounts: {
+    71→    published: number;
+    72→    draft: number;
+    73→    in_review: number;
+    74→  };
+    75→  avgSeoScore: number;
+    76→}
+    77→
+    78→type ViewMode = 'grid' | 'list';
+    79→
+    80→// ─── Helpers ─────────────────────────────────────────────────────────
+    81→const SEO_COLOR = (score: number) => {
+    82→  if (score >= 80) return 'badge-green';
+    83→  if (score >= 60) return 'badge-yellow';
+    84→  return 'badge-red';
+    85→};
+    86→
+    87→const SEO_LABEL = (score: number) => {
+    88→  if (score >= 80) return 'Good';
+    89→  if (score >= 60) return 'Needs Work';
+    90→  return 'Poor';
+    91→};
+    92→
+    93→const SEO_TEXT_COLOR = (score: number) => {
+    94→  if (score >= 80) return 'text-green-500';
+    95→  if (score >= 60) return 'text-yellow-500';
+    96→  return 'text-red-400';
+    97→};
+    98→
+    99→const STATUS_BADGE: Record<string, string> = {
+   100→  published: 'badge-green',
+   101→  draft: 'badge-red',
+   102→  in_review: 'badge-yellow',
+   103→};
+   104→
+   105→const BAR_COLORS: Record<string, string> = {
+   106→  'Good (80-100)': '#22c55e',
+   107→  'Needs Work (60-79)': '#eab308',
+   108→  'Poor (0-59)': '#ef4444',
+   109→};
+   110→
+   111→const BLOG_CATEGORIES = [
+   112→  'Jewellery Trends',
+   113→  'Care & Maintenance',
+   114→  'Brand Story',
+   115→  'Product Spotlight',
+   116→  'Gift Guide',
+   117→  'Sustainability',
+   118→  'Style Tips',
+   119→  'Behind the Scenes',
+   120→];
+   121→
+   122→const BLOG_STATUSES = ['draft', 'in_review', 'published'];
+   123→
+   124→// ─── Circular Progress ──────────────────────────────────────────────
+   125→function CircularProgress({ value, size = 80, strokeWidth = 6 }: { value: number; size?: number; strokeWidth?: number }) {
+   126→  const radius = (size - strokeWidth) / 2;
+   127→  const circumference = 2 * Math.PI * radius;
+   128→  const offset = circumference - (value / 100) * circumference;
+   129→  const color = value >= 80 ? '#22c55e' : value >= 60 ? '#eab308' : '#ef4444';
+   130→
+   131→  return (
+   132→    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+   133→      <svg width={size} height={size} className="-rotate-90">
+   134→        <circle
+   135→          cx={size / 2}
+   136→          cy={size / 2}
+   137→          r={radius}
+   138→          fill="none"
+   139→          stroke="#2a2520"
+   140→          strokeWidth={strokeWidth}
+   141→        />
+   142→        <circle
+   143→          cx={size / 2}
+   144→          cy={size / 2}
+   145→          r={radius}
+   146→          fill="none"
+   147→          stroke={color}
+   148→          strokeWidth={strokeWidth}
+   149→          strokeDasharray={circumference}
+   150→          strokeDashoffset={offset}
+   151→          strokeLinecap="round"
+   152→          className="transition-all duration-700 ease-out"
+   153→        />
+   154→      </svg>
+   155→      <div className="absolute inset-0 flex items-center justify-center">
+   156→        <span className={`text-lg font-bold ${value >= 80 ? 'text-green-500' : value >= 60 ? 'text-yellow-500' : 'text-red-400'}`}>
+   157→          {value}
+   158→        </span>
+   159→      </div>
+   160→    </div>
+   161→  );
+   162→}
+   163→
+   164→// ─── Main Component ──────────────────────────────────────────────────
+   165→export default function BlogPlannerTab() {
+   166→  const [data, setData] = useState<BlogData | null>(null);
+   167→  const [loading, setLoading] = useState(true);
+   168→  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+   169→  const [searchQuery, setSearchQuery] = useState('');
+   170→  const [categoryFilter, setCategoryFilter] = useState('all');
+   171→  const [statusFilter, setStatusFilter] = useState('all');
+   172→  const [authorFilter, setAuthorFilter] = useState('all');
+   173→  const [dialogOpen, setDialogOpen] = useState(false);
+   174→  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+   175→  const [submitting, setSubmitting] = useState(false);
+   176→
+   177→  // Form state
+   178→  const [formTitle, setFormTitle] = useState('');
+   179→  const [formContent, setFormContent] = useState('');
+   180→  const [formCategory, setFormCategory] = useState('Jewellery Trends');
+   181→  const [formTags, setFormTags] = useState('');
+   182→  const [formAuthor, setFormAuthor] = useState('Laxree Team');
+   183→  const [formStatus, setFormStatus] = useState('draft');
+   184→  const [formPublishDate, setFormPublishDate] = useState('');
+   185→
+   186→  const fetchData = useCallback(async () => {
+   187→    try {
+   188→      setLoading(true);
+   189→      const res = await fetch('/api/marketing/blogs');
+   190→      if (!res.ok) throw new Error('Failed');
+   191→      const json = await res.json();
+   192→      setData(json);
+   193→    } catch {
+   194→      toast.error('Failed to load blog data');
+   195→    } finally {
+   196→      setLoading(false);
+   197→    }
+   198→  }, []);
+   199→
+   200→  useEffect(() => {
+   201→    fetchData();
+   202→  }, [fetchData]);
+   203→
+   204→  // Unique authors
+   205→  const authors = useMemo(() => {
+   206→    if (!data) return [];
+   207→    return [...new Set(data.posts.map((p) => p.author).filter(Boolean))] as string[];
+   208→  }, [data]);
+   209→
+   210→  // Filtered posts
+   211→  const filteredPosts = useMemo(() => {
+   212→    if (!data) return [];
+   213→    return data.posts.filter((post) => {
+   214→      if (searchQuery && !post.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+   215→      if (categoryFilter !== 'all' && post.category !== categoryFilter) return false;
+   216→      if (statusFilter !== 'all' && post.status !== statusFilter) return false;
+   217→      if (authorFilter !== 'all' && post.author !== authorFilter) return false;
+   218→      return true;
+   219→    });
+   220→  }, [data, searchQuery, categoryFilter, statusFilter, authorFilter]);
+   221→
+   222→  // SEO Score Distribution
+   223→  const seoDistribution = useMemo(() => {
+   224→    if (!data) return [];
+   225→    const good = data.posts.filter((p) => p.seoScore >= 80).length;
+   226→    const needsWork = data.posts.filter((p) => p.seoScore >= 60 && p.seoScore < 80).length;
+   227→    const poor = data.posts.filter((p) => p.seoScore < 60).length;
+   228→    return [
+   229→      { range: 'Good (80-100)', count: good },
+   230→      { range: 'Needs Work (60-79)', count: needsWork },
+   231→      { range: 'Poor (0-59)', count: poor },
+   232→    ].filter((d) => d.count > 0);
+   233→  }, [data]);
+   234→
+   235→  const chartConfig = {
+   236→    count: { label: 'Posts', color: '#D4A843' },
+   237→  };
+   238→
+   239→  // ─── Form Handlers ────────────────────────────────────────────────
+   240→  const openCreateDialog = () => {
+   241→    setEditingPost(null);
+   242→    resetForm();
+   243→    setDialogOpen(true);
+   244→  };
+   245→
+   246→  const openEditDialog = (post: BlogPost) => {
+   247→    setEditingPost(post);
+   248→    setFormTitle(post.title);
+   249→    setFormContent(post.content || '');
+   250→    setFormCategory(post.category || 'Jewellery Trends');
+   251→    setFormTags(post.tags || '');
+   252→    setFormAuthor(post.author || 'Laxree Team');
+   253→    setFormStatus(post.status);
+   254→    setFormPublishDate(post.publishDate ? format(parseISO(post.publishDate), 'yyyy-MM-dd') : '');
+   255→    setDialogOpen(true);
+   256→  };
+   257→
+   258→  const resetForm = () => {
+   259→    setFormTitle('');
+   260→    setFormContent('');
+   261→    setFormCategory('Jewellery Trends');
+   262→    setFormTags('');
+   263→    setFormAuthor('Laxree Team');
+   264→    setFormStatus('draft');
+   265→    setFormPublishDate('');
+   266→  };
+   267→
+   268→  const handleSubmit = async () => {
+   269→    if (!formTitle.trim()) {
+   270→      toast.error('Please enter a title');
+   271→      return;
+   272→    }
+   273→    try {
+   274→      setSubmitting(true);
+   275→      const method = editingPost ? 'PUT' : 'POST';
+   276→      const body: Record<string, unknown> = {
+   277→        title: formTitle,
+   278→        content: formContent,
+   279→        category: formCategory,
+   280→        tags: formTags,
+   281→        author: formAuthor,
+   282→        status: formStatus,
+   283→        publishDate: formPublishDate || null,
+   284→      };
+   285→      if (editingPost) body.id = editingPost.id;
+   286→
+   287→      const res = await fetch('/api/marketing/blogs', {
+   288→        method,
+   289→        headers: { 'Content-Type': 'application/json' },
+   290→        body: JSON.stringify(body),
+   291→      });
+   292→      if (!res.ok) throw new Error('Failed');
+   293→      toast.success(editingPost ? 'Post updated' : 'Post created');
+   294→      setDialogOpen(false);
+   295→      fetchData();
+   296→    } catch {
+   297→      toast.error('Failed to save post');
+   298→    } finally {
+   299→      setSubmitting(false);
+   300→    }
+   301→  };
+   302→
+   303→  const handlePublish = async (post: BlogPost) => {
+   304→    try {
+   305→      const res = await fetch('/api/marketing/blogs', {
+   306→        method: 'PUT',
+   307→        headers: { 'Content-Type': 'application/json' },
+   308→        body: JSON.stringify({
+   309→          id: post.id,
+   310→          status: 'published',
+   311→          publishDate: new Date().toISOString(),
+   312→        }),
+   313→      });
+   314→      if (!res.ok) throw new Error('Failed');
+   315→      toast.success('Post published');
+   316→      fetchData();
+   317→    } catch {
+   318→      toast.error('Failed to publish post');
+   319→    }
+   320→  };
+   321→
+   322→  const handleDelete = async (post: BlogPost) => {
+   323→    // The API doesn't have DELETE, so we just inform the user
+   324→    toast.info('Delete is not available in this demo');
+   325→  };
+   326→
+   327→  // ─── Render ────────────────────────────────────────────────────────
+   328→  return (
+   329→    <div className="space-y-6">
+   330→      {/* Header */}
+   331→      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+   332→        <div>
+   333→          <h2 className="text-2xl font-bold gold-gradient-text">Blog Planner</h2>
+   334→          <p className="text-sm text-muted-foreground mt-1">
+   335→            Manage your luxury jewellery blog content and SEO performance
+   336→          </p>
+   337→          {data && !loading && (
+   338→            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+   339→              <span>{data.posts.length} Total Posts</span>
+   340→              <span>•</span>
+   341→              <span>Avg SEO Score: <span className={SEO_TEXT_COLOR(data.avgSeoScore)}>{data.avgSeoScore}</span></span>
+   342→              <span>•</span>
+   343→              <span>{data.statusCounts.published} Published</span>
+   344→            </div>
+   345→          )}
+   346→        </div>
+   347→        <div className="flex items-center gap-3">
+   348→          <Button
+   349→            onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+   350→            variant="outline"
+   351→            size="sm"
+   352→            className="gap-2 border-[#2a2520] hover:border-[#D4A843] hover:text-[#D4A843] transition-colors"
+   353→          >
+   354→            {viewMode === 'grid' ? <List className="size-4" /> : <Grid3X3 className="size-4" />}
+   355→            {viewMode === 'grid' ? 'List' : 'Grid'}
+   356→          </Button>
+   357→          <Button
+   358→            onClick={openCreateDialog}
+   359→            className="gap-2 bg-[#D4A843] text-[#0a0a0a] hover:bg-[#E8C46A] font-semibold"
+   360→          >
+   361→            <Plus className="size-4" />
+   362→            New Blog Post
+   363→          </Button>
+   364→        </div>
+   365→      </div>
+   366→
+   367→      {/* Search & Filters */}
+   368→      <div className="flex flex-wrap items-center gap-3">
+   369→        <div className="relative flex-1 min-w-[200px] max-w-[320px]">
+   370→          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+   371→          <Input
+   372→            value={searchQuery}
+   373→            onChange={(e) => setSearchQuery(e.target.value)}
+   374→            placeholder="Search posts..."
+   375→            className="pl-9 border-[#2a2520] bg-[#111] focus-visible:border-[#D4A843]"
+   376→          />
+   377→        </div>
+   378→        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+   379→          <SelectTrigger className="w-[160px] border-[#2a2520] bg-[#111]">
+   380→            <SelectValue placeholder="Category" />
+   381→          </SelectTrigger>
+   382→          <SelectContent>
+   383→            <SelectItem value="all">All Categories</SelectItem>
+   384→            {BLOG_CATEGORIES.map((c) => (
+   385→              <SelectItem key={c} value={c}>{c}</SelectItem>
+   386→            ))}
+   387→          </SelectContent>
+   388→        </Select>
+   389→        <Select value={statusFilter} onValueChange={setStatusFilter}>
+   390→          <SelectTrigger className="w-[130px] border-[#2a2520] bg-[#111]">
+   391→            <SelectValue placeholder="Status" />
+   392→          </SelectTrigger>
+   393→          <SelectContent>
+   394→            <SelectItem value="all">All Statuses</SelectItem>
+   395→            {BLOG_STATUSES.map((s) => (
+   396→              <SelectItem key={s} value={s} className="capitalize">
+   397→                {s.replace('_', ' ')}
+   398→              </SelectItem>
+   399→            ))}
+   400→          </SelectContent>
+   401→        </Select>
+   402→        <Select value={authorFilter} onValueChange={setAuthorFilter}>
+   403→          <SelectTrigger className="w-[150px] border-[#2a2520] bg-[#111]">
+   404→            <SelectValue placeholder="Author" />
+   405→          </SelectTrigger>
+   406→          <SelectContent>
+   407→            <SelectItem value="all">All Authors</SelectItem>
+   408→            {authors.map((a) => (
+   409→              <SelectItem key={a} value={a!}>{a}</SelectItem>
+   410→            ))}
+   411→          </SelectContent>
+   412→        </Select>
+   413→      </div>
+   414→
+   415→      {/* Stats Row */}
+   416→      {loading ? (
+   417→        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+   418→          {Array.from({ length: 4 }).map((_, i) => (
+   419→            <Skeleton key={i} className="h-28 rounded-xl" />
+   420→          ))}
+   421→        </div>
+   422→      ) : data ? (
+   423→        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+   424→          {/* Published */}
+   425→          <div className="gold-card gold-shimmer rounded-xl p-4">
+   426→            <div className="flex items-center gap-2 mb-2">
+   427→              <FileText className="size-4 text-green-500" />
+   428→              <span className="text-xs text-muted-foreground">Published</span>
+   429→            </div>
+   430→            <div className="text-3xl font-bold text-green-500 gold-glow stat-animate">
+   431→              {data.statusCounts.published}
+   432→            </div>
+   433→          </div>
+   434→
+   435→          {/* In Review */}
+   436→          <div className="gold-card gold-shimmer rounded-xl p-4">
+   437→            <div className="flex items-center gap-2 mb-2">
+   438→              <Eye className="size-4 text-yellow-500" />
+   439→              <span className="text-xs text-muted-foreground">In Review</span>
+   440→            </div>
+   441→            <div className="text-3xl font-bold text-yellow-500 gold-glow stat-animate">
+   442→              {data.statusCounts.in_review}
+   443→            </div>
+   444→          </div>
+   445→
+   446→          {/* Draft */}
+   447→          <div className="gold-card gold-shimmer rounded-xl p-4">
+   448→            <div className="flex items-center gap-2 mb-2">
+   449→              <PenLine className="size-4 text-red-400" />
+   450→              <span className="text-xs text-muted-foreground">Drafts</span>
+   451→            </div>
+   452→            <div className="text-3xl font-bold text-red-400 gold-glow stat-animate">
+   453→              {data.statusCounts.draft}
+   454→            </div>
+   455→          </div>
+   456→
+   457→          {/* Avg SEO Score */}
+   458→          <div className="gold-card gold-shimmer rounded-xl p-4 flex items-center gap-4">
+   459→            <CircularProgress value={data.avgSeoScore} size={64} strokeWidth={5} />
+   460→            <div>
+   461→              <div className="text-xs text-muted-foreground mb-1">Avg SEO Score</div>
+   462→              <div className={`text-sm font-semibold ${SEO_TEXT_COLOR(data.avgSeoScore)}`}>
+   463→                {SEO_LABEL(data.avgSeoScore)}
+   464→              </div>
+   465→            </div>
+   466→          </div>
+   467→        </div>
+   468→      ) : null}
+   469→
+   470→      {/* SEO Distribution Chart */}
+   471→      {data && seoDistribution.length > 0 && !loading && (
+   472→        <Card className="gold-card overflow-hidden">
+   473→          <CardContent className="p-4">
+   474→            <h3 className="text-sm font-semibold mb-3 text-muted-foreground">SEO Score Distribution</h3>
+   475→            <ChartContainer config={chartConfig} className="h-[120px] w-full">
+   476→              <BarChart data={seoDistribution} layout="vertical" margin={{ left: 0, right: 20, top: 0, bottom: 0 }}>
+   477→                <XAxis type="number" hide />
+   478→                <YAxis type="category" dataKey="range" tick={{ fontSize: 11, fill: '#9a9080' }} width={150} />
+   479→                <Tooltip content={<ChartTooltipContent />} cursor={{ fill: 'rgba(212,168,67,0.05)' }} />
+   480→                <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={20}>
+   481→                  {seoDistribution.map((entry, index) => (
+   482→                    <Cell key={index} fill={BAR_COLORS[entry.range] || '#D4A843'} />
+   483→                  ))}
+   484→                </Bar>
+   485→              </BarChart>
+   486→            </ChartContainer>
+   487→          </CardContent>
+   488→        </Card>
+   489→      )}
+   490→
+   491→      {/* Blog Posts Content */}
+   492→      {loading ? (
+   493→        viewMode === 'grid' ? (
+   494→          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+   495→            {Array.from({ length: 6 }).map((_, i) => (
+   496→              <Skeleton key={i} className="h-52 rounded-xl" />
+   497→            ))}
+   498→          </div>
+   499→        ) : (
+   500→          <div className="space-y-2">
+   501→            {Array.from({ length: 5 }).map((_, i) => (
+   502→              <Skeleton key={i} className="h-14 rounded-lg" />
+   503→            ))}
+   504→          </div>
+   505→        )
+   506→      ) : viewMode === 'grid' ? (
+   507→        /* ─── Grid View ──────────────────────────────────────────── */
+   508→        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+   509→          {filteredPosts.length === 0 ? (
+   510→            <div className="col-span-full text-center py-16 text-muted-foreground">
+   511→              No blog posts found
+   512→            </div>
+   513→          ) : (
+   514→            filteredPosts.map((post) => (
+   515→              <div
+   516→                key={post.id}
+   517→                className="gold-card gold-shimmer rounded-xl p-5 flex flex-col gap-3 group cursor-pointer
+   518→                  hover:!border-[rgba(212,168,67,0.5)] hover:!shadow-[0_0_25px_rgba(212,168,67,0.15)] transition-all duration-300"
+   519→                onClick={() => openEditDialog(post)}
+   520→              >
+   521→                {/* Top row: badges */}
+   522→                <div className="flex items-center justify-between">
+   523→                  {post.category && (
+   524→                    <span className="badge-gold text-xs px-2 py-0.5 rounded-md border font-medium">
+   525→                      {post.category}
+   526→                    </span>
+   527→                  )}
+   528→                  <span
+   529→                    className={`text-xs px-2 py-0.5 rounded-md border font-medium capitalize ${STATUS_BADGE[post.status] || 'badge-gold'}`}
+   530→                  >
+   531→                    {post.status.replace('_', ' ')}
+   532→                  </span>
+   533→                </div>
+   534→
+   535→                {/* Title */}
+   536→                <h3 className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-[#D4A843] transition-colors">
+   537→                  {post.title}
+   538→                </h3>
+   539→
+   540→                {/* Author & Date */}
+   541→                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+   542→                  <span>{post.author || 'Laxree Team'}</span>
+   543→                  {post.publishDate && (
+   544→                    <>
+   545→                      <span>•</span>
+   546→                      <span>{format(parseISO(post.publishDate), 'MMM dd, yyyy')}</span>
+   547→                    </>
+   548→                  )}
+   549→                </div>
+   550→
+   551→                {/* SEO Score */}
+   552→                <div className="flex items-center justify-between mt-auto pt-2 border-t border-[#2a2520]">
+   553→                  <div className="flex items-center gap-2">
+   554→                    <TrendingUp className={`size-3.5 ${SEO_TEXT_COLOR(post.seoScore)}`} />
+   555→                    <span className={`text-xs font-medium ${SEO_TEXT_COLOR(post.seoScore)}`}>
+   556→                      SEO: {post.seoScore}
+   557→                    </span>
+   558→                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${SEO_COLOR(post.seoScore)}`}>
+   559→                      {SEO_LABEL(post.seoScore)}
+   560→                    </span>
+   561→                  </div>
+   562→                </div>
+   563→
+   564→                {/* Actions */}
+   565→                <div className="flex items-center gap-1">
+   566→                  <Button
+   567→                    variant="ghost"
+   568→                    size="sm"
+   569→                    className="h-7 gap-1 text-xs text-muted-foreground hover:text-[#D4A843]"
+   570→                    onClick={(e) => {
+   571→                      e.stopPropagation();
+   572→                      openEditDialog(post);
+   573→                    }}
+   574→                  >
+   575→                    <Edit3 className="size-3" /> Edit
+   576→                  </Button>
+   577→                  {post.status !== 'published' && (
+   578→                    <Button
+   579→                      variant="ghost"
+   580→                      size="sm"
+   581→                      className="h-7 gap-1 text-xs text-muted-foreground hover:text-green-500"
+   582→                      onClick={(e) => {
+   583→                        e.stopPropagation();
+   584→                        handlePublish(post);
+   585→                      }}
+   586→                    >
+   587→                      <Send className="size-3" /> Publish
+   588→                    </Button>
+   589→                  )}
+   590→                  <Button
+   591→                    variant="ghost"
+   592→                    size="sm"
+   593→                    className="h-7 gap-1 text-xs text-muted-foreground hover:text-red-400 ml-auto"
+   594→                    onClick={(e) => {
+   595→                      e.stopPropagation();
+   596→                      handleDelete(post);
+   597→                    }}
+   598→                  >
+   599→                    <Trash2 className="size-3" />
+   600→                  </Button>
+   601→                </div>
+   602→              </div>
+   603→            ))
+   604→          )}
+   605→        </div>
+   606→      ) : (
+   607→        /* ─── List View ──────────────────────────────────────────── */
+   608→        <Card className="gold-card overflow-hidden">
+   609→          <CardContent className="p-0">
+   610→            <div className="overflow-x-auto">
+   611→              <Table>
+   612→                <TableHeader>
+   613→                  <TableRow className="gold-table-header border-[#2a2520] hover:bg-transparent">
+   614→                    <TableHead className="text-[#D4A843]">Title</TableHead>
+   615→                    <TableHead className="text-[#D4A843]">Category</TableHead>
+   616→                    <TableHead className="text-[#D4A843]">Author</TableHead>
+   617→                    <TableHead className="text-[#D4A843]">Status</TableHead>
+   618→                    <TableHead className="text-[#D4A843]">SEO Score</TableHead>
+   619→                    <TableHead className="text-[#D4A843]">Published</TableHead>
+   620→                    <TableHead className="text-[#D4A843]">Actions</TableHead>
+   621→                  </TableRow>
+   622→                </TableHeader>
+   623→                <TableBody>
+   624→                  {filteredPosts.length === 0 ? (
+   625→                    <TableRow>
+   626→                      <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+   627→                        No blog posts found
+   628→                      </TableCell>
+   629→                    </TableRow>
+   630→                  ) : (
+   631→                    filteredPosts.map((post) => (
+   632→                      <TableRow
+   633→                        key={post.id}
+   634→                        className="border-[#2a2520] hover:bg-[rgba(212,168,67,0.05)] transition-colors"
+   635→                      >
+   636→                        <TableCell className="font-medium max-w-[220px] truncate">
+   637→                          {post.title}
+   638→                        </TableCell>
+   639→                        <TableCell>
+   640→                          {post.category ? (
+   641→                            <span className="badge-gold text-xs px-2 py-0.5 rounded-md border">
+   642→                              {post.category}
+   643→                            </span>
+   644→                          ) : (
+   645→                            <span className="text-muted-foreground">—</span>
+   646→                          )}
+   647→                        </TableCell>
+   648→                        <TableCell className="text-muted-foreground text-sm">
+   649→                          {post.author || 'Laxree Team'}
+   650→                        </TableCell>
+   651→                        <TableCell>
+   652→                          <span
+   653→                            className={`text-xs px-2 py-0.5 rounded-md border font-medium capitalize ${STATUS_BADGE[post.status] || 'badge-gold'}`}
+   654→                          >
+   655→                            {post.status.replace('_', ' ')}
+   656→                          </span>
+   657→                        </TableCell>
+   658→                        <TableCell>
+   659→                          <div className="flex items-center gap-2">
+   660→                            <TrendingUp className={`size-3.5 ${SEO_TEXT_COLOR(post.seoScore)}`} />
+   661→                            <span className={`text-sm font-semibold ${SEO_TEXT_COLOR(post.seoScore)}`}>
+   662→                              {post.seoScore}
+   663→                            </span>
+   664→                            <span className={`text-[10px] px-1.5 py-0.5 rounded border ${SEO_COLOR(post.seoScore)}`}>
+   665→                              {SEO_LABEL(post.seoScore)}
+   666→                            </span>
+   667→                          </div>
+   668→                        </TableCell>
+   669→                        <TableCell className="text-muted-foreground text-sm">
+   670→                          {post.publishDate
+   671→                            ? format(parseISO(post.publishDate), 'MMM dd, yyyy')
+   672→                            : '—'}
+   673→                        </TableCell>
+   674→                        <TableCell>
+   675→                          <div className="flex items-center gap-1">
+   676→                            <Button
+   677→                              variant="ghost"
+   678→                              size="icon"
+   679→                              className="size-7 text-muted-foreground hover:text-[#D4A843]"
+   680→                              onClick={() => openEditDialog(post)}
+   681→                            >
+   682→                              <Edit3 className="size-3.5" />
+   683→                            </Button>
+   684→                            {post.status !== 'published' && (
+   685→                              <Button
+   686→                                variant="ghost"
+   687→                                size="icon"
+   688→                                className="size-7 text-muted-foreground hover:text-green-500"
+   689→                                onClick={() => handlePublish(post)}
+   690→                              >
+   691→                                <Send className="size-3.5" />
+   692→                              </Button>
+   693→                            )}
+   694→                          </div>
+   695→                        </TableCell>
+   696→                      </TableRow>
+   697→                    ))
+   698→                  )}
+   699→                </TableBody>
+   700→              </Table>
+   701→            </div>
+   702→          </CardContent>
+   703→        </Card>
+   704→      )}
+   705→
+   706→      {/* ─── Blog Post Dialog ─────────────────────────────────────── */}
+   707→      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+   708→        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-[#111] border-[#2a2520]">
+   709→          <DialogHeader>
+   710→            <DialogTitle className="gold-gradient-text">
+   711→              {editingPost ? 'Edit Blog Post' : 'New Blog Post'}
+   712→            </DialogTitle>
+   713→            <DialogDescription>
+   714→              {editingPost ? 'Update the blog post details' : 'Create a new blog post for the Laxree journal'}
+   715→            </DialogDescription>
+   716→          </DialogHeader>
+   717→
+   718→          <div className="space-y-4 py-2">
+   719→            <div className="space-y-2">
+   720→              <Label className="text-foreground/80">Title</Label>
+   721→              <Input
+   722→                value={formTitle}
+   723→                onChange={(e) => setFormTitle(e.target.value)}
+   724→                placeholder="Enter post title..."
+   725→                className="border-[#2a2520] bg-[#0a0a0a] focus-visible:border-[#D4A843]"
+   726→              />
+   727→            </div>
+   728→
+   729→            <div className="space-y-2">
+   730→              <Label className="text-foreground/80">Content</Label>
+   731→              <Textarea
+   732→                value={formContent}
+   733→                onChange={(e) => setFormContent(e.target.value)}
+   734→                placeholder="Write your blog content..."
+   735→                rows={6}
+   736→                className="border-[#2a2520] bg-[#0a0a0a] focus-visible:border-[#D4A843] min-h-[140px]"
+   737→              />
+   738→            </div>
+   739→
+   740→            <div className="grid grid-cols-2 gap-4">
+   741→              <div className="space-y-2">
+   742→                <Label className="text-foreground/80">Category</Label>
+   743→                <Select value={formCategory} onValueChange={setFormCategory}>
+   744→                  <SelectTrigger className="border-[#2a2520] bg-[#0a0a0a] w-full">
+   745→                    <SelectValue />
+   746→                  </SelectTrigger>
+   747→                  <SelectContent>
+   748→                    {BLOG_CATEGORIES.map((c) => (
+   749→                      <SelectItem key={c} value={c}>{c}</SelectItem>
+   750→                    ))}
+   751→                  </SelectContent>
+   752→                </Select>
+   753→              </div>
+   754→
+   755→              <div className="space-y-2">
+   756→                <Label className="text-foreground/80">Author</Label>
+   757→                <Input
+   758→                  value={formAuthor}
+   759→                  onChange={(e) => setFormAuthor(e.target.value)}
+   760→                  placeholder="Author name"
+   761→                  className="border-[#2a2520] bg-[#0a0a0a] focus-visible:border-[#D4A843]"
+   762→                />
+   763→              </div>
+   764→            </div>
+   765→
+   766→            <div className="space-y-2">
+   767→              <Label className="text-foreground/80">Tags</Label>
+   768→              <Input
+   769→                value={formTags}
+   770→                onChange={(e) => setFormTags(e.target.value)}
+   771→                placeholder="luxury, gold, diamond (comma separated)"
+   772→                className="border-[#2a2520] bg-[#0a0a0a] focus-visible:border-[#D4A843]"
+   773→              />
+   774→            </div>
+   775→
+   776→            <div className="grid grid-cols-2 gap-4">
+   777→              <div className="space-y-2">
+   778→                <Label className="text-foreground/80">Status</Label>
+   779→                <Select value={formStatus} onValueChange={setFormStatus}>
+   780→                  <SelectTrigger className="border-[#2a2520] bg-[#0a0a0a] w-full">
+   781→                    <SelectValue />
+   782→                  </SelectTrigger>
+   783→                  <SelectContent>
+   784→                    {BLOG_STATUSES.map((s) => (
+   785→                      <SelectItem key={s} value={s} className="capitalize">
+   786→                        {s.replace('_', ' ')}
+   787→                      </SelectItem>
+   788→                    ))}
+   789→                  </SelectContent>
+   790→                </Select>
+   791→              </div>
+   792→
+   793→              <div className="space-y-2">
+   794→                <Label className="text-foreground/80">Publish Date</Label>
+   795→                <Input
+   796→                  type="date"
+   797→                  value={formPublishDate}
+   798→                  onChange={(e) => setFormPublishDate(e.target.value)}
+   799→                  className="border-[#2a2520] bg-[#0a0a0a] focus-visible:border-[#D4A843]"
+   800→                />
+   801→              </div>
+   802→            </div>
+   803→
+   804→            {/* SEO Score Display */}
+   805→            {editingPost && (
+   806→              <div className="flex items-center gap-4 p-3 rounded-lg bg-[#0a0a0a] border border-[#2a2520]">
+   807→                <CircularProgress value={editingPost.seoScore} size={56} strokeWidth={4} />
+   808→                <div>
+   809→                  <div className="text-xs text-muted-foreground">SEO Score</div>
+   810→                  <div className={`text-lg font-bold ${SEO_TEXT_COLOR(editingPost.seoScore)}`}>
+   811→                    {editingPost.seoScore}/100 — {SEO_LABEL(editingPost.seoScore)}
+   812→                  </div>
+   813→                </div>
+   814→              </div>
+   815→            )}
+   816→          </div>
+   817→
+   818→          <DialogFooter>
+   819→            <Button
+   820→              variant="outline"
+   821→              onClick={() => setDialogOpen(false)}
+   822→              className="border-[#2a2520] hover:border-[#D4A843]"
+   823→            >
+   824→              Cancel
+   825→            </Button>
+   826→            <Button
+   827→              onClick={handleSubmit}
+   828→              disabled={submitting}
+   829→              className="bg-[#D4A843] text-[#0a0a0a] hover:bg-[#E8C46A] font-semibold"
+   830→            >
+   831→              {submitting ? 'Saving...' : editingPost ? 'Update Post' : 'Create Post'}
+   832→            </Button>
+   833→          </DialogFooter>
+   834→        </DialogContent>
+   835→      </Dialog>
+   836→    </div>
+   837→  );
+   838→}

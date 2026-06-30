@@ -14,6 +14,9 @@ import {
   FileText,
   Eye,
   PenLine,
+  Sparkles,
+  Loader2,
+  Tag,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -76,6 +79,16 @@ interface BlogData {
 }
 
 type ViewMode = 'grid' | 'list';
+
+interface AISuggestion {
+  title: string;
+  outline: string[];
+  keywords: string[];
+  seoDifficulty: string;
+}
+
+const AI_CATEGORIES = ['Trends', 'Styling', 'Guide', 'Brand Story', 'Wedding', 'Care', 'How-to'];
+const AI_TONES = ['Professional', 'Casual', 'Luxurious', 'Educational'];
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 const SEO_COLOR = (score: number) => {
@@ -183,6 +196,13 @@ export default function BlogPlannerTab() {
   const [formStatus, setFormStatus] = useState('draft');
   const [formPublishDate, setFormPublishDate] = useState('');
 
+  // AI Suggester state
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiCategory, setAiCategory] = useState('Trends');
+  const [aiTone, setAiTone] = useState('Professional');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[]>([]);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -234,6 +254,89 @@ export default function BlogPlannerTab() {
 
   const chartConfig = {
     count: { label: 'Posts', color: '#D4A843' },
+  };
+
+  // ─── AI Suggester Handlers ────────────────────────────────────────
+  const parseAISuggestions = (text: string): AISuggestion[] => {
+    const blocks = text.split(/\n*---+\n*/).filter(Boolean);
+    return blocks.map((block) => {
+      const lines = block.trim().split('\n');
+      let title = '';
+      const outline: string[] = [];
+      const keywords: string[] = [];
+      let seoDifficulty = 'Medium';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        if (trimmed.match(/^1\.\s*Title/i) || trimmed.match(/^Title:/i)) {
+          title = trimmed.replace(/^1\.\s*Title[:\s]*/i, '').replace(/^Title[:\s]*/i, '').trim();
+        } else if (trimmed.match(/^2\.\s*Outline/i) || trimmed.match(/^Outline:/i)) {
+          continue;
+        } else if (trimmed.match(/^3\.\s*Target\s*Keywords/i) || trimmed.match(/^Target\s*Keywords:/i)) {
+          const kwText = trimmed.replace(/^3\.\s*Target\s*Keywords[:\s]*/i, '').replace(/^Target\s*Keywords[:\s]*/i, '').trim();
+          kwText.split(/[,;]/).forEach((kw) => {
+            const k = kw.trim().replace(/^[-•*]\s*/, '');
+            if (k) keywords.push(k);
+          });
+        } else if (trimmed.match(/^4\.\s*SEO\s*Difficulty/i) || trimmed.match(/^SEO\s*Difficulty:/i)) {
+          const d = trimmed.replace(/^4\.\s*SEO\s*Difficulty[:\s]*/i, '').replace(/^SEO\s*Difficulty[:\s]*/i, '').trim();
+          if (d.match(/low/i)) seoDifficulty = 'Low';
+          else if (d.match(/high/i)) seoDifficulty = 'High';
+          else seoDifficulty = 'Medium';
+        } else if (trimmed.match(/^[-•*]\s/) || trimmed.match(/^\d+\.\s/)) {
+          if (title && keywords.length === 0 && outline.length < 5) {
+            outline.push(trimmed.replace(/^[-•*\d.]\s*/, '').trim());
+          }
+        } else if (!title) {
+          title = trimmed;
+        }
+      }
+
+      return { title: title || 'Untitled Suggestion', outline: outline.slice(0, 4), keywords: keywords.slice(0, 5), seoDifficulty };
+    }).filter((s) => s.title !== 'Untitled Suggestion');
+  };
+
+  const handleAISuggest = async () => {
+    if (!aiTopic.trim() || aiLoading) return;
+    try {
+      setAiLoading(true);
+      setAiSuggestions([]);
+      const res = await fetch('/api/marketing/ai-blog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: aiTopic, category: aiCategory, tone: aiTone }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      const json = await res.json();
+      const parsed = parseAISuggestions(json.suggestions);
+      setAiSuggestions(parsed.length > 0 ? parsed : [{ title: aiTopic, outline: [json.suggestions.substring(0, 200)], keywords: [], seoDifficulty: 'Medium' }]);
+    } catch {
+      toast.error('Failed to generate AI suggestions');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleUseAsDraft = (suggestion: AISuggestion) => {
+    setEditingPost(null);
+    resetForm();
+    setFormTitle(suggestion.title);
+    setFormContent(suggestion.outline.map((p) => `• ${p}`).join('\n'));
+    setFormTags(suggestion.keywords.join(', '));
+    if (aiCategory) {
+      const catMap: Record<string, string> = {
+        Trends: 'Jewellery Trends',
+        Styling: 'Style Tips',
+        Guide: 'Product Spotlight',
+        'Brand Story': 'Brand Story',
+        Wedding: 'Gift Guide',
+        Care: 'Care & Maintenance',
+        'How-to': 'Care & Maintenance',
+      };
+      setFormCategory(catMap[aiCategory] || 'Jewellery Trends');
+    }
+    setDialogOpen(true);
   };
 
   // ─── Form Handlers ────────────────────────────────────────────────
@@ -363,6 +466,143 @@ export default function BlogPlannerTab() {
           </Button>
         </div>
       </div>
+
+      {/* AI Content Suggester */}
+      <Card className="gold-card gold-shimmer rounded-xl overflow-hidden">
+        <CardContent className="p-5">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="flex items-center justify-center size-10 rounded-lg bg-gradient-to-br from-[#D4A843] to-[#B8922F] shrink-0">
+              <Sparkles className="size-5 text-[#0a0a0a]" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-base font-semibold flex items-center gap-2">
+                AI Content Suggester
+                <span className="badge-gold text-[10px] px-1.5 py-0.5 rounded-md border font-medium">AI</span>
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Get AI-powered blog topic and outline suggestions</p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[200px]">
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Topic / Keywords</Label>
+              <Input
+                value={aiTopic}
+                onChange={(e) => setAiTopic(e.target.value)}
+                placeholder="e.g. gold necklace layering, diamond care tips..."
+                className="border-[#2a2520] bg-[#111] focus-visible:border-[#D4A843] h-9"
+                onKeyDown={(e) => e.key === 'Enter' && handleAISuggest()}
+              />
+            </div>
+            <div className="w-[150px]">
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Category</Label>
+              <Select value={aiCategory} onValueChange={setAiCategory}>
+                <SelectTrigger className="h-9 border-[#2a2520] bg-[#111]">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AI_CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-[140px]">
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Tone</Label>
+              <Select value={aiTone} onValueChange={setAiTone}>
+                <SelectTrigger className="h-9 border-[#2a2520] bg-[#111]">
+                  <SelectValue placeholder="Tone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AI_TONES.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              onClick={handleAISuggest}
+              disabled={aiLoading || !aiTopic.trim()}
+              className="h-9 gap-2 bg-gradient-to-r from-[#D4A843] to-[#E8C46A] text-[#0a0a0a] hover:from-[#E8C46A] hover:to-[#D4A843] font-semibold disabled:opacity-50"
+            >
+              {aiLoading ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Generating<span className="dot-pulse">...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="size-4" />
+                  Suggest
+                </>
+              )}
+            </Button>
+          </div>
+
+          {aiSuggestions.length > 0 && (
+            <div className="mt-4 space-y-3 animate-fade-in">
+              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Suggestions</div>
+              {aiSuggestions.map((suggestion, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-lg border border-[#2a2520] bg-[#0d0d0d] p-4 space-y-3 hover:border-[rgba(212,168,67,0.3)] transition-all duration-200"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center justify-center size-6 rounded-full bg-gradient-to-br from-[#D4A843] to-[#B8922F] text-xs font-bold text-[#0a0a0a]">
+                        {idx + 1}
+                      </span>
+                      <h4 className="text-sm font-semibold leading-snug">{suggestion.title}</h4>
+                    </div>
+                    <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full border font-medium ${
+                      suggestion.seoDifficulty === 'Low' ? 'badge-green' :
+                      suggestion.seoDifficulty === 'Medium' ? 'badge-yellow' : 'badge-red'
+                    }`}>
+                      {suggestion.seoDifficulty} SEO
+                    </span>
+                  </div>
+
+                  <ul className="space-y-1 ml-8">
+                    {suggestion.outline.map((point, pIdx) => (
+                      <li key={pIdx} className="text-xs text-muted-foreground flex items-start gap-2">
+                        <span className="text-[#D4A843] mt-0.5">•</span>
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="flex items-center justify-between ml-8">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Tag className="size-3 text-[#D4A843]" />
+                      {suggestion.keywords.map((kw, kIdx) => (
+                        <span key={kIdx} className="text-[10px] px-1.5 py-0.5 rounded bg-[rgba(212,168,67,0.1)] text-[#D4A843] border border-[rgba(212,168,67,0.2)]">
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1.5 border-[#D4A843] text-[#D4A843] hover:bg-[#D4A843] hover:text-[#0a0a0a]"
+                      onClick={() => handleUseAsDraft(suggestion)}
+                    >
+                      <PenLine className="size-3" />
+                      Use as Draft
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {aiLoading && aiSuggestions.length === 0 && (
+            <div className="mt-4 flex items-center justify-center py-8 text-sm text-muted-foreground">
+              <span>Generating suggestions</span>
+              <span className="dot-pulse text-[#D4A843]">...</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Search & Filters */}
       <div className="flex flex-wrap items-center gap-3">

@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { toast } from 'sonner';
 import {
   DollarSign,
   Download,
@@ -184,6 +185,32 @@ export default function LeadsTab() {
     : 0;
   const inStorePct = data ? 100 - onlinePct : 0;
 
+  const handleExportCsv = () => {
+    if (!data || data.leads.length === 0) return;
+    const headers = ['Date', 'Company', 'Email', 'UTM Source', 'Quality', 'Country'];
+    const rows = filteredLeads.map((l) => [
+      new Date(l.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      l.company || '',
+      l.email || '',
+      l.utmSource || '',
+      l.quality,
+      l.country || '',
+    ]);
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `laxree-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Leads exported successfully');
+  };
+
   const SortableHeader = ({ label, field }: { label: string; field: SortKey }) => (
     <TableHead
       className="cursor-pointer text-xs font-semibold text-gold"
@@ -230,7 +257,7 @@ export default function LeadsTab() {
             <p className="text-sm text-muted-foreground">Lead management and revenue analytics</p>
           </div>
         </div>
-        <Button variant="outline" className="border-gold/30 text-gold hover:bg-gold-muted">
+        <Button variant="outline" className="border-gold/30 text-gold hover:bg-gold-muted" onClick={handleExportCsv}>
           <Download className="mr-1.5 h-4 w-4" />
           Export
         </Button>

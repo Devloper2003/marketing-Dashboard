@@ -46,6 +46,7 @@ import {
   AlertTriangle,
   XCircle,
   CheckCircle2,
+  Gem,
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -321,19 +322,76 @@ export default function OverviewTab() {
         },
       ];
 
+  // ─── Helpers ─────────────────────────────────────────────────────────────
+
+  const getGreeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good Morning';
+    if (h < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
   // ─── Render ──────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6">
+      {/* Welcome Banner */}
+      <Card className="relative overflow-hidden border-0 bg-gradient-to-r from-[#1a1610] via-[#151210] to-[#0d0d0d] border border-[#D4A843]/15">
+        <CardContent className="relative p-5 sm:p-6">
+          {/* Background decorative elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#D4A843]/5 to-transparent rounded-full -translate-y-1/2 translate-x-1/4" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#D4A843]/3 to-transparent rounded-full translate-y-1/3 -translate-x-1/4" />
+          
+          <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl gold-gradient shadow-lg shadow-[#D4A843]/20">
+                <Gem className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold gold-gradient-text">{getGreeting()}, Laxree Team</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Your marketing dashboard is performing <span className="text-green-400 font-medium">12% better</span> than last month. 
+                  3 campaigns need attention.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3 sm:gap-4 mt-3 sm:mt-0">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#D4A843]/10 border border-[#D4A843]/20">
+                <TrendingUp className="h-4 w-4 text-green-400" />
+                <div>
+                  <p className="text-xs text-muted-foreground">ROAS</p>
+                  <p className="text-sm font-bold text-green-400">+11.2%</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#D4A843]/10 border border-[#D4A843]/20">
+                <Users className="h-4 w-4 text-[#D4A843]" />
+                <div>
+                  <p className="text-xs text-muted-foreground">New Leads</p>
+                  <p className="text-sm font-bold text-[#D4A843]">+48</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#D4A843]/10 border border-[#D4A843]/20">
+                <Target className="h-4 w-4 text-[#E8C46A]" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Conversions</p>
+                  <p className="text-sm font-bold text-[#E8C46A]">+8.3%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* ── KPI Cards ──────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 stagger-children count-animate">
         {loading ? (
           Array.from({ length: 6 }).map((_, i) => <KpiSkeleton key={i} />)
         ) : (
           kpiCards!.map((kpi, idx) => (
             <div
               key={kpi.label}
-              className="stat-animate gold-card gold-shimmer rounded-xl p-4"
+              className="stat-animate gold-card-hover gold-shimmer rounded-xl p-4"
               style={{ animationDelay: `${idx * 80}ms` }}
             >
               <div className="flex items-center justify-between mb-2">
@@ -706,7 +764,7 @@ export default function OverviewTab() {
                   {data!.campaigns.slice(0, 10).map((c) => (
                     <TableRow
                       key={c.id}
-                      className="border-border/50 transition-colors hover:bg-gold-muted/30"
+                      className="border-border/50 table-row-hover"
                     >
                       <TableCell className="text-xs font-medium text-foreground">
                         {c.name}
@@ -808,6 +866,40 @@ export default function OverviewTab() {
               ))}
         </div>
       </div>
+
+      {/* Campaign Performance Alerts */}
+      <Card className="gold-card border-0 mt-6">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-500/15">
+                <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
+              </div>
+              <CardTitle className="text-sm font-semibold">Campaign Alerts</CardTitle>
+            </div>
+            <Badge variant="outline" className="badge-red text-[10px]">3 Active</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[
+            { campaign: 'YouTube Brand Video', channel: 'YouTube', issue: 'CPM increased 42%, ROAS dropped to 2.1x', severity: 'critical' },
+            { campaign: 'Influencer Collab Q4', channel: 'Instagram', issue: 'Below target conversions by 15%', severity: 'warning' },
+            { campaign: 'Organic Traffic', channel: 'Organic', issue: 'Monthly traffic target 75% reached, needs content push', severity: 'warning' },
+          ].map((alert, i) => (
+            <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-[#0a0a0a] border border-border/50 hover:border-[#D4A843]/20 transition-colors">
+              <span className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${alert.severity === 'critical' ? 'bg-red-500' : 'bg-yellow-500'}`} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-foreground truncate">{alert.campaign}</p>
+                  <Badge variant="outline" className="badge-gold text-[10px] shrink-0">{alert.channel}</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">{alert.issue}</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }
