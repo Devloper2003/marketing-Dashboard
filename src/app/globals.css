@@ -1420,3 +1420,246 @@ textarea:focus, input[type="text"]:focus {
 .grid-fade-in > *:nth-child(10) { animation-delay: 450ms; }
 .grid-fade-in > *:nth-child(11) { animation-delay: 500ms; }
 .grid-fade-in > *:nth-child(12) { animation-delay: 550ms; }
+
+/* ─── Command Palette Styles ───────────────────────────────────── */
+.cmd-palette-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.cmd-palette-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #D4A843;
+  transform: scaleY(0);
+  transition: transform 0.15s ease;
+}
+
+.cmd-palette-item:hover::before,
+.cmd-palette-item.active::before {
+  transform: scaleY(1);
+}
+
+/* ─── Shimmer Border Effect ────────────────────────────────────── */
+@keyframes shimmerBorder {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.shimmer-border {
+  background: linear-gradient(90deg, rgba(212, 168, 67, 0.1), rgba(212, 168, 67, 0.3), rgba(212, 168, 67, 0.1));
+  background-size: 200% 100%;
+  animation: shimmerBorder 3s ease-in-out infinite;
+}
+
+/* ─── Micro-interaction: Press Scale ────────────────────────────── */
+.press-effect {
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.press-effect:active {
+  transform: scale(0.97);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Gradient Text Accent ──────────────────────────────────────── */
+.text-gradient-gold-warm {
+  background: linear-gradient(135deg, #D4A843 0%, #F0D78C 40%, #D4A843 70%, #B8922F 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Hover Ripple Effect ───────────────────────────────────────── */
+.ripple-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(212, 168, 67, 0.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.ripple-hover:hover::after {
+  opacity: 1;
+}
+
+/* ─── Subtle Noise Background for Premium Feel ──────────────────── */
+.bg-noise-subtle {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E");
+}
+
+/* ─── Animated Gradient Background ──────────────────────────────── */
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animated-gradient-bg {
+  background: linear-gradient(-45deg, #0a0a0a, #1a1610, #0a0a0a, #12100d);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+/* ─── Number Counter Animation ─────────────────────────────────── */
+@keyframes numberReveal {
+  0% { opacity: 0; transform: translateY(8px) scale(0.95); filter: blur(3px); }
+  60% { opacity: 1; transform: translateY(-1px) scale(1.01); filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+.number-reveal {
+  animation: numberReveal 0.5s ease-out forwards;
+}
+
+/* ─── Tab Indicator Transition ──────────────────────────────────── */
+.tab-indicator-gold {
+  position: relative;
+}
+
+.tab-indicator-gold::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #D4A843, #E8C46A, #D4A843);
+  border-radius: 1px 1px 0 0;
+  transform: scaleX(0);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-indicator-gold:hover::after,
+.tab-indicator-gold[aria-selected="true"]::after {
+  transform: scaleX(1);
+}
+
+/* ─── Glow Dot for Status Indicators ────────────────────────────── */
+@keyframes glowDotPulse {
+  0%, 100% { box-shadow: 0 0 4px currentColor, 0 0 8px currentColor; opacity: 1; }
+  50% { box-shadow: 0 0 6px currentColor, 0 0 14px currentColor; opacity: 0.7; }
+}
+
+.glow-dot {
+  animation: glowDotPulse 2s ease-in-out infinite;
+}
+
+/* ─── Hover Card Border Sweep ───────────────────────────────────── */
+@keyframes borderSweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.hover-sweep {
+  position: relative;
+  border: 1px solid rgba(212, 168, 67, 0.1);
+  transition: all 0.3s ease;
+}
+
+.hover-sweep:hover {
+  border-color: transparent;
+  background-image: linear-gradient(#111, #111), linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.2), rgba(212, 168, 67, 0.3), rgba(212, 168, 67, 0.2), transparent);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  background-size: 100%, 200% 100%;
+  animation: borderSweep 2s linear infinite;
+}
+
+/* ─── Enhanced Scrollbar for Main Content ───────────────────────── */
+main::-webkit-scrollbar {
+  width: 7px;
+}
+
+main::-webkit-scrollbar-track {
+  background: rgba(10, 10, 10, 0.5);
+}
+
+main::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(212, 168, 67, 0.15), rgba(212, 168, 67, 0.25));
+  border-radius: 4px;
+  border: 1px solid rgba(212, 168, 67, 0.08);
+}
+
+main::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(212, 168, 67, 0.25), rgba(212, 168, 67, 0.4));
+}
+
+/* ─── Button Gold Variant ───────────────────────────────────────── */
+.btn-gold {
+  background: linear-gradient(135deg, #D4A843 0%, #E8C46A 50%, #D4A843 100%);
+  color: #0a0a0a;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(212, 168, 67, 0.2);
+}
+
+.btn-gold:hover {
+  box-shadow: 0 4px 16px rgba(212, 168, 67, 0.3), 0 0 0 1px rgba(212, 168, 67, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-gold:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(212, 168, 67, 0.2);
+}
+
+/* ─── Card Hover Border Animation ───────────────────────────────── */
+.card-hover-border {
+  position: relative;
+  background: #111;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.card-hover-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  padding: 1px;
+  background: linear-gradient(135deg, transparent 30%, rgba(212, 168, 67, 0.2) 50%, transparent 70%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card-hover-border:hover::before {
+  opacity: 1;
+}
+
+/* ─── Tooltip Enhancement for Command Palette ───────────────────── */
+.kbd-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  min-width: 20px;
+  padding: 0 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(42, 37, 32, 0.6);
+  background: rgba(10, 10, 10, 0.8);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 10px;
+  color: rgba(154, 144, 128, 0.5);
+  line-height: 1;
+}
+
+/* ─── Subtle Background Pattern ─────────────────────────────────── */
+.bg-dots {
+  background-image: radial-gradient(rgba(212, 168, 67, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+}

@@ -33,6 +33,8 @@ import {
   Wallet,
   FlaskConical,
   FileBarChart,
+  Filter,
+  GitBranch,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -45,6 +47,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -98,8 +101,14 @@ const ReportsTab = dynamic(() => import('@/components/dashboard/reports-tab'), {
 const AbTestingTab = dynamic(() => import('@/components/dashboard/ab-testing-tab'), {
   loading: () => <TabSkeleton />,
 });
+const AttributionTab = dynamic(() => import('@/components/dashboard/attribution-tab'), {
+  loading: () => <TabSkeleton />,
+});
+const FunnelTab = dynamic(() => import('@/components/dashboard/funnel-tab'), {
+  loading: () => <TabSkeleton />,
+});
 
-type TabKey = 'overview' | 'calendar' | 'blogs' | 'social-planner' | 'ideas' | 'seo' | 'campaigns' | 'social-analytics' | 'leads' | 'budget' | 'competitors' | 'email' | 'ab-testing' | 'reports';
+type TabKey = 'overview' | 'calendar' | 'blogs' | 'social-planner' | 'ideas' | 'seo' | 'campaigns' | 'social-analytics' | 'leads' | 'budget' | 'competitors' | 'email' | 'ab-testing' | 'reports' | 'funnel' | 'attribution';
 
 interface NavItem {
   key: TabKey;
@@ -122,6 +131,8 @@ const navItems: NavItem[] = [
   { key: 'email', label: 'Email Campaigns', icon: Mail },
   { key: 'reports', label: 'Reports', icon: FileBarChart },
   { key: 'ab-testing', label: 'A/B Testing', icon: FlaskConical },
+  { key: 'funnel', label: 'Funnel', icon: Filter },
+  { key: 'attribution', label: 'Attribution', icon: GitBranch },
 ];
 
 function TabSkeleton() {
@@ -319,11 +330,33 @@ const quickActions = [
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [fabOpen, setFabOpen] = useState(false);
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [cmdQuery, setCmdQuery] = useState('');
 
   const activeNavItem = navItems.find((n) => n.key === activeTab);
+
+  // Command palette: filter nav items
+  const filteredNavItems = cmdQuery
+    ? navItems.filter((n) => n.label.toLowerCase().includes(cmdQuery.toLowerCase()))
+    : navItems;
+
+  // Cmd+K shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCmdOpen((v) => !v);
+        setCmdQuery('');
+      }
+      if (e.key === 'Escape') {
+        setCmdOpen(false);
+        setFabOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const renderTab = () => {
     switch (activeTab) {
@@ -341,6 +374,8 @@ export default function Home() {
       case 'email': return <EmailTab />;
       case 'ab-testing': return <AbTestingTab />;
       case 'reports': return <ReportsTab />;
+      case 'funnel': return <FunnelTab />;
+      case 'attribution': return <AttributionTab />;
       default: return <OverviewTab />;
     }
   };
@@ -412,31 +447,28 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Search */}
-            {searchOpen ? (
-              <div className="flex items-center gap-2 bg-[#111] border border-[#D4A843]/30 rounded-lg px-3 py-1.5 animate-in fade-in duration-200">
-                <SearchIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                <input
-                  autoFocus
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search..."
-                  className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none w-40 sm:w-56"
-                />
-                <button onClick={() => { setSearchOpen(false); setSearchQuery(''); }}>
-                  <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                </button>
-              </div>
-            ) : (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-[#D4A843] h-8 w-8"
-                onClick={() => setSearchOpen(true)}
-              >
-                <SearchIcon className="h-4 w-4" />
-              </Button>
-            )}
+            {/* Command Palette Trigger */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-[#D4A843] h-8 px-3 border border-border/40 hover:border-[#D4A843]/30 bg-[#111]/30 transition-all"
+              onClick={() => { setCmdOpen(true); setCmdQuery(''); }}
+            >
+              <SearchIcon className="h-3.5 w-3.5" />
+              <span className="text-xs">Search...</span>
+              <kbd className="ml-1 inline-flex h-5 items-center gap-0.5 rounded border border-border/60 bg-[#0a0a0a] px-1.5 text-[10px] font-mono text-muted-foreground/70">
+                ⌘K
+              </kbd>
+            </Button>
+            {/* Mobile search */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="sm:hidden text-muted-foreground hover:text-[#D4A843] h-8 w-8"
+              onClick={() => { setCmdOpen(true); setCmdQuery(''); }}
+            >
+              <SearchIcon className="h-4 w-4" />
+            </Button>
 
             {/* Date Range */}
             <Select defaultValue="30d">
@@ -578,6 +610,75 @@ export default function Home() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* ── Command Palette (⌘K) ─────────────────────────────────── */}
+      <Dialog open={cmdOpen} onOpenChange={setCmdOpen}>
+        <DialogContent className="sm:max-w-lg p-0 gap-0 bg-[#111] border-[#D4A843]/15 shadow-2xl shadow-black/60 rounded-xl overflow-hidden">
+          <div className="flex items-center gap-3 border-b border-border/50 px-4 py-3">
+            <SearchIcon className="h-4 w-4 text-[#D4A843] shrink-0" />
+            <input
+              autoFocus
+              value={cmdQuery}
+              onChange={(e) => setCmdQuery(e.target.value)}
+              placeholder="Search tabs, actions..."
+              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+            />
+            <kbd className="inline-flex h-5 items-center rounded border border-border/60 bg-[#0a0a0a] px-1.5 text-[10px] font-mono text-muted-foreground/50">ESC</kbd>
+          </div>
+          <div className="max-h-[320px] overflow-y-auto py-2 px-2">
+            <p className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Navigation</p>
+            <div className="space-y-0.5">
+              {filteredNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.key;
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => { setActiveTab(item.key); setCmdOpen(false); }}
+                    className={`flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm transition-all duration-150 ${
+                      isActive
+                        ? 'bg-[#D4A843]/10 text-[#D4A843]'
+                        : 'text-foreground hover:bg-white/5'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 shrink-0 opacity-60" />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {isActive && <span className="text-[10px] text-[#D4A843]/60">Current</span>}
+                  </button>
+                );
+              })}
+            </div>
+            {cmdQuery && filteredNavItems.length === 0 && (
+              <div className="py-8 text-center text-sm text-muted-foreground">No results found</div>
+            )}
+            <div className="gold-divider my-2" />
+            <p className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Quick Actions</p>
+            <div className="space-y-0.5">
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <button
+                    key={action.label}
+                    onClick={() => { setActiveTab(action.tab); setCmdOpen(false); }}
+                    className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-white/5 transition-all duration-150"
+                  >
+                    <Icon className="h-4 w-4 shrink-0 opacity-60" />
+                    <span className="flex-1 text-left">{action.label}</span>
+                    <Zap className="h-3 w-3 text-[#D4A843]/40" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="border-t border-border/30 px-4 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-3 text-[10px] text-muted-foreground/50">
+              <span className="flex items-center gap-1"><kbd className="inline-flex h-4 items-center rounded border border-border/40 bg-[#0a0a0a] px-1 text-[9px]">↑↓</kbd> Navigate</span>
+              <span className="flex items-center gap-1"><kbd className="inline-flex h-4 items-center rounded border border-border/40 bg-[#0a0a0a] px-1 text-[9px]">↵</kbd> Select</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground/40">Laxree Marketing Suite</span>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

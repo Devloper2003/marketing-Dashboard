@@ -371,3 +371,145 @@ Stage Summary:
 6. Add marketing attribution modeling (first-touch, last-touch, multi-touch)
 7. Add customer journey mapping visualization
 8. Add predictive analytics (forecasting trends with mock ML data)
+
+---
+Task ID: 6-b
+Agent: Funnel Tab Builder
+Task: Build Customer Journey / Funnel Visualizer tab
+
+Work Log:
+- Created GET API route at `/api/marketing/funnel` returning comprehensive mock data:
+  - Main funnel with 7 stages (Awareness→Loyalty), each with count, conversion/dropoff rates, avg time spent, revenue
+  - Funnel by channel breakdown for 5 channels (Google Ads, Facebook, Instagram, Email, Organic)
+  - 5 bottleneck analysis points with severity and recommendations
+  - Journey duration distribution (7 time ranges)
+  - Device breakdown (Desktop/Mobile/Tablet with conversion rates)
+  - Monthly funnel trend data (6 months)
+- Built `funnel-tab.tsx` component (~420 lines) with 3 sub-tabs:
+  - **Funnel View**: Hero visual funnel with 7 proportional horizontal bars, gold gradient fills, staggered entrance animations, hover effects with gold shimmer, dropoff percentages between bars, ambient-particles background. Sidebar with 5 metric cards (Total Entry, Overall CR with progress ring, Avg Journey Time, Revenue per Visitor, Best Converting Stage). Bottleneck analysis section with 5 severity-coded cards (critical/warning/minor) using corner-accent for critical ones.
+  - **Channel Analysis**: Stacked horizontal BarChart with 5 gold/earth-tone channel segments, custom tooltip, plus 5 channel summary cards with conversion rates and progress bars.
+  - **Journey Insights**: BarChart for duration distribution with gradient bars and average reference line. Device breakdown with 3 metric cards (highlighting best-converting device with gradient-border) and donut PieChart with custom center label and legend.
+- Registered tab in `page.tsx`: added Filter icon import, `FunnelTab` dynamic import, `'funnel'` to TabKey union, nav item `{ key: 'funnel', label: 'Funnel', icon: Filter }`, and renderTab case.
+- Ran `bun run lint` — zero errors.
+
+Files Created/Modified:
+- `src/app/api/marketing/funnel/route.ts` (new)
+- `src/components/dashboard/funnel-tab.tsx` (new)
+- `src/app/page.tsx` (modified)
+
+---
+Task ID: 6-a
+Agent: Attribution Builder
+Task: Build Marketing Attribution tab
+
+Work Log:
+- Created API route `src/app/api/marketing/attribution/route.ts` with mock data for 5 data sets: channel attribution (6 channels × 4 models), model comparison (4 models), touch point distribution (8 customer journey stages), monthly trend (6 months × 4 models), and ROI matrix (6 channels × 4 models)
+- Built `src/components/dashboard/attribution-tab.tsx` with 7 sections: header with GitBranch icon, 4 clickable model comparison cards with active gold border highlighting, channel attribution table with inline mini bars and ₹ formatting, grouped BarChart comparing 4 models across channels, and 3 sub-tabs (Monthly Trend LineChart, Customer Journey Funnel with drop-off indicators, ROI Matrix heatmap with color-coded cells)
+- Registered tab in `page.tsx`: added `AttributionTab` dynamic import (already present), added `'attribution'` to TabKey union, added nav item `{ key: 'attribution', label: 'Attribution', icon: GitBranch }` after Funnel, added renderTab case
+- Ran `bun run lint` — zero errors
+
+Stage Summary:
+- Full Marketing Attribution tab with 4 attribution models (First Touch, Last Touch, Linear, Time Decay)
+- Interactive model selection cards, detailed channel breakdown table with inline bars
+- Grouped bar chart for model comparison, LineChart for monthly trend
+- Visual customer journey funnel (8 stages) with conversion rates and drop-off percentages
+- ROI heatmap (6 channels × 4 models) color-coded green/yellow/red
+- All using gold theme CSS classes, Recharts, shadcn/ui components, responsive design
+
+---
+Task ID: 6-c
+Agent: QA & Enhancement Agent (Round 3)
+Task: QA, new features, command palette, advanced styling
+
+Work Log:
+- **QA Assessment**: ESLint 0 errors, all 15 API routes return 200 (added attribution + funnel), agent-browser verified Overview renders with all 16 nav items, A/B Testing tab renders correctly
+- **New Feature: Marketing Attribution Tab** (sub-agent 6-a):
+  - /api/marketing/attribution — 5 mock datasets (channel attribution, model comparison, touch points, monthly trend, ROI matrix)
+  - Component with 4 model comparison cards, channel attribution table with inline bars, grouped BarChart, 3 sub-tabs (Monthly Trend, Journey Funnel, ROI Matrix heatmap)
+  - Registered as 15th nav item
+- **New Feature: Customer Journey / Funnel Visualizer Tab** (sub-agent 6-b):
+  - /api/marketing/funnel — 6 mock datasets (7-stage funnel, 5-channel breakdown, bottlenecks, duration distribution, device breakdown, monthly trend)
+  - Hero visual funnel with 7 proportional gold-gradient bars, ambient-particles, staggered animations, dropoff percentages, sidebar metrics, bottleneck severity cards
+  - 3 sub-tabs (Funnel View, Channel Analysis, Journey Insights) with stacked BarChart, duration BarChart, device donut PieChart
+  - Registered as 16th nav item
+- **New Feature: Command Palette (⌘K)**:
+  - Replaced simple search input with full Command Palette Dialog
+  - Triggered by ⌘K/Ctrl+K keyboard shortcut or clicking search bar
+  - Shows all 16 nav items + 5 quick actions, with real-time filtering
+  - Current tab highlighted with gold background
+  - Footer with keyboard shortcuts (↑↓ Navigate, ↵ Select, ESC)
+  - Search bar in header shows "Search..." with ⌘K kbd indicator
+  - Mobile: icon-only search button
+  - Removed unused searchOpen/searchQuery state, added cmdOpen/cmdQuery
+  - Added Dialog import from shadcn/ui
+- **Advanced CSS Styling** — Added 15+ new utility classes to globals.css:
+  - `cmd-palette-item` — left gold bar scale animation on hover/active
+  - `shimmer-border` — animated gradient border pulse
+  - `press-effect` — active state with scale(0.97) + inset shadow
+  - `text-gradient-gold-warm` — 4-stop gold gradient text
+  - `ripple-hover` — radial gradient ripple on hover (CSS custom properties)
+  - `bg-noise-subtle` — SVG fractal noise texture overlay
+  - `animated-gradient-bg` — slow shifting dark-gold gradient background
+  - `number-reveal` — blur-to-sharp with overshoot animation
+  - `tab-indicator-gold` — scaleX bottom border transition for tabs
+  - `glow-dot` — pulsing box-shadow glow for status dots
+  - `hover-sweep` — border sweep animation on hover using gradient masking
+  - Enhanced `main` scrollbar with gold gradient thumb and border
+  - `btn-gold` — full gold gradient button with shadow and hover lift
+  - `card-hover-border` — CSS mask-based gradient border reveal on hover
+  - `kbd-key` — monospace keyboard key styling
+  - `bg-dots` — subtle gold dot grid pattern
+
+Stage Summary:
+- 2 new tab features: Marketing Attribution (15th) and Customer Journey Funnel (16th)
+- 2 new API routes: /api/marketing/attribution, /api/marketing/funnel
+- 1 new UX feature: Command Palette (⌘K) with keyboard shortcut
+- 15+ new CSS utility classes
+- Total: 16 tabs, 18 API routes, 75+ CSS utilities
+- ESLint: 0 errors
+- All 15 API routes return 200
+
+---
+## Current Project Status Description/Assessment
+
+**Status**: Dashboard is comprehensive with **16 functional tabs**, **18 API routes**, **3 AI-powered features**, **Command Palette**, and **75+ custom CSS utility classes**. Fully-featured marketing analytics platform for Laxree luxury jewellery brand.
+
+**All Completed Features (16 tabs)**:
+1. Overview — Welcome banner, 6 KPI cards, charts, goal tracking, campaign table, alerts
+2. Content Calendar — Monthly grid, list view, color-coded events, add/filter
+3. Blog Planner — Grid/list views, SEO scoring, AI Content Suggester
+4. Social Media Planner — Platform tabs, stats, AI Post Generator
+5. Idea Researcher — AI-powered idea generation, save/edit board
+6. SEO Dashboard — Keywords table, technical vitals, backlink profile
+7. Campaign Insights — ROAS table, channel spend chart, filters
+8. Social Analytics — Platform comparison, follower growth, engagement breakdown
+9. Leads & Revenue — Revenue analytics, CSV export, trend charts
+10. Budget Planner — Donut/bar/area charts, budget table, alerts
+11. Competitor Analysis — Market share, radar chart, SWOT (4 sub-tabs)
+12. Email Campaigns — Email stats, campaign table, engagement metrics
+13. A/B Testing Lab — Test table, variant comparison, confidence visualization
+14. Marketing Reports — Report templates, type-specific charts, scheduling
+15. Marketing Attribution — 4 model comparison, channel table, ROI heatmap
+16. Customer Journey — Visual funnel, bottleneck analysis, channel breakdown, device analytics
+
+**Infrastructure**:
+- 16 tab components, 18 API routes, 8 Prisma models, 60+ seed records
+- Command Palette (⌘K), Quick Actions FAB, Notification Center
+- 75+ CSS utility classes, 20+ animations, micro-interactions
+- Mobile-responsive, collapsible sidebar, sticky footer
+
+**Unresolved Issues / Risks**:
+- Dev server instability in sandbox — not a code bug
+- No user authentication (intentional for prototype)
+- No real-time updates (polling-based)
+- Footer year shows 2026 (acceptable for demo)
+
+**Priority Recommendations for Next Phase**:
+1. Add predictive analytics / forecasting tab with mock ML trend data
+2. Add real-time data refresh (SWR polling)
+3. Add dashboard widget customization (drag & drop)
+4. Add PDF report export
+5. Add dark/light theme toggle
+6. Add multi-language support
+7. Add marketing automation workflow builder
+8. Add influencer relationship management (IRM) tab
