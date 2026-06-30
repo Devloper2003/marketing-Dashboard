@@ -1,0 +1,1665 @@
+     1→@import "tailwindcss";
+     2→@import "tw-animate-css";
+     3→
+     4→@custom-variant dark (&:is(.dark *));
+     5→
+     6→@theme inline {
+     7→  --color-background: var(--background);
+     8→  --color-foreground: var(--foreground);
+     9→  --font-sans: var(--font-geist-sans);
+    10→  --font-mono: var(--font-geist-mono);
+    11→  --color-sidebar-ring: var(--sidebar-ring);
+    12→  --color-sidebar-border: var(--sidebar-border);
+    13→  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    14→  --color-sidebar-accent: var(--sidebar-accent);
+    15→  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    16→  --color-sidebar-primary: var(--sidebar-primary);
+    17→  --color-sidebar-foreground: var(--sidebar-foreground);
+    18→  --color-sidebar: var(--sidebar);
+    19→  --color-chart-5: var(--chart-5);
+    20→  --color-chart-4: var(--chart-4);
+    21→  --color-chart-3: var(--chart-3);
+    22→  --color-chart-2: var(--chart-2);
+    23→  --color-chart-1: var(--chart-1);
+    24→  --color-ring: var(--ring);
+    25→  --color-input: var(--input);
+    26→  --color-border: var(--border);
+    27→  --color-destructive: var(--destructive);
+    28→  --color-accent-foreground: var(--accent-foreground);
+    29→  --color-accent: var(--accent);
+    30→  --color-muted-foreground: var(--muted-foreground);
+    31→  --color-muted: var(--muted);
+    32→  --color-secondary-foreground: var(--secondary-foreground);
+    33→  --color-secondary: var(--secondary);
+    34→  --color-primary-foreground: var(--primary-foreground);
+    35→  --color-primary: var(--primary);
+    36→  --color-popover-foreground: var(--popover-foreground);
+    37→  --color-popover: var(--popover);
+    38→  --color-card-foreground: var(--card-foreground);
+    39→  --color-card: var(--card);
+    40→  --radius-sm: calc(var(--radius) - 4px);
+    41→  --radius-md: calc(var(--radius) - 2px);
+    42→  --radius-lg: var(--radius);
+    43→  --radius-xl: calc(var(--radius) + 4px);
+    44→  --color-gold: var(--gold);
+    45→  --color-gold-light: var(--gold-light);
+    46→  --color-gold-dark: var(--gold-dark);
+    47→  --color-gold-muted: var(--gold-muted);
+    48→}
+    49→
+    50→:root {
+    51→  --radius: 0.625rem;
+    52→  --background: #0a0a0a;
+    53→  --foreground: #f5f0e8;
+    54→  --card: #111111;
+    55→  --card-foreground: #f5f0e8;
+    56→  --popover: #111111;
+    57→  --popover-foreground: #f5f0e8;
+    58→  --primary: #D4A843;
+    59→  --primary-foreground: #0a0a0a;
+    60→  --secondary: #1a1a1a;
+    61→  --secondary-foreground: #f5f0e8;
+    62→  --muted: #1a1a1a;
+    63→  --muted-foreground: #9a9080;
+    64→  --accent: #1f1c15;
+    65→  --accent-foreground: #D4A843;
+    66→  --destructive: #ef4444;
+    67→  --border: #2a2520;
+    68→  --input: #2a2520;
+    69→  --ring: #D4A843;
+    70→  --chart-1: #D4A843;
+    71→  --chart-2: #E8C46A;
+    72→  --chart-3: #B8922F;
+    73→  --chart-4: #F0D78C;
+    74→  --chart-5: #9A7B24;
+    75→  --sidebar: #0d0d0d;
+    76→  --sidebar-foreground: #f5f0e8;
+    77→  --sidebar-primary: #D4A843;
+    78→  --sidebar-primary-foreground: #0a0a0a;
+    79→  --sidebar-accent: #1f1c15;
+    80→  --sidebar-accent-foreground: #D4A843;
+    81→  --sidebar-border: #2a2520;
+    82→  --sidebar-ring: #D4A843;
+    83→  --gold: #D4A843;
+    84→  --gold-light: #E8C46A;
+    85→  --gold-dark: #B8922F;
+    86→  --gold-muted: rgba(212, 168, 67, 0.15);
+    87→}
+    88→
+    89→@layer base {
+    90→  * {
+    91→    @apply border-border outline-ring/50;
+    92→  }
+    93→  body {
+    94→    @apply bg-background text-foreground;
+    95→    font-feature-settings: "rlig" 1, "calt" 1;
+    96→  }
+    97→}
+    98→
+    99→/* Custom scrollbar */
+   100→::-webkit-scrollbar {
+   101→  width: 6px;
+   102→  height: 6px;
+   103→}
+   104→
+   105→::-webkit-scrollbar-track {
+   106→  background: #111111;
+   107→}
+   108→
+   109→::-webkit-scrollbar-thumb {
+   110→  background: #2a2520;
+   111→  border-radius: 3px;
+   112→}
+   113→
+   114→::-webkit-scrollbar-thumb:hover {
+   115→  background: #D4A843;
+   116→}
+   117→
+   118→/* Gold gradient utilities */
+   119→.gold-gradient {
+   120→  background: linear-gradient(135deg, #D4A843 0%, #E8C46A 50%, #D4A843 100%);
+   121→}
+   122→
+   123→.gold-gradient-text {
+   124→  background: linear-gradient(135deg, #D4A843 0%, #F0D78C 50%, #D4A843 100%);
+   125→  -webkit-background-clip: text;
+   126→  -webkit-text-fill-color: transparent;
+   127→  background-clip: text;
+   128→}
+   129→
+   130→.gold-border-glow {
+   131→  border: 1px solid rgba(212, 168, 67, 0.3);
+   132→  box-shadow: 0 0 15px rgba(212, 168, 67, 0.08);
+   133→}
+   134→
+   135→.gold-card {
+   136→  background: linear-gradient(145deg, #111111 0%, #0d0d0d 100%);
+   137→  border: 1px solid rgba(212, 168, 67, 0.15);
+   138→  transition: all 0.3s ease;
+   139→}
+   140→
+   141→.gold-card:hover {
+   142→  border-color: rgba(212, 168, 67, 0.35);
+   143→  box-shadow: 0 0 20px rgba(212, 168, 67, 0.1);
+   144→}
+   145→
+   146→.gold-shimmer {
+   147→  position: relative;
+   148→  overflow: hidden;
+   149→}
+   150→
+   151→.gold-shimmer::before {
+   152→  content: '';
+   153→  position: absolute;
+   154→  top: 0;
+   155→  left: -100%;
+   156→  width: 100%;
+   157→  height: 100%;
+   158→  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.05), transparent);
+   159→  transition: left 0.5s ease;
+   160→}
+   161→
+   162→.gold-shimmer:hover::before {
+   163→  left: 100%;
+   164→}
+   165→
+   166→/* Sidebar active indicator */
+   167→.sidebar-active-indicator {
+   168→  position: relative;
+   169→}
+   170→
+   171→.sidebar-active-indicator::before {
+   172→  content: '';
+   173→  position: absolute;
+   174→  left: 0;
+   175→  top: 50%;
+   176→  transform: translateY(-50%);
+   177→  width: 3px;
+   178→  height: 60%;
+   179→  background: linear-gradient(180deg, #D4A843, #E8C46A);
+   180→  border-radius: 0 2px 2px 0;
+   181→}
+   182→
+   183→/* Progress bar gold */
+   184→.gold-progress {
+   185→  background: linear-gradient(90deg, #B8922F, #D4A843, #E8C46A);
+   186→}
+   187→
+   188→/* Table styling */
+   189→.gold-table-header {
+   190→  background: linear-gradient(135deg, rgba(212, 168, 67, 0.1) 0%, rgba(212, 168, 67, 0.05) 100%);
+   191→  border-bottom: 1px solid rgba(212, 168, 67, 0.2);
+   192→}
+   193→
+   194→/* Badge styles */
+   195→.badge-gold {
+   196→  background: rgba(212, 168, 67, 0.15);
+   197→  color: #D4A843;
+   198→  border: 1px solid rgba(212, 168, 67, 0.3);
+   199→}
+   200→
+   201→.badge-green {
+   202→  background: rgba(34, 197, 94, 0.15);
+   203→  color: #22c55e;
+   204→  border: 1px solid rgba(34, 197, 94, 0.3);
+   205→}
+   206→
+   207→.badge-red {
+   208→  background: rgba(239, 68, 68, 0.15);
+   209→  color: #ef4444;
+   210→  border: 1px solid rgba(239, 68, 68, 0.3);
+   211→}
+   212→
+   213→.badge-yellow {
+   214→  background: rgba(234, 179, 8, 0.15);
+   215→  color: #eab308;
+   216→  border: 1px solid rgba(234, 179, 8, 0.3);
+   217→}
+   218→
+   219→.badge-blue {
+   220→  background: rgba(59, 130, 246, 0.15);
+   221→  color: #3b82f6;
+   222→  border: 1px solid rgba(59, 130, 246, 0.3);
+   223→}
+   224→
+   225→.badge-purple {
+   226→  background: rgba(168, 85, 247, 0.15);
+   227→  color: #a855f7;
+   228→  border: 1px solid rgba(168, 85, 247, 0.3);
+   229→}
+   230→
+   231→/* Calendar day hover */
+   232→.calendar-day:hover {
+   233→  background: rgba(212, 168, 67, 0.1);
+   234→  border-color: rgba(212, 168, 67, 0.3);
+   235→}
+   236→
+   237→.calendar-day-today {
+   238→  border: 1px solid #D4A843;
+   239→  background: rgba(212, 168, 67, 0.08);
+   240→}
+   241→
+   242→.calendar-day-has-event::after {
+   243→  content: '';
+   244→  position: absolute;
+   245→  bottom: 4px;
+   246→  left: 50%;
+   247→  transform: translateX(-50%);
+   248→  width: 5px;
+   249→  height: 5px;
+   250→  border-radius: 50%;
+   251→  background: #D4A843;
+   252→}
+   253→
+   254→/* Stat card animation */
+   255→@keyframes countUp {
+   256→  from { opacity: 0; transform: translateY(10px); }
+   257→  to { opacity: 1; transform: translateY(0); }
+   258→}
+   259→
+   260→.stat-animate {
+   261→  animation: countUp 0.5s ease-out forwards;
+   262→}
+   263→
+   264→/* Glow effect for important numbers */
+   265→.gold-glow {
+   266→  text-shadow: 0 0 10px rgba(212, 168, 67, 0.3);
+   267→}
+   268→
+   269→/* Mini chart bar */
+   270→.mini-bar {
+   271→  transition: height 0.5s ease;
+   272→}
+   273→
+   274→/* Dot pulse */
+   275→@keyframes dotPulse {
+   276→  0%, 100% { opacity: 1; }
+   277→  50% { opacity: 0.5; }
+   278→}
+   279→
+   280→.dot-pulse {
+   281→  animation: dotPulse 2s ease-in-out infinite;
+   282→}
+   283→
+   284→/* Pulse gold FAB */
+   285→@keyframes pulseGold {
+   286→  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 168, 67, 0.5); }
+   287→  50% { box-shadow: 0 0 0 12px rgba(212, 168, 67, 0); }
+   288→}
+   289→
+   290→.pulse-gold {
+   291→  animation: pulseGold 2s ease-in-out infinite;
+   292→}
+   293→
+   294→/* Stagger children entrance */
+   295→@keyframes staggerFadeIn {
+   296→  from { opacity: 0; transform: translateY(16px); }
+   297→  to { opacity: 1; transform: translateY(0); }
+   298→}
+   299→
+   300→.stagger-children > * {
+   301→  opacity: 0;
+   302→  animation: staggerFadeIn 0.45s ease-out forwards;
+   303→}
+   304→
+   305→.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+   306→.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
+   307→.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
+   308→.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
+   309→.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
+   310→.stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+   311→.stagger-children > *:nth-child(7) { animation-delay: 360ms; }
+   312→.stagger-children > *:nth-child(8) { animation-delay: 420ms; }
+   313→.stagger-children > *:nth-child(9) { animation-delay: 480ms; }
+   314→.stagger-children > *:nth-child(10) { animation-delay: 540ms; }
+   315→
+   316→/* Count animate (extra polish for numbers) */
+   317→.count-animate .gold-glow {
+   318→  animation: countUp 0.6s ease-out forwards;
+   319→}
+   320→
+   321→/* Gold card hover (enhanced) */
+   322→.gold-card-hover {
+   323→  background: linear-gradient(145deg, #111111 0%, #0d0d0d 100%);
+   324→  border: 1px solid rgba(212, 168, 67, 0.15);
+   325→  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+   326→  position: relative;
+   327→  overflow: hidden;
+   328→}
+   329→
+   330→.gold-card-hover::after {
+   331→  content: '';
+   332→  position: absolute;
+   333→  inset: 0;
+   334→  border-radius: inherit;
+   335→  background: linear-gradient(135deg, rgba(212, 168, 67, 0.04) 0%, transparent 60%);
+   336→  opacity: 0;
+   337→  transition: opacity 0.35s ease;
+   338→}
+   339→
+   340→.gold-card-hover:hover {
+   341→  border-color: rgba(212, 168, 67, 0.45);
+   342→  box-shadow: 0 0 30px rgba(212, 168, 67, 0.12), 0 8px 32px rgba(0, 0, 0, 0.3);
+   343→  transform: translateY(-2px);
+   344→}
+   345→
+   346→.gold-card-hover:hover::after {
+   347→  opacity: 1;
+   348→}
+   349→
+   350→/* Table row hover */
+   351→.table-row-hover {
+   352→  transition: all 0.2s ease;
+   353→}
+   354→
+   355→.table-row-hover:hover {
+   356→  background: rgba(212, 168, 67, 0.06) !important;
+   357→  box-shadow: inset 3px 0 0 #D4A843;
+   358→}
+   359→
+   360→/* Notification dot pulse */
+   361→@keyframes notifPulse {
+   362→  0%, 100% { transform: scale(1); opacity: 1; }
+   363→  50% { transform: scale(1.3); opacity: 0.7; }
+   364→}
+   365→
+   366→.notif-pulse {
+   367→  animation: notifPulse 2s ease-in-out infinite;
+   368→}
+   369→
+   370→/* Shimmer loading for skeleton */
+   371→@keyframes shimmer {
+   372→  0% { background-position: -200% 0; }
+   373→  100% { background-position: 200% 0; }
+   374→}
+   375→
+   376→.skeleton-gold {
+   377→  background: linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%);
+   378→  background-size: 200% 100%;
+   379→  animation: shimmer 1.5s infinite;
+   380→  border-radius: 8px;
+   381→}
+   382→
+   383→/* Gold text gradient for headings */
+   384→.text-gold-subtle {
+   385→  color: rgba(212, 168, 67, 0.85);
+   386→}
+   387→
+   388→/* Card glass effect */
+   389→.glass-gold {
+   390→  background: rgba(17, 17, 17, 0.85);
+   391→  backdrop-filter: blur(16px);
+   392→  border: 1px solid rgba(212, 168, 67, 0.12);
+   393→}
+   394→
+   395→/* Fade in animation */
+   396→@keyframes fadeIn {
+   397→  from { opacity: 0; }
+   398→  to { opacity: 1; }
+   399→}
+   400→
+   401→.animate-fade-in {
+   402→  animation: fadeIn 0.3s ease-out;
+   403→}
+   404→
+   405→/* Scale in animation */
+   406→@keyframes scaleIn {
+   407→  from { opacity: 0; transform: scale(0.95); }
+   408→  to { opacity: 1; transform: scale(1); }
+   409→}
+   410→
+   411→.animate-scale-in {
+   412→  animation: scaleIn 0.25s ease-out;
+   413→}
+   414→
+   415→/* Subtle border glow on focus */
+   416→.focus-gold:focus-within {
+   417→  border-color: rgba(212, 168, 67, 0.4);
+   418→  box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.08);
+   419→}
+   420→
+   421→/* Tooltip dark theme override */
+   422→[data-radix-popper-content-wrapper] [data-side] {
+   423→  background: #1a1a1a !important;
+   424→  border-color: rgba(212, 168, 67, 0.25) !important;
+   425→  color: #f5f0e8 !important;
+   426→  border-radius: 8px !important;
+   427→  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 1px rgba(212, 168, 67, 0.15) !important;
+   428→}
+   429→
+   430→/* Select dropdown item hover */
+   431→[data-radix-collection-item]:hover {
+   432→  background: rgba(212, 168, 67, 0.1) !important;
+   433→  color: #D4A843 !important;
+   434→}
+   435→
+   436→/* Dialog overlay */
+   437→[data-radix-dialog-overlay] {
+   438→  background: rgba(0, 0, 0, 0.7) !important;
+   439→  backdrop-filter: blur(4px);
+   440→}
+   441→
+   442→/* Popover content styling */
+   443→[data-radix-popper-content-wrapper] [data-state="open"] {
+   444→  animation: scaleIn 0.15s ease-out;
+   445→}
+   446→
+   447→/* Gold focus ring for all interactive elements */
+   448→button:focus-visible,
+   449→a:focus-visible,
+   450→[role="button"]:focus-visible {
+   451→  outline: 2px solid rgba(212, 168, 67, 0.5);
+   452→  outline-offset: 2px;
+   453→}
+   454→
+   455→/* Smooth transition for all interactive elements */
+   456→button, a, [role="button"], input, textarea, select {
+   457→  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+   458→}
+   459→
+   460→/* Active/pressed state */
+   461→button:active, [role="button"]:active {
+   462→  transform: scale(0.98);
+   463→}
+   464→
+   465→/* Scrollbar for dialog content */
+   466→[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+   467→  width: 4px;
+   468→}
+   469→[data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
+   470→  background: transparent;
+   471→}
+   472→[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+   473→  background: rgba(212, 168, 67, 0.3);
+   474→  border-radius: 4px;
+   475→}
+   476→[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover {
+   477→  background: #D4A843;
+   478→}
+   479→
+   480→/* Subtle gold glow for active elements */
+   481→.glow-subtle {
+   482→  box-shadow: 0 0 20px rgba(212, 168, 67, 0.06);
+   483→}
+   484→
+   485→/* Progress bar with gold gradient */
+   486→.progress-gold > div {
+   487→  background: linear-gradient(90deg, #B8922F, #D4A843, #E8C46A) !important;
+   488→}
+   489→
+   490→/* ─── Enhanced Glass-morphism Cards ─────────────────────────────── */
+   491→.glass-card-premium {
+   492→  background: linear-gradient(135deg, rgba(17, 17, 17, 0.9) 0%, rgba(26, 26, 26, 0.7) 100%);
+   493→  backdrop-filter: blur(20px) saturate(1.2);
+   494→  border: 1px solid rgba(212, 168, 67, 0.1);
+   495→  box-shadow:
+   496→    0 4px 24px rgba(0, 0, 0, 0.3),
+   497→    inset 0 1px 0 rgba(212, 168, 67, 0.05);
+   498→}
+   499→
+   500→.glass-card-premium:hover {
+   501→  border-color: rgba(212, 168, 67, 0.25);
+   502→  box-shadow:
+   503→    0 8px 40px rgba(0, 0, 0, 0.4),
+   504→    0 0 30px rgba(212, 168, 67, 0.06),
+   505→    inset 0 1px 0 rgba(212, 168, 67, 0.1);
+   506→}
+   507→
+   508→/* ─── Gold Divider ──────────────────────────────────────────────── */
+   509→.gold-divider {
+   510→  height: 1px;
+   511→  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.3), transparent);
+   512→  border: none;
+   513→}
+   514→
+   515→.gold-divider-v {
+   516→  width: 1px;
+   517→  background: linear-gradient(180deg, transparent, rgba(212, 168, 67, 0.3), transparent);
+   518→}
+   519→
+   520→/* ─── Advanced Animations ───────────────────────────────────────── */
+   521→@keyframes fadeInUp {
+   522→  from { opacity: 0; transform: translateY(20px); }
+   523→  to { opacity: 1; transform: translateY(0); }
+   524→}
+   525→
+   526→@keyframes fadeInDown {
+   527→  from { opacity: 0; transform: translateY(-12px); }
+   528→  to { opacity: 1; transform: translateY(0); }
+   529→}
+   530→
+   531→@keyframes fadeInLeft {
+   532→  from { opacity: 0; transform: translateX(-20px); }
+   533→  to { opacity: 1; transform: translateX(0); }
+   534→}
+   535→
+   536→@keyframes fadeInRight {
+   537→  from { opacity: 0; transform: translateX(20px); }
+   538→  to { opacity: 1; transform: translateX(0); }
+   539→}
+   540→
+   541→@keyframes slideUp {
+   542→  from { transform: translateY(100%); opacity: 0; }
+   543→  to { transform: translateY(0); opacity: 1; }
+   544→}
+   545→
+   546→@keyframes slideDown {
+   547→  from { transform: translateY(-100%); opacity: 0; }
+   548→  to { transform: translateY(0); opacity: 1; }
+   549→}
+   550→
+   551→@keyframes shimmerGold {
+   552→  0% { background-position: -200% center; }
+   553→  100% { background-position: 200% center; }
+   554→}
+   555→
+   556→@keyframes borderGlow {
+   557→  0%, 100% { border-color: rgba(212, 168, 67, 0.15); }
+   558→  50% { border-color: rgba(212, 168, 67, 0.4); }
+   559→}
+   560→
+   561→@keyframes float {
+   562→  0%, 100% { transform: translateY(0); }
+   563→  50% { transform: translateY(-4px); }
+   564→}
+   565→
+   566→@keyframes breathe {
+   567→  0%, 100% { opacity: 0.6; }
+   568→  50% { opacity: 1; }
+   569→}
+   570→
+   571→@keyframes rotateIn {
+   572→  from { opacity: 0; transform: rotate(-8deg) scale(0.95); }
+   573→  to { opacity: 1; transform: rotate(0) scale(1); }
+   574→}
+   575→
+   576→@keyframes countPulse {
+   577→  0% { transform: scale(1); }
+   578→  50% { transform: scale(1.05); }
+   579→  100% { transform: scale(1); }
+   580→}
+   581→
+   582→.animate-fade-in-up { animation: fadeInUp 0.4s ease-out; }
+   583→.animate-fade-in-down { animation: fadeInDown 0.35s ease-out; }
+   584→.animate-fade-in-left { animation: fadeInLeft 0.4s ease-out; }
+   585→.animate-fade-in-right { animation: fadeInRight 0.4s ease-out; }
+   586→.animate-slide-up { animation: slideUp 0.3s ease-out; }
+   587→.animate-slide-down { animation: slideDown 0.3s ease-out; }
+   588→.animate-rotate-in { animation: rotateIn 0.35s ease-out; }
+   589→.animate-float { animation: float 3s ease-in-out infinite; }
+   590→.animate-breathe { animation: breathe 3s ease-in-out infinite; }
+   591→.animate-count-pulse { animation: countPulse 0.6s ease-out; }
+   592→
+   593→.animate-shimmer-gold {
+   594→  background: linear-gradient(90deg, #D4A843 0%, #F0D78C 25%, #D4A843 50%, #F0D78C 75%, #D4A843 100%);
+   595→  background-size: 200% auto;
+   596→  -webkit-background-clip: text;
+   597→  -webkit-text-fill-color: transparent;
+   598→  background-clip: text;
+   599→  animation: shimmerGold 3s linear infinite;
+   600→}
+   601→
+   602→.animate-border-glow {
+   603→  animation: borderGlow 2.5s ease-in-out infinite;
+   604→}
+   605→
+   606→/* ─── Tooltip Gold Enhancement ──────────────────────────────────── */
+   607→.tooltip-gold {
+   608→  position: relative;
+   609→}
+   610→
+   611→.tooltip-gold::after {
+   612→  content: attr(data-tooltip);
+   613→  position: absolute;
+   614→  bottom: calc(100% + 8px);
+   615→  left: 50%;
+   616→  transform: translateX(-50%) translateY(4px);
+   617→  background: #1a1a1a;
+   618→  color: #f5f0e8;
+   619→  padding: 6px 12px;
+   620→  border-radius: 6px;
+   621→  font-size: 12px;
+   622→  white-space: nowrap;
+   623→  border: 1px solid rgba(212, 168, 67, 0.25);
+   624→  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+   625→  opacity: 0;
+   626→  pointer-events: none;
+   627→  transition: all 0.2s ease;
+   628→  z-index: 50;
+   629→}
+   630→
+   631→.tooltip-gold:hover::after {
+   632→  opacity: 1;
+   633→  transform: translateX(-50%) translateY(0);
+   634→}
+   635→
+   636→/* ─── Gold Select & Input Focus ──────────────────────────────────── */
+   637→.gold-select > [role="combobox"] {
+   638→  border-color: rgba(212, 168, 67, 0.15) !important;
+   639→  transition: all 0.25s ease;
+   640→}
+   641→
+   642→.gold-select > [role="combobox"]:hover {
+   643→  border-color: rgba(212, 168, 67, 0.3) !important;
+   644→}
+   645→
+   646→.gold-select > [role="combobox"]:focus,
+   647→.gold-select > [role="combobox"][data-state="open"] {
+   648→  border-color: rgba(212, 168, 67, 0.5) !important;
+   649→  box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.08) !important;
+   650→}
+   651→
+   652→.gold-input {
+   653→  border: 1px solid rgba(212, 168, 67, 0.15) !important;
+   654→  transition: all 0.25s ease;
+   655→}
+   656→
+   657→.gold-input:hover {
+   658→  border-color: rgba(212, 168, 67, 0.3) !important;
+   659→}
+   660→
+   661→.gold-input:focus {
+   662→  border-color: rgba(212, 168, 67, 0.5) !important;
+   663→  box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.08) !important;
+   664→  outline: none;
+   665→}
+   666→
+   667→/* ─── Gold Tab Styling ───────────────────────────────────────────── */
+   668→.gold-tab-active {
+   669→  color: #D4A843 !important;
+   670→  border-bottom: 2px solid #D4A843 !important;
+   671→}
+   672→
+   673→.gold-tab-active::after {
+   674→  content: '';
+   675→  position: absolute;
+   676→  bottom: -1px;
+   677→  left: 0;
+   678→  right: 0;
+   679→  height: 2px;
+   680→  background: linear-gradient(90deg, transparent, #D4A843, transparent);
+   681→}
+   682→
+   683→/* ─── Scroll Fade Effect ─────────────────────────────────────────── */
+   684→.scroll-fade {
+   685→  mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+   686→  -webkit-mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+   687→}
+   688→
+   689→.scroll-fade-top {
+   690→  mask-image: linear-gradient(to bottom, transparent, black 10%);
+   691→  -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%);
+   692→}
+   693→
+   694→.scroll-fade-both {
+   695→  mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+   696→  -webkit-mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+   697→}
+   698→
+   699→/* ─── Enhanced Badge Variants ────────────────────────────────────── */
+   700→.badge-cyan {
+   701→  background: rgba(6, 182, 212, 0.15);
+   702→  color: #06b6d4;
+   703→  border: 1px solid rgba(6, 182, 212, 0.3);
+   704→}
+   705→
+   706→.badge-pink {
+   707→  background: rgba(236, 72, 153, 0.15);
+   708→  color: #ec4899;
+   709→  border: 1px solid rgba(236, 72, 153, 0.3);
+   710→}
+   711→
+   712→.badge-orange {
+   713→  background: rgba(249, 115, 22, 0.15);
+   714→  color: #f97316;
+   715→  border: 1px solid rgba(249, 115, 22, 0.3);
+   716→}
+   717→
+   718→.badge-teal {
+   719→  background: rgba(20, 184, 166, 0.15);
+   720→  color: #14b8a6;
+   721→  border: 1px solid rgba(20, 184, 166, 0.3);
+   722→}
+   723→
+   724→/* ─── Card Hover Lift Group ──────────────────────────────────────── */
+   725→.card-lift {
+   726→  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+   727→}
+   728→
+   729→.card-lift:hover {
+   730→  transform: translateY(-3px);
+   731→  box-shadow:
+   732→    0 12px 40px rgba(0, 0, 0, 0.3),
+   733→    0 0 20px rgba(212, 168, 67, 0.08);
+   734→}
+   735→
+   736→/* ─── Gradient Border Card ──────────────────────────────────────── */
+   737→.gradient-border {
+   738→  position: relative;
+   739→  background: #111;
+   740→  border-radius: var(--radius);
+   741→}
+   742→
+   743→.gradient-border::before {
+   744→  content: '';
+   745→  position: absolute;
+   746→  inset: -1px;
+   747→  border-radius: calc(var(--radius) + 1px);
+   748→  background: linear-gradient(135deg, rgba(212, 168, 67, 0.3), transparent 40%, transparent 60%, rgba(212, 168, 67, 0.2));
+   749→  z-index: -1;
+   750→  opacity: 0;
+   751→  transition: opacity 0.3s ease;
+   752→}
+   753→
+   754→.gradient-border:hover::before {
+   755→  opacity: 1;
+   756→}
+   757→
+   758→/* ─── Hover Underline Effect ─────────────────────────────────────── */
+   759→.hover-underline {
+   760→  position: relative;
+   761→  display: inline-block;
+   762→}
+   763→
+   764→.hover-underline::after {
+   765→  content: '';
+   766→  position: absolute;
+   767→  bottom: -2px;
+   768→  left: 0;
+   769→  width: 0;
+   770→  height: 1px;
+   771→  background: #D4A843;
+   772→  transition: width 0.3s ease;
+   773→}
+   774→
+   775→.hover-underline:hover::after {
+   776→  width: 100%;
+   777→}
+   778→
+   779→/* ─── Number Highlight Animation ─────────────────────────────────── */
+   780→.number-highlight {
+   781→  display: inline-block;
+   782→  transition: all 0.3s ease;
+   783→}
+   784→
+   785→.number-highlight:hover {
+   786→  color: #D4A843;
+   787→  text-shadow: 0 0 12px rgba(212, 168, 67, 0.4);
+   788→  transform: scale(1.02);
+   789→}
+   790→
+   791→/* ─── Status Dot Variants ────────────────────────────────────────── */
+   792→.status-dot {
+   793→  display: inline-block;
+   794→  width: 6px;
+   795→  height: 6px;
+   796→  border-radius: 50%;
+   797→  flex-shrink: 0;
+   798→}
+   799→
+   800→.status-dot-green { background: #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.4); }
+   801→.status-dot-yellow { background: #eab308; box-shadow: 0 0 6px rgba(234, 179, 8, 0.4); }
+   802→.status-dot-red { background: #ef4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+   803→.status-dot-blue { background: #3b82f6; box-shadow: 0 0 6px rgba(59, 130, 246, 0.4); }
+   804→.status-dot-gold { background: #D4A843; box-shadow: 0 0 6px rgba(212, 168, 67, 0.4); }
+   805→
+   806→/* ─── Enhanced Input/Textarea Styling ────────────────────────────── */
+   807→textarea:focus, input[type="text"]:focus {
+   808→  border-color: rgba(212, 168, 67, 0.4) !important;
+   809→  box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.06), 0 0 12px rgba(212, 168, 67, 0.04) !important;
+   810→}
+   811→
+   812→/* ─── Enhanced Dialog Entrance ───────────────────────────────────── */
+   813→[data-radix-dialog-content] {
+   814→  animation: fadeInUp 0.25s ease-out !important;
+   815→  border: 1px solid rgba(212, 168, 67, 0.15) !important;
+   816→  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 40px rgba(212, 168, 67, 0.04) !important;
+   817→}
+   818→
+   819→/* ─── Enhanced Chart Tooltip ─────────────────────────────────────── */
+   820→.recharts-tooltip-wrapper {
+   821→  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+   822→}
+   823→
+   824→/* ─── Sidebar Nav Hover Micro-animation ──────────────────────────── */
+   825→.nav-item-hover {
+   826→  position: relative;
+   827→  overflow: hidden;
+   828→}
+   829→
+   830→.nav-item-hover::before {
+   831→  content: '';
+   832→  position: absolute;
+   833→  inset: 0;
+   834→  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.05), transparent);
+   835→  transform: translateX(-100%);
+   836→  transition: transform 0.4s ease;
+   837→}
+   838→
+   839→.nav-item-hover:hover::before {
+   840→  transform: translateX(100%);
+   841→}
+   842→
+   843→/* ─── Section Heading Style ──────────────────────────────────────── */
+   844→.section-heading {
+   845→  position: relative;
+   846→  display: inline-flex;
+   847→  align-items: center;
+   848→  gap: 8px;
+   849→}
+   850→
+   851→.section-heading::after {
+   852→  content: '';
+   853→  display: block;
+   854→  height: 1px;
+   855→  flex: 1;
+   856→  min-width: 40px;
+   857→  background: linear-gradient(90deg, rgba(212, 168, 67, 0.3), transparent);
+   858→  margin-left: 8px;
+   859→}
+   860→
+   861→/* ─── Metric Card Mini Sparkline Background ──────────────────────── */
+   862→.metric-sparkle {
+   863→  position: relative;
+   864→}
+   865→
+   866→.metric-sparkle::before {
+   867→  content: '';
+   868→  position: absolute;
+   869→  top: 0;
+   870→  right: 0;
+   871→  width: 60%;
+   872→  height: 100%;
+   873→  background: radial-gradient(ellipse at top right, rgba(212, 168, 67, 0.06), transparent 70%);
+   874→  pointer-events: none;
+   875→}
+   876→
+   877→/* ─── Scrollbar Fade for Long Tables ─────────────────────────────── */
+   878→.table-scroll-fade {
+   879→  position: relative;
+   880→}
+   881→
+   882→.table-scroll-fade::after {
+   883→  content: '';
+   884→  position: sticky;
+   885→  bottom: 0;
+   886→  left: 0;
+   887→  right: 0;
+   888→  height: 40px;
+   889→  background: linear-gradient(to top, #111, transparent);
+   890→  pointer-events: none;
+   891→  display: block;
+   892→}
+   893→
+   894→/* ─── Loading Skeleton Variants ──────────────────────────────────── */
+   895→.skeleton-card {
+   896→  background: linear-gradient(145deg, #111111, #0d0d0d);
+   897→  border: 1px solid rgba(42, 37, 32, 0.5);
+   898→  border-radius: 12px;
+   899→  overflow: hidden;
+   900→}
+   901→
+   902→.skeleton-card::after {
+   903→  content: '';
+   904→  display: block;
+   905→  width: 100%;
+   906→  height: 100%;
+   907→  background: linear-gradient(90deg, transparent 25%, rgba(212, 168, 67, 0.03) 50%, transparent 75%);
+   908→  background-size: 200% 100%;
+   909→  animation: shimmer 2s infinite;
+   910→}
+   911→
+   912→/* ─── Ambient Gold Particles Background ─────────────────────────── */
+   913→@keyframes particleFloat {
+   914→  0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+   915→  10% { opacity: 0.6; }
+   916→  90% { opacity: 0.6; }
+   917→  100% { transform: translateY(-120px) translateX(30px); opacity: 0; }
+   918→}
+   919→
+   920→.ambient-particles {
+   921→  position: relative;
+   922→  overflow: hidden;
+   923→}
+   924→
+   925→.ambient-particles::before,
+   926→.ambient-particles::after {
+   927→  content: '';
+   928→  position: absolute;
+   929→  width: 3px;
+   930→  height: 3px;
+   931→  background: #D4A843;
+   932→  border-radius: 50%;
+   933→  animation: particleFloat 6s ease-in-out infinite;
+   934→  pointer-events: none;
+   935→}
+   936→
+   937→.ambient-particles::before {
+   938→  left: 20%;
+   939→  bottom: 0;
+   940→  animation-delay: 0s;
+   941→}
+   942→
+   943→.ambient-particles::after {
+   944→  left: 70%;
+   945→  bottom: 0;
+   946→  animation-delay: 2s;
+   947→  width: 2px;
+   948→  height: 2px;
+   949→}
+   950→
+   951→/* ─── Luxury Diamond Separator ──────────────────────────────────── */
+   952→.diamond-separator {
+   953→  display: flex;
+   954→  align-items: center;
+   955→  gap: 12px;
+   956→  padding: 8px 0;
+   957→}
+   958→
+   959→.diamond-separator::before,
+   960→.diamond-separator::after {
+   961→  content: '';
+   962→  flex: 1;
+   963→  height: 1px;
+   964→  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.3), transparent);
+   965→}
+   966→
+   967→.diamond-separator > * {
+   968→  position: relative;
+   969→}
+   970→
+   971→.diamond-separator .diamond-icon {
+   972→  width: 8px;
+   973→  height: 8px;
+   974→  background: #D4A843;
+   975→  transform: rotate(45deg);
+   976→  flex-shrink: 0;
+   977→  box-shadow: 0 0 8px rgba(212, 168, 67, 0.4);
+   978→}
+   979→
+   980→/* ─── Gold Noise Texture Overlay ────────────────────────────────── */
+   981→.gold-texture {
+   982→  position: relative;
+   983→}
+   984→
+   985→.gold-texture::before {
+   986→  content: '';
+   987→  position: absolute;
+   988→  inset: 0;
+   989→  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
+   990→  pointer-events: none;
+   991→  border-radius: inherit;
+   992→  z-index: 1;
+   993→}
+   994→
+   995→/* ─── Premium Card with Inner Glow ─────────────────────────────── */
+   996→.premium-card {
+   997→  background: linear-gradient(160deg, #131313 0%, #0e0e0e 50%, #111 100%);
+   998→  border: 1px solid rgba(212, 168, 67, 0.12);
+   999→  border-radius: 12px;
+  1000→  position: relative;
+  1001→  overflow: hidden;
+  1002→  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  1003→}
+  1004→
+  1005→.premium-card::before {
+  1006→  content: '';
+  1007→  position: absolute;
+  1008→  top: 0;
+  1009→  left: 0;
+  1010→  right: 0;
+  1011→  height: 1px;
+  1012→  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.2), transparent);
+  1013→}
+  1014→
+  1015→.premium-card::after {
+  1016→  content: '';
+  1017→  position: absolute;
+  1018→  top: -50%;
+  1019→  left: -50%;
+  1020→  width: 200%;
+  1021→  height: 200%;
+  1022→  background: radial-gradient(ellipse at top left, rgba(212, 168, 67, 0.03), transparent 50%);
+  1023→  pointer-events: none;
+  1024→  transition: opacity 0.4s ease;
+  1025→  opacity: 0;
+  1026→}
+  1027→
+  1028→.premium-card:hover {
+  1029→  border-color: rgba(212, 168, 67, 0.3);
+  1030→  transform: translateY(-2px);
+  1031→  box-shadow:
+  1032→    0 8px 32px rgba(0, 0, 0, 0.3),
+  1033→    0 0 0 1px rgba(212, 168, 67, 0.1),
+  1034→    inset 0 1px 0 rgba(212, 168, 67, 0.08);
+  1035→}
+  1036→
+  1037→.premium-card:hover::after {
+  1038→  opacity: 1;
+  1039→}
+  1040→
+  1041→/* ─── Animated Gold Border (rotating gradient) ──────────────────── */
+  1042→@keyframes rotateBorder {
+  1043→  0% { --angle: 0deg; }
+  1044→  100% { --angle: 360deg; }
+  1045→}
+  1046→
+  1047→.animated-border {
+  1048→  position: relative;
+  1049→  border-radius: 12px;
+  1050→  padding: 1px;
+  1051→  background: conic-gradient(from var(--angle, 0deg), transparent 70%, rgba(212, 168, 67, 0.4) 80%, rgba(212, 168, 67, 0.1) 90%, transparent 100%);
+  1052→  animation: rotateBorder 4s linear infinite;
+  1053→}
+  1054→
+  1055→@property --angle {
+  1056→  syntax: '<angle>';
+  1057→  initial-value: 0deg;
+  1058→  inherits: false;
+  1059→}
+  1060→
+  1061→.animated-border > * {
+  1062→  border-radius: 11px;
+  1063→  background: #111;
+  1064→}
+  1065→
+  1066→/* ─── Text Glow Effects ─────────────────────────────────────────── */
+  1067→.text-glow-gold {
+  1068→  text-shadow:
+  1069→    0 0 7px rgba(212, 168, 67, 0.4),
+  1070→    0 0 15px rgba(212, 168, 67, 0.2),
+  1071→    0 0 30px rgba(212, 168, 67, 0.1);
+  1072→}
+  1073→
+  1074→.text-glow-gold-sm {
+  1075→  text-shadow:
+  1076→    0 0 4px rgba(212, 168, 67, 0.3),
+  1077→    0 0 8px rgba(212, 168, 67, 0.15);
+  1078→}
+  1079→
+  1080→/* ─── Hover Scale Micro-animation ───────────────────────────────── */
+  1081→.hover-scale-sm {
+  1082→  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  1083→}
+  1084→
+  1085→.hover-scale-sm:hover {
+  1086→  transform: scale(1.02);
+  1087→}
+  1088→
+  1089→.hover-scale-md {
+  1090→  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  1091→}
+  1092→
+  1093→.hover-scale-md:hover {
+  1094→  transform: scale(1.04);
+  1095→}
+  1096→
+  1097→/* ─── Gold Pulse Ring (for important elements) ──────────────────── */
+  1098→@keyframes goldPulseRing {
+  1099→  0% { box-shadow: 0 0 0 0 rgba(212, 168, 67, 0.4); }
+  1100→  70% { box-shadow: 0 0 0 8px rgba(212, 168, 67, 0); }
+  1101→  100% { box-shadow: 0 0 0 0 rgba(212, 168, 67, 0); }
+  1102→}
+  1103→
+  1104→.gold-pulse-ring {
+  1105→  animation: goldPulseRing 2s ease-in-out infinite;
+  1106→}
+  1107→
+  1108→/* ─── Striped Accent Bar ────────────────────────────────────────── */
+  1109→.striped-bar {
+  1110→  background: repeating-linear-gradient(
+  1111→    -45deg,
+  1112→    rgba(212, 168, 67, 0.15),
+  1113→    rgba(212, 168, 67, 0.15) 2px,
+  1114→    transparent 2px,
+  1115→    transparent 6px
+  1116→  );
+  1117→}
+  1118→
+  1119→/* ─── Glass Morphism Enhancements ───────────────────────────────── */
+  1120→.glass-premium {
+  1121→  background: linear-gradient(135deg, rgba(17, 17, 17, 0.95) 0%, rgba(13, 13, 13, 0.8) 100%);
+  1122→  backdrop-filter: blur(24px) saturate(1.3);
+  1123→  border: 1px solid rgba(212, 168, 67, 0.1);
+  1124→  box-shadow:
+  1125→    0 8px 32px rgba(0, 0, 0, 0.4),
+  1126→    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+  1127→    inset 0 0 0 1px rgba(212, 168, 67, 0.05);
+  1128→}
+  1129→
+  1130→/* ─── Animated Counter ──────────────────────────────────────────── */
+  1131→@keyframes countUpSmooth {
+  1132→  from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
+  1133→  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+  1134→}
+  1135→
+  1136→.count-up-smooth {
+  1137→  animation: countUpSmooth 0.6s ease-out forwards;
+  1138→}
+  1139→
+  1140→/* ─── Decorative Corner Accents ─────────────────────────────────── */
+  1141→.corner-accent {
+  1142→  position: relative;
+  1143→}
+  1144→
+  1145→.corner-accent::before {
+  1146→  content: '';
+  1147→  position: absolute;
+  1148→  top: -1px;
+  1149→  left: -1px;
+  1150→  width: 16px;
+  1151→  height: 16px;
+  1152→  border-top: 2px solid #D4A843;
+  1153→  border-left: 2px solid #D4A843;
+  1154→  border-radius: 2px 0 0 0;
+  1155→  pointer-events: none;
+  1156→}
+  1157→
+  1158→.corner-accent::after {
+  1159→  content: '';
+  1160→  position: absolute;
+  1161→  bottom: -1px;
+  1162→  right: -1px;
+  1163→  width: 16px;
+  1164→  height: 16px;
+  1165→  border-bottom: 2px solid #D4A843;
+  1166→  border-right: 2px solid #D4A843;
+  1167→  border-radius: 0 0 2px 0;
+  1168→  pointer-events: none;
+  1169→}
+  1170→
+  1171→/* ─── Interactive Hover Underline (animated) ────────────────────── */
+  1172→.animated-underline {
+  1173→  position: relative;
+  1174→  display: inline-block;
+  1175→}
+  1176→
+  1177→.animated-underline::after {
+  1178→  content: '';
+  1179→  position: absolute;
+  1180→  bottom: -2px;
+  1181→  left: 50%;
+  1182→  width: 0;
+  1183→  height: 1.5px;
+  1184→  background: linear-gradient(90deg, #D4A843, #E8C46A);
+  1185→  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  1186→  transform: translateX(-50%);
+  1187→}
+  1188→
+  1189→.animated-underline:hover::after {
+  1190→  width: 100%;
+  1191→}
+  1192→
+  1193→/* ─── Sidebar Active Nav Glow ───────────────────────────────────── */
+  1194→.sidebar-glow-active {
+  1195→  box-shadow:
+  1196→    inset 3px 0 0 #D4A843,
+  1197→    0 0 20px rgba(212, 168, 67, 0.06);
+  1198→}
+  1199→
+  1200→/* ─── Chart Container Styling ───────────────────────────────────── */
+  1201→.chart-container {
+  1202→  position: relative;
+  1203→  background: linear-gradient(145deg, rgba(17, 17, 17, 0.6), rgba(13, 13, 13, 0.4));
+  1204→  border: 1px solid rgba(212, 168, 67, 0.08);
+  1205→  border-radius: 12px;
+  1206→  padding: 16px;
+  1207→}
+  1208→
+  1209→.chart-container::before {
+  1210→  content: '';
+  1211→  position: absolute;
+  1212→  top: 0;
+  1213→  left: 0;
+  1214→  right: 0;
+  1215→  height: 1px;
+  1216→  background: linear-gradient(90deg, transparent 10%, rgba(212, 168, 67, 0.15) 50%, transparent 90%);
+  1217→  border-radius: 12px 12px 0 0;
+  1218→}
+  1219→
+  1220→/* ─── Badge with Dot Indicator ──────────────────────────────────── */
+  1221→.badge-dot {
+  1222→  display: inline-flex;
+  1223→  align-items: center;
+  1224→  gap: 6px;
+  1225→  padding: 2px 10px 2px 8px;
+  1226→  border-radius: 9999px;
+  1227→  font-size: 11px;
+  1228→  font-weight: 500;
+  1229→  border: 1px solid;
+  1230→}
+  1231→
+  1232→.badge-dot::before {
+  1233→  content: '';
+  1234→  width: 6px;
+  1235→  height: 6px;
+  1236→  border-radius: 50%;
+  1237→  flex-shrink: 0;
+  1238→}
+  1239→
+  1240→.badge-dot-success {
+  1241→  background: rgba(34, 197, 94, 0.1);
+  1242→  color: #22c55e;
+  1243→  border-color: rgba(34, 197, 94, 0.25);
+  1244→}
+  1245→
+  1246→.badge-dot-success::before { background: #22c55e; }
+  1247→
+  1248→.badge-dot-warning {
+  1249→  background: rgba(234, 179, 8, 0.1);
+  1250→  color: #eab308;
+  1251→  border-color: rgba(234, 179, 8, 0.25);
+  1252→}
+  1253→
+  1254→.badge-dot-warning::before { background: #eab308; }
+  1255→
+  1256→.badge-dot-danger {
+  1257→  background: rgba(239, 68, 68, 0.1);
+  1258→  color: #ef4444;
+  1259→  border-color: rgba(239, 68, 68, 0.25);
+  1260→}
+  1261→
+  1262→.badge-dot-danger::before { background: #ef4444; }
+  1263→
+  1264→.badge-dot-gold {
+  1265→  background: rgba(212, 168, 67, 0.1);
+  1266→  color: #D4A843;
+  1267→  border-color: rgba(212, 168, 67, 0.25);
+  1268→}
+  1269→
+  1270→.badge-dot-gold::before { background: #D4A843; }
+  1271→
+  1272→/* ─── Empty State Styling ───────────────────────────────────────── */
+  1273→.empty-state {
+  1274→  display: flex;
+  1275→  flex-direction: column;
+  1276→  align-items: center;
+  1277→  justify-content: center;
+  1278→  padding: 48px 24px;
+  1279→  text-align: center;
+  1280→}
+  1281→
+  1282→.empty-state-icon {
+  1283→  width: 64px;
+  1284→  height: 64px;
+  1285→  border-radius: 16px;
+  1286→  background: rgba(212, 168, 67, 0.08);
+  1287→  border: 1px dashed rgba(212, 168, 67, 0.2);
+  1288→  display: flex;
+  1289→  align-items: center;
+  1290→  justify-content: center;
+  1291→  margin-bottom: 16px;
+  1292→}
+  1293→
+  1294→/* ─── Tooltip Arrow Enhancement ─────────────────────────────────── */
+  1295→[data-radix-popper-content-wrapper] [data-side="top"]::after {
+  1296→  content: '';
+  1297→  position: absolute;
+  1298→  bottom: -4px;
+  1299→  left: 50%;
+  1300→  transform: translateX(-50%) rotate(45deg);
+  1301→  width: 8px;
+  1302→  height: 8px;
+  1303→  background: #1a1a1a;
+  1304→  border-right: 1px solid rgba(212, 168, 67, 0.25);
+  1305→  border-bottom: 1px solid rgba(212, 168, 67, 0.25);
+  1306→}
+  1307→
+  1308→/* ─── Scrollbar for Tables ──────────────────────────────────────── */
+  1309→.table-scroll-gold::-webkit-scrollbar {
+  1310→  width: 5px;
+  1311→  height: 5px;
+  1312→}
+  1313→
+  1314→.table-scroll-gold::-webkit-scrollbar-track {
+  1315→  background: rgba(10, 10, 10, 0.5);
+  1316→  border-radius: 4px;
+  1317→}
+  1318→
+  1319→.table-scroll-gold::-webkit-scrollbar-thumb {
+  1320→  background: rgba(212, 168, 67, 0.2);
+  1321→  border-radius: 4px;
+  1322→  transition: background 0.2s ease;
+  1323→}
+  1324→
+  1325→.table-scroll-gold::-webkit-scrollbar-thumb:hover {
+  1326→  background: rgba(212, 168, 67, 0.5);
+  1327→}
+  1328→
+  1329→/* ─── Focus Ring Utility ────────────────────────────────────────── */
+  1330→.focus-ring-gold:focus-visible {
+  1331→  outline: none;
+  1332→  box-shadow: 0 0 0 2px rgba(212, 168, 67, 0.3), 0 0 0 4px rgba(212, 168, 67, 0.1);
+  1333→}
+  1334→
+  1335→/* ─── Transition Group for Lists ────────────────────────────────── */
+  1336→@keyframes listSlideIn {
+  1337→  from { opacity: 0; transform: translateX(-8px); }
+  1338→  to { opacity: 1; transform: translateX(0); }
+  1339→}
+  1340→
+  1341→.list-slide-in > * {
+  1342→  animation: listSlideIn 0.3s ease-out forwards;
+  1343→}
+  1344→
+  1345→.list-slide-in > *:nth-child(1) { animation-delay: 0ms; }
+  1346→.list-slide-in > *:nth-child(2) { animation-delay: 40ms; }
+  1347→.list-slide-in > *:nth-child(3) { animation-delay: 80ms; }
+  1348→.list-slide-in > *:nth-child(4) { animation-delay: 120ms; }
+  1349→.list-slide-in > *:nth-child(5) { animation-delay: 160ms; }
+  1350→.list-slide-in > *:nth-child(6) { animation-delay: 200ms; }
+  1351→.list-slide-in > *:nth-child(7) { animation-delay: 240ms; }
+  1352→.list-slide-in > *:nth-child(8) { animation-delay: 280ms; }
+  1353→
+  1354→/* ─── Enhanced Select Styling ───────────────────────────────────── */
+  1355→[data-radix-select-viewport] {
+  1356→  padding: 4px !important;
+  1357→}
+  1358→
+  1359→[data-radix-select-item] {
+  1360→  border-radius: 6px !important;
+  1361→  padding: 6px 8px !important;
+  1362→  margin: 1px 0 !important;
+  1363→  transition: all 0.15s ease !important;
+  1364→}
+  1365→
+  1366→[data-radix-select-item][data-highlighted] {
+  1367→  background: rgba(212, 168, 67, 0.12) !important;
+  1368→  color: #D4A843 !important;
+  1369→}
+  1370→
+  1371→/* ─── Badge Hover Effect ────────────────────────────────────────── */
+  1372→.badge-interactive {
+  1373→  cursor: pointer;
+  1374→  transition: all 0.2s ease;
+  1375→}
+  1376→
+  1377→.badge-interactive:hover {
+  1378→  transform: translateY(-1px);
+  1379→  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  1380→}
+  1381→
+  1382→/* ─── Data Grid Cell Hover ──────────────────────────────────────── */
+  1383→.data-cell-hover {
+  1384→  position: relative;
+  1385→  transition: background-color 0.15s ease;
+  1386→}
+  1387→
+  1388→.data-cell-hover:hover {
+  1389→  background: rgba(212, 168, 67, 0.04);
+  1390→}
+  1391→
+  1392→/* ─── Skeleton Shimmer Gold ─────────────────────────────────────── */
+  1393→.skeleton-gold-bar {
+  1394→  background: linear-gradient(90deg, rgba(212, 168, 67, 0.05) 25%, rgba(212, 168, 67, 0.12) 50%, rgba(212, 168, 67, 0.05) 75%);
+  1395→  background-size: 200% 100%;
+  1396→  animation: shimmer 1.8s ease-in-out infinite;
+  1397→  border-radius: 4px;
+  1398→}
+  1399→
+  1400→/* ─── Responsive Card Grid Animations ───────────────────────────── */
+  1401→@keyframes gridFadeIn {
+  1402→  from { opacity: 0; transform: scale(0.97); }
+  1403→  to { opacity: 1; transform: scale(1); }
+  1404→}
+  1405→
+  1406→.grid-fade-in > * {
+  1407→  animation: gridFadeIn 0.4s ease-out forwards;
+  1408→  opacity: 0;
+  1409→}
+  1410→
+  1411→.grid-fade-in > *:nth-child(1) { animation-delay: 0ms; }
+  1412→.grid-fade-in > *:nth-child(2) { animation-delay: 50ms; }
+  1413→.grid-fade-in > *:nth-child(3) { animation-delay: 100ms; }
+  1414→.grid-fade-in > *:nth-child(4) { animation-delay: 150ms; }
+  1415→.grid-fade-in > *:nth-child(5) { animation-delay: 200ms; }
+  1416→.grid-fade-in > *:nth-child(6) { animation-delay: 250ms; }
+  1417→.grid-fade-in > *:nth-child(7) { animation-delay: 300ms; }
+  1418→.grid-fade-in > *:nth-child(8) { animation-delay: 350ms; }
+  1419→.grid-fade-in > *:nth-child(9) { animation-delay: 400ms; }
+  1420→.grid-fade-in > *:nth-child(10) { animation-delay: 450ms; }
+  1421→.grid-fade-in > *:nth-child(11) { animation-delay: 500ms; }
+  1422→.grid-fade-in > *:nth-child(12) { animation-delay: 550ms; }
+  1423→
+  1424→/* ─── Command Palette Styles ───────────────────────────────────── */
+  1425→.cmd-palette-item {
+  1426→  position: relative;
+  1427→  overflow: hidden;
+  1428→}
+  1429→
+  1430→.cmd-palette-item::before {
+  1431→  content: '';
+  1432→  position: absolute;
+  1433→  left: 0;
+  1434→  top: 0;
+  1435→  bottom: 0;
+  1436→  width: 2px;
+  1437→  background: #D4A843;
+  1438→  transform: scaleY(0);
+  1439→  transition: transform 0.15s ease;
+  1440→}
+  1441→
+  1442→.cmd-palette-item:hover::before,
+  1443→.cmd-palette-item.active::before {
+  1444→  transform: scaleY(1);
+  1445→}
+  1446→
+  1447→/* ─── Shimmer Border Effect ────────────────────────────────────── */
+  1448→@keyframes shimmerBorder {
+  1449→  0% { background-position: 0% 50%; }
+  1450→  50% { background-position: 100% 50%; }
+  1451→  100% { background-position: 0% 50%; }
+  1452→}
+  1453→
+  1454→.shimmer-border {
+  1455→  background: linear-gradient(90deg, rgba(212, 168, 67, 0.1), rgba(212, 168, 67, 0.3), rgba(212, 168, 67, 0.1));
+  1456→  background-size: 200% 100%;
+  1457→  animation: shimmerBorder 3s ease-in-out infinite;
+  1458→}
+  1459→
+  1460→/* ─── Micro-interaction: Press Scale ────────────────────────────── */
+  1461→.press-effect {
+  1462→  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  1463→}
+  1464→
+  1465→.press-effect:active {
+  1466→  transform: scale(0.97);
+  1467→  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  1468→}
+  1469→
+  1470→/* ─── Gradient Text Accent ──────────────────────────────────────── */
+  1471→.text-gradient-gold-warm {
+  1472→  background: linear-gradient(135deg, #D4A843 0%, #F0D78C 40%, #D4A843 70%, #B8922F 100%);
+  1473→  -webkit-background-clip: text;
+  1474→  -webkit-text-fill-color: transparent;
+  1475→  background-clip: text;
+  1476→}
+  1477→
+  1478→/* ─── Hover Ripple Effect ───────────────────────────────────────── */
+  1479→.ripple-hover {
+  1480→  position: relative;
+  1481→  overflow: hidden;
+  1482→}
+  1483→
+  1484→.ripple-hover::after {
+  1485→  content: '';
+  1486→  position: absolute;
+  1487→  inset: 0;
+  1488→  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(212, 168, 67, 0.15) 0%, transparent 60%);
+  1489→  opacity: 0;
+  1490→  transition: opacity 0.3s ease;
+  1491→  pointer-events: none;
+  1492→}
+  1493→
+  1494→.ripple-hover:hover::after {
+  1495→  opacity: 1;
+  1496→}
+  1497→
+  1498→/* ─── Subtle Noise Background for Premium Feel ──────────────────── */
+  1499→.bg-noise-subtle {
+  1500→  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E");
+  1501→}
+  1502→
+  1503→/* ─── Animated Gradient Background ──────────────────────────────── */
+  1504→@keyframes gradientShift {
+  1505→  0%, 100% { background-position: 0% 50%; }
+  1506→  50% { background-position: 100% 50%; }
+  1507→}
+  1508→
+  1509→.animated-gradient-bg {
+  1510→  background: linear-gradient(-45deg, #0a0a0a, #1a1610, #0a0a0a, #12100d);
+  1511→  background-size: 400% 400%;
+  1512→  animation: gradientShift 15s ease infinite;
+  1513→}
+  1514→
+  1515→/* ─── Number Counter Animation ─────────────────────────────────── */
+  1516→@keyframes numberReveal {
+  1517→  0% { opacity: 0; transform: translateY(8px) scale(0.95); filter: blur(3px); }
+  1518→  60% { opacity: 1; transform: translateY(-1px) scale(1.01); filter: blur(0); }
+  1519→  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  1520→}
+  1521→
+  1522→.number-reveal {
+  1523→  animation: numberReveal 0.5s ease-out forwards;
+  1524→}
+  1525→
+  1526→/* ─── Tab Indicator Transition ──────────────────────────────────── */
+  1527→.tab-indicator-gold {
+  1528→  position: relative;
+  1529→}
+  1530→
+  1531→.tab-indicator-gold::after {
+  1532→  content: '';
+  1533→  position: absolute;
+  1534→  bottom: -1px;
+  1535→  left: 0;
+  1536→  right: 0;
+  1537→  height: 2px;
+  1538→  background: linear-gradient(90deg, #D4A843, #E8C46A, #D4A843);
+  1539→  border-radius: 1px 1px 0 0;
+  1540→  transform: scaleX(0);
+  1541→  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  1542→}
+  1543→
+  1544→.tab-indicator-gold:hover::after,
+  1545→.tab-indicator-gold[aria-selected="true"]::after {
+  1546→  transform: scaleX(1);
+  1547→}
+  1548→
+  1549→/* ─── Glow Dot for Status Indicators ────────────────────────────── */
+  1550→@keyframes glowDotPulse {
+  1551→  0%, 100% { box-shadow: 0 0 4px currentColor, 0 0 8px currentColor; opacity: 1; }
+  1552→  50% { box-shadow: 0 0 6px currentColor, 0 0 14px currentColor; opacity: 0.7; }
+  1553→}
+  1554→
+  1555→.glow-dot {
+  1556→  animation: glowDotPulse 2s ease-in-out infinite;
+  1557→}
+  1558→
+  1559→/* ─── Hover Card Border Sweep ───────────────────────────────────── */
+  1560→@keyframes borderSweep {
+  1561→  0% { background-position: -200% 0; }
+  1562→  100% { background-position: 200% 0; }
+  1563→}
+  1564→
+  1565→.hover-sweep {
+  1566→  position: relative;
+  1567→  border: 1px solid rgba(212, 168, 67, 0.1);
+  1568→  transition: all 0.3s ease;
+  1569→}
+  1570→
+  1571→.hover-sweep:hover {
+  1572→  border-color: transparent;
+  1573→  background-image: linear-gradient(#111, #111), linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.2), rgba(212, 168, 67, 0.3), rgba(212, 168, 67, 0.2), transparent);
+  1574→  background-origin: border-box;
+  1575→  background-clip: padding-box, border-box;
+  1576→  background-size: 100%, 200% 100%;
+  1577→  animation: borderSweep 2s linear infinite;
+  1578→}
+  1579→
+  1580→/* ─── Enhanced Scrollbar for Main Content ───────────────────────── */
+  1581→main::-webkit-scrollbar {
+  1582→  width: 7px;
+  1583→}
+  1584→
+  1585→main::-webkit-scrollbar-track {
+  1586→  background: rgba(10, 10, 10, 0.5);
+  1587→}
+  1588→
+  1589→main::-webkit-scrollbar-thumb {
+  1590→  background: linear-gradient(180deg, rgba(212, 168, 67, 0.15), rgba(212, 168, 67, 0.25));
+  1591→  border-radius: 4px;
+  1592→  border: 1px solid rgba(212, 168, 67, 0.08);
+  1593→}
+  1594→
+  1595→main::-webkit-scrollbar-thumb:hover {
+  1596→  background: linear-gradient(180deg, rgba(212, 168, 67, 0.25), rgba(212, 168, 67, 0.4));
+  1597→}
+  1598→
+  1599→/* ─── Button Gold Variant ───────────────────────────────────────── */
+  1600→.btn-gold {
+  1601→  background: linear-gradient(135deg, #D4A843 0%, #E8C46A 50%, #D4A843 100%);
+  1602→  color: #0a0a0a;
+  1603→  font-weight: 600;
+  1604→  transition: all 0.2s ease;
+  1605→  box-shadow: 0 2px 8px rgba(212, 168, 67, 0.2);
+  1606→}
+  1607→
+  1608→.btn-gold:hover {
+  1609→  box-shadow: 0 4px 16px rgba(212, 168, 67, 0.3), 0 0 0 1px rgba(212, 168, 67, 0.2);
+  1610→  transform: translateY(-1px);
+  1611→}
+  1612→
+  1613→.btn-gold:active {
+  1614→  transform: translateY(0);
+  1615→  box-shadow: 0 1px 4px rgba(212, 168, 67, 0.2);
+  1616→}
+  1617→
+  1618→/* ─── Card Hover Border Animation ───────────────────────────────── */
+  1619→.card-hover-border {
+  1620→  position: relative;
+  1621→  background: #111;
+  1622→  border-radius: 12px;
+  1623→  overflow: hidden;
+  1624→}
+  1625→
+  1626→.card-hover-border::before {
+  1627→  content: '';
+  1628→  position: absolute;
+  1629→  inset: 0;
+  1630→  border-radius: 12px;
+  1631→  padding: 1px;
+  1632→  background: linear-gradient(135deg, transparent 30%, rgba(212, 168, 67, 0.2) 50%, transparent 70%);
+  1633→  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  1634→  -webkit-mask-composite: xor;
+  1635→  mask-composite: exclude;
+  1636→  opacity: 0;
+  1637→  transition: opacity 0.3s ease;
+  1638→}
+  1639→
+  1640→.card-hover-border:hover::before {
+  1641→  opacity: 1;
+  1642→}
+  1643→
+  1644→/* ─── Tooltip Enhancement for Command Palette ───────────────────── */
+  1645→.kbd-key {
+  1646→  display: inline-flex;
+  1647→  align-items: center;
+  1648→  justify-content: center;
+  1649→  height: 20px;
+  1650→  min-width: 20px;
+  1651→  padding: 0 5px;
+  1652→  border-radius: 4px;
+  1653→  border: 1px solid rgba(42, 37, 32, 0.6);
+  1654→  background: rgba(10, 10, 10, 0.8);
+  1655→  font-family: ui-monospace, SFMono-Regular, monospace;
+  1656→  font-size: 10px;
+  1657→  color: rgba(154, 144, 128, 0.5);
+  1658→  line-height: 1;
+  1659→}
+  1660→
+  1661→/* ─── Subtle Background Pattern ─────────────────────────────────── */
+  1662→.bg-dots {
+  1663→  background-image: radial-gradient(rgba(212, 168, 67, 0.03) 1px, transparent 1px);
+  1664→  background-size: 24px 24px;
+  1665→}

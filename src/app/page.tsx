@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import {
+  Wand2,
   LayoutDashboard,
   Calendar,
   FileText,
@@ -35,6 +35,10 @@ import {
   FileBarChart,
   Filter,
   GitBranch,
+  Globe,
+  ClipboardList,
+  Contact,
+  LogOut,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -58,6 +62,7 @@ import {
 
 // Lazy load tab components
 import dynamic from 'next/dynamic';
+import LoginPage from '@/components/login-page';
 
 const OverviewTab = dynamic(() => import('@/components/dashboard/overview-tab'), {
   loading: () => <TabSkeleton />,
@@ -104,35 +109,60 @@ const AbTestingTab = dynamic(() => import('@/components/dashboard/ab-testing-tab
 const AttributionTab = dynamic(() => import('@/components/dashboard/attribution-tab'), {
   loading: () => <TabSkeleton />,
 });
+const SeoMasterTab = dynamic(() => import('@/components/dashboard/seo-master-tab'), {
+  loading: () => <TabSkeleton />,
+});
+const ReportBuilderTab = dynamic(() => import('@/components/dashboard/report-builder-tab'), {
+  loading: () => <TabSkeleton />,
+});
 const FunnelTab = dynamic(() => import('@/components/dashboard/funnel-tab'), {
   loading: () => <TabSkeleton />,
 });
+const SocialAccountsTab = dynamic(() => import('@/components/dashboard/social-accounts-tab'), {
+  loading: () => <TabSkeleton />,
+});
+const LeadPipelineTab = dynamic(() => import('@/components/dashboard/lead-pipeline-tab'), {
+  loading: () => <TabSkeleton />,
+});
 
-type TabKey = 'overview' | 'calendar' | 'blogs' | 'social-planner' | 'ideas' | 'seo' | 'campaigns' | 'social-analytics' | 'leads' | 'budget' | 'competitors' | 'email' | 'ab-testing' | 'reports' | 'funnel' | 'attribution';
+type TabKey = 'overview' | 'calendar' | 'blogs' | 'social-planner' | 'ideas' | 'seo' | 'campaigns' | 'social-analytics' | 'leads' | 'report-builder' | 'budget' | 'competitors' | 'email' | 'ab-testing' | 'reports' | 'funnel' | 'attribution' | 'social-accounts' | 'seo-master' | 'lead-pipeline';
 
 interface NavItem {
   key: TabKey;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  category?: string;
+  shortcut?: string;
+  badge?: string;
 }
 
 const navItems: NavItem[] = [
-  { key: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { key: 'calendar', label: 'Content Calendar', icon: Calendar },
-  { key: 'blogs', label: 'Blog Planner', icon: FileText },
-  { key: 'social-planner', label: 'Social Planner', icon: Share2 },
-  { key: 'ideas', label: 'Idea Researcher', icon: Lightbulb },
-  { key: 'seo', label: 'SEO Dashboard', icon: Search },
-  { key: 'campaigns', label: 'Campaigns', icon: Target },
-  { key: 'social-analytics', label: 'Social Analytics', icon: BarChart3 },
-  { key: 'leads', label: 'Leads & Revenue', icon: Users },
-  { key: 'budget', label: 'Budget Planner', icon: Wallet },
-  { key: 'competitors', label: 'Competitor Analysis', icon: Swords },
-  { key: 'email', label: 'Email Campaigns', icon: Mail },
-  { key: 'reports', label: 'Reports', icon: FileBarChart },
-  { key: 'ab-testing', label: 'A/B Testing', icon: FlaskConical },
-  { key: 'funnel', label: 'Funnel', icon: Filter },
-  { key: 'attribution', label: 'Attribution', icon: GitBranch },
+  // Core
+  { key: 'overview', label: 'Overview', icon: LayoutDashboard, category: 'Core', shortcut: '1' },
+  // Content & Planning
+  { key: 'calendar', label: 'Content Calendar', icon: Calendar, category: 'Content & Planning', shortcut: '2' },
+  { key: 'blogs', label: 'Blog Planner', icon: FileText, category: 'Content & Planning', shortcut: '3', badge: '3' },
+  { key: 'social-planner', label: 'Social Planner', icon: Share2, category: 'Content & Planning', shortcut: '4' },
+  { key: 'ideas', label: 'Idea Researcher', icon: Lightbulb, category: 'Content & Planning', shortcut: '5', badge: 'AI' },
+  // Performance
+  { key: 'seo', label: 'SEO Dashboard', icon: Search, category: 'Performance', shortcut: '6' },
+  { key: 'campaigns', label: 'Campaigns', icon: Target, category: 'Performance', shortcut: '7', badge: '5' },
+  { key: 'social-analytics', label: 'Social Analytics', icon: BarChart3, category: 'Performance', shortcut: '8' },
+  { key: 'leads', label: 'Leads & Revenue', icon: Users, category: 'Performance', shortcut: '9', badge: '12' },
+  // Analytics & Insights
+  { key: 'report-builder', label: 'Report Builder', icon: ClipboardList, category: 'Analytics', shortcut: '0' },
+  { key: 'budget', label: 'Budget Planner', icon: Wallet, category: 'Analytics' },
+  { key: 'competitors', label: 'Competitor Analysis', icon: Swords, category: 'Analytics' },
+  { key: 'attribution', label: 'Attribution', icon: GitBranch, category: 'Analytics' },
+  { key: 'funnel', label: 'Funnel', icon: Filter, category: 'Analytics' },
+  // Outreach
+  { key: 'email', label: 'Email Campaigns', icon: Mail, category: 'Outreach' },
+  { key: 'reports', label: 'Reports', icon: FileBarChart, category: 'Outreach', badge: '2' },
+  { key: 'ab-testing', label: 'A/B Testing', icon: FlaskConical, category: 'Outreach' },
+  // Advanced
+  { key: 'social-accounts', label: 'Social Accounts', icon: Globe, category: 'Advanced' },
+  { key: 'seo-master', label: 'AI SEO Master', icon: Wand2, category: 'Advanced', badge: 'AI' },
+  { key: 'lead-pipeline', label: 'Lead Pipeline', icon: Contact, category: 'Advanced', badge: '8' },
 ];
 
 function TabSkeleton() {
@@ -157,11 +187,40 @@ function SidebarContent({
   activeTab,
   onTabChange,
   collapsed,
+  onLogout,
+  scrollRef,
+  user,
 }: {
   activeTab: TabKey;
   onTabChange: (key: TabKey) => void;
   collapsed: boolean;
+  onLogout?: () => void;
+  scrollRef?: React.RefObject<HTMLDivElement | null>;
+  user?: { email: string; name: string; role: string } | null;
 }) {
+  const activeItemRef = useRef<HTMLButtonElement | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close user menu on outside click
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [userMenuOpen]);
+
+  // Smooth scroll active nav item into view
+  useEffect(() => {
+    if (activeItemRef.current) {
+      activeItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [activeTab]);
+
   return (
     <div className="flex h-full flex-col">
       {/* Logo */}
@@ -178,22 +237,25 @@ function SidebarContent({
         )}
       </div>
 
-      {/* Navigation */}
-      <ScrollArea className="flex-1 py-3">
-        <nav className="space-y-0.5 px-3">
-          {navItems.map((item, idx) => {
+      {/* Navigation - Smooth Animated Scroll with Categories */}
+      <ScrollArea className="flex-1 py-3 scroll-smooth">
+        <nav className="px-3" ref={scrollRef as React.RefObject<HTMLElement>}>
+          {navItems.reduce<React.ReactNode[]>((acc, item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.key;
-            const showDivider = idx === 9; // Divider before Budget/Competitor/Email/Reports/A-B Testing
+            const prevItem = navItems[navItems.indexOf(item) - 1];
+            const showCategory = !collapsed && item.category && (!prevItem || prevItem.category !== item.category);
+            const badgeColor = item.badge === 'AI' ? 'bg-[#D4A843]/20 text-[#D4A843]' : 'bg-[#D4A843]/10 text-[#D4A843]/70';
 
             if (collapsed) {
-              return (
+              acc.push(
                 <TooltipProvider key={item.key} delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
+                        ref={isActive ? activeItemRef : undefined}
                         onClick={() => onTabChange(item.key)}
-                        className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 mx-auto nav-item-hover focus-ring-gold ${
+                        className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-300 ease-out mx-auto nav-item-hover focus-ring-gold my-0.5 ${
                           isActive
                             ? 'bg-[#D4A843]/15 text-[#D4A843] sidebar-glow-active'
                             : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
@@ -203,38 +265,55 @@ function SidebarContent({
                           <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full gold-gradient" />
                         )}
                         <Icon className="h-[18px] w-[18px]" />
+                        {item.badge && (
+                          <span className={`absolute -top-0.5 -right-0.5 h-3.5 min-w-3.5 flex items-center justify-center rounded-full px-1 text-[8px] font-bold ${badgeColor}`}>{item.badge}</span>
+                        )}
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="right" className="bg-card border-border text-foreground">
-                      {item.label}
+                      <div className="flex items-center gap-2">
+                        {item.label}
+                        {item.shortcut && <span className="text-[10px] text-muted-foreground/50 ml-2">⌘{item.shortcut}</span>}
+                      </div>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               );
-            }
-
-            return (
-              <div key={item.key}>
-                {showDivider && (
-                  <div className="gold-divider my-2.5" />
-                )}
-                <button
-                  onClick={() => onTabChange(item.key)}
-                  className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 w-full focus-ring-gold ${
-                    isActive
-                      ? 'bg-[#D4A843]/10 text-[#D4A843] sidebar-glow-active'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-                  }`}
-                >
-                  {isActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full gold-gradient" />
+            } else {
+              acc.push(
+                <div key={item.key}>
+                  {showCategory && (
+                    <div className="flex items-center gap-2 mt-4 mb-1.5 first:mt-0">
+                      <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">{item.category}</span>
+                      <div className="flex-1 h-px bg-border/30" />
+                    </div>
                   )}
-                  <Icon className="h-[18px] w-[18px] shrink-0" />
-                  <span className="truncate">{item.label}</span>
-                </button>
-              </div>
-            );
-          })}
+                  <button
+                    ref={isActive ? activeItemRef : undefined}
+                    onClick={() => onTabChange(item.key)}
+                    className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-300 ease-out w-full focus-ring-gold my-0.5 group ${
+                      isActive
+                        ? 'bg-[#D4A843]/10 text-[#D4A843] sidebar-glow-active'
+                        : 'text-muted-foreground/80 hover:text-foreground hover:bg-white/5'
+                    }`}
+                  >
+                    {isActive && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full gold-gradient" />
+                    )}
+                    <Icon className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`} />
+                    <span className="truncate flex-1">{item.label}</span>
+                    {item.badge && (
+                      <span className={`h-5 min-w-5 flex items-center justify-center rounded-full px-1.5 text-[9px] font-bold ${badgeColor}`}>{item.badge}</span>
+                    )}
+                    {item.shortcut && (
+                      <span className="text-[10px] text-muted-foreground/30 font-mono group-hover:text-muted-foreground/50 transition-colors">{item.shortcut}</span>
+                    )}
+                  </button>
+                </div>
+              );
+            }
+            return acc;
+          }, [])}
         </nav>
       </ScrollArea>
 
@@ -273,32 +352,70 @@ function SidebarContent({
         )}
       </div>
 
-      {/* User Section */}
-      <div className="relative border-t border-border/30 p-3">
+      {/* User Section with Logout */}
+      <div className="relative border-t border-border/30 p-3" ref={userMenuRef}>
         <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-[#D4A843]/15 via-[#D4A843]/8 to-transparent" />
         {!collapsed ? (
-          <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-white/5 transition-all duration-200 cursor-pointer group">
-            <Avatar className="h-8 w-8 border border-[#D4A843]/30 group-hover:border-[#D4A843]/50 transition-colors">
-              <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">LT</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">Laxree Team</p>
-              <p className="text-[11px] text-muted-foreground/70 truncate">Marketing Manager</p>
-            </div>
-            <div className="h-2 w-2 rounded-full bg-[#D4A843]/50 group-hover:bg-[#D4A843] transition-colors" />
+          <div className="space-y-1">
+            <button
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-white/5 transition-all duration-200 cursor-pointer group w-full text-left"
+            >
+              <Avatar className="h-8 w-8 border border-[#D4A843]/30 group-hover:border-[#D4A843]/50 transition-colors">
+                <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">{user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'LT'}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{user?.name || 'Laxree Team'}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[11px] text-muted-foreground/70 truncate">{user?.role === 'admin' ? 'Administrator' : user?.role === 'manager' ? 'Marketing Manager' : 'Analytics Viewer'}</p>
+                  {user?.role === 'admin' && (
+                    <span className="h-3.5 px-1.5 rounded-full bg-[#D4A843]/15 text-[8px] font-bold text-[#D4A843] tracking-wider uppercase">Admin</span>
+                  )}
+                </div>
+              </div>
+              <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200 ${userMenuOpen ? 'rotate-90' : ''}`} />
+            </button>
+            {/* User dropdown menu */}
+            <AnimatePresence>
+              {userMenuOpen && onLogout && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                  animate={{ opacity: 1, height: 'auto', marginTop: 4 }}
+                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="rounded-lg border border-[#D4A843]/15 bg-[#0a0a0a] p-1">
+                    <div className="px-3 py-2 border-b border-border/30 mb-1">
+                      <p className="text-[11px] text-muted-foreground truncate">{user?.email || ''}</p>
+                    </div>
+                    <button
+                      onClick={() => { onLogout(); setUserMenuOpen(false); }}
+                      className="flex items-center gap-2.5 w-full rounded-md px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                      Sign Out
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         ) : (
           <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex justify-center">
-                  <Avatar className="h-8 w-8 border border-[#D4A843]/30 cursor-pointer hover:border-[#D4A843]/50 transition-colors">
-                    <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">LT</AvatarFallback>
+                <button
+                  onClick={() => { if (onLogout) onLogout(); }}
+                  className="flex justify-center"
+                >
+                  <Avatar className="h-8 w-8 border border-[#D4A843]/30 cursor-pointer hover:border-red-500/50 hover:opacity-80 transition-all">
+                    <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">{user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'LT'}</AvatarFallback>
                   </Avatar>
-                </div>
+                </button>
               </TooltipTrigger>
               <TooltipContent side="right" className="bg-card border-border text-foreground">
-                Laxree Team
+                {user?.name || 'Laxree Team'} — Click to sign out
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -328,6 +445,40 @@ const quickActions = [
 ];
 
 export default function Home() {
+  // Auth state - use lazy initializer to read session without useEffect setState
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return !!sessionStorage.getItem('laxree_session');
+      } catch { return false; }
+    }
+    return false;
+  });
+  const [user, setUser] = useState<{ email: string; name: string; role: string } | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const s = sessionStorage.getItem('laxree_session');
+        return s ? JSON.parse(s) : null;
+      } catch { return null; }
+    }
+    return null;
+  });
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const navScrollRef = useRef<HTMLDivElement>(null);
+
+  const handleLogin = useCallback((loggedInUser: { email: string; name: string; role: string }) => {
+    setIsLoggedIn(true);
+    setUser(loggedInUser);
+    sessionStorage.setItem('laxree_session', JSON.stringify(loggedInUser));
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    setIsLoggedIn(false);
+    setUser(null);
+    sessionStorage.removeItem('laxree_session');
+  }, []);
+
+  // Dashboard state
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
@@ -336,12 +487,18 @@ export default function Home() {
 
   const activeNavItem = navItems.find((n) => n.key === activeTab);
 
+  // Handle tab change with smooth scroll & mobile sheet close
+  const handleTabChange = useCallback((key: TabKey) => {
+    setActiveTab(key);
+    setMobileSheetOpen(false);
+  }, []);
+
   // Command palette: filter nav items
   const filteredNavItems = cmdQuery
     ? navItems.filter((n) => n.label.toLowerCase().includes(cmdQuery.toLowerCase()))
     : navItems;
 
-  // Cmd+K shortcut
+  // Cmd+K shortcut + Alt+number for quick nav
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -353,10 +510,23 @@ export default function Home() {
         setCmdOpen(false);
         setFabOpen(false);
       }
+      // Alt+1 through Alt+0 for quick navigation
+      if (e.altKey && !e.metaKey && !e.ctrlKey) {
+        const shortcutItem = navItems.find(n => n.shortcut === e.key);
+        if (shortcutItem) {
+          e.preventDefault();
+          handleTabChange(shortcutItem.key);
+        }
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  // Show login if not authenticated
+  if (!isLoggedIn) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
 
   const renderTab = () => {
     switch (activeTab) {
@@ -369,13 +539,17 @@ export default function Home() {
       case 'campaigns': return <CampaignsTab />;
       case 'social-analytics': return <SocialAnalyticsTab />;
       case 'leads': return <LeadsTab />;
+      case 'report-builder': return <ReportBuilderTab />;
       case 'budget': return <BudgetTab />;
       case 'competitors': return <CompetitorTab />;
       case 'email': return <EmailTab />;
       case 'ab-testing': return <AbTestingTab />;
       case 'reports': return <ReportsTab />;
       case 'funnel': return <FunnelTab />;
+      case 'social-accounts': return <SocialAccountsTab />;
       case 'attribution': return <AttributionTab />;
+      case 'seo-master': return <SeoMasterTab />;
+      case 'lead-pipeline': return <LeadPipelineTab />;
       default: return <OverviewTab />;
     }
   };
@@ -390,8 +564,11 @@ export default function Home() {
       >
         <SidebarContent
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           collapsed={sidebarCollapsed}
+          onLogout={handleLogout}
+          scrollRef={navScrollRef}
+          user={user}
         />
         {/* Collapse Toggle */}
         <button
@@ -407,8 +584,8 @@ export default function Home() {
         </button>
       </aside>
 
-      {/* Mobile Sidebar */}
-      <Sheet>
+      {/* Mobile Sidebar (Controlled) */}
+      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
         <SheetTrigger asChild>
           <Button
             variant="ghost"
@@ -422,10 +599,10 @@ export default function Home() {
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <SidebarContent
             activeTab={activeTab}
-            onTabChange={(key) => {
-              setActiveTab(key);
-            }}
+            onTabChange={handleTabChange}
             collapsed={false}
+            onLogout={handleLogout}
+            user={user}
           />
         </SheetContent>
       </Sheet>
@@ -528,11 +705,20 @@ export default function Home() {
               </PopoverContent>
             </Popover>
 
+            {/* User name badge (desktop) */}
+            {user && (
+              <div className="hidden md:flex items-center gap-2 mr-1">
+                <div className="h-5 px-2 rounded-full bg-[#D4A843]/10 border border-[#D4A843]/15 flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-sm shadow-green-500/30" />
+                  <span className="text-[11px] font-medium text-[#D4A843]/80">{user.name}</span>
+                </div>
+              </div>
+            )}
             <Separator orientation="vertical" className="h-5 bg-border/50 mx-1" />
 
             {/* User Avatar (mobile) */}
             <Avatar className="h-7 w-7 border border-[#D4A843]/20 lg:hidden">
-              <AvatarFallback className="bg-[#D4A843]/15 text-[#D4A843] text-[10px] font-bold">LT</AvatarFallback>
+              <AvatarFallback className="bg-[#D4A843]/15 text-[#D4A843] text-[10px] font-bold">{user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'LT'}</AvatarFallback>
             </Avatar>
           </div>
         </header>

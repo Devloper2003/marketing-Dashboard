@@ -96,6 +96,63 @@
   }
 }
 
+/* Smooth scroll for sidebar navigation */
+.scroll-smooth {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Sidebar nav item animated scroll highlight */
+.nav-scroll-highlight {
+  animation: navScrollPulse 0.6s ease-out;
+}
+
+@keyframes navScrollPulse {
+  0% { background-color: rgba(212, 168, 67, 0.25); }
+  100% { background-color: rgba(212, 168, 67, 0.1); }
+}
+
+/* Smooth nav item transition */
+.nav-item-anim {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item-anim:hover {
+  transform: translateX(2px);
+}
+
+/* Login page transitions */
+.login-fade-in {
+  animation: loginFadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes loginFadeIn {
+  0% { opacity: 0; transform: translateY(20px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.login-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.login-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.15), transparent);
+  animation: loginShimmer 3s ease-in-out infinite;
+}
+
+@keyframes loginShimmer {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: 100%; }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -109,10 +166,25 @@
 ::-webkit-scrollbar-thumb {
   background: #2a2520;
   border-radius: 3px;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #D4A843;
+}
+
+/* Sidebar scrollbar - thinner */
+[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+  width: 4px;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+  background: rgba(212, 168, 67, 0.2);
+  border-radius: 2px;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 168, 67, 0.5);
 }
 
 /* Gold gradient utilities */
