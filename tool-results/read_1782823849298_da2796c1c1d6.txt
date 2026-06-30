@@ -1,0 +1,870 @@
+     1→'use client';
+     2→
+     3→import { useState, useEffect, useRef, Suspense, useCallback } from 'react';
+     4→import {
+     5→  Wand2,
+     6→  LayoutDashboard,
+     7→  Calendar,
+     8→  FileText,
+     9→  Share2,
+    10→  Lightbulb,
+    11→  Search,
+    12→  Target,
+    13→  BarChart3,
+    14→  Users,
+    15→  ChevronLeft,
+    16→  ChevronRight,
+    17→  Menu,
+    18→  Gem,
+    19→  Swords,
+    20→  Mail,
+    21→  Bell,
+    22→  Search as SearchIcon,
+    23→  X,
+    24→  Zap,
+    25→  FilePlus2,
+    26→  Clock,
+    27→  Sparkles,
+    28→  BarChart,
+    29→  TrendingUp,
+    30→  AlertTriangle,
+    31→  Check,
+    32→  Eye,
+    33→  Wallet,
+    34→  FlaskConical,
+    35→  FileBarChart,
+    36→  Filter,
+    37→  GitBranch,
+    38→  Globe,
+    39→  ClipboardList,
+    40→  Contact,
+    41→  LogOut,
+    42→} from 'lucide-react';
+    43→import { AnimatePresence, motion } from 'framer-motion';
+    44→import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+    45→import { Button } from '@/components/ui/button';
+    46→import { Input } from '@/components/ui/input';
+    47→import { Badge } from '@/components/ui/badge';
+    48→import { Skeleton } from '@/components/ui/skeleton';
+    49→import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+    50→import { ScrollArea } from '@/components/ui/scroll-area';
+    51→import { Separator } from '@/components/ui/separator';
+    52→import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+    53→import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+    54→import { Dialog, DialogContent } from '@/components/ui/dialog';
+    55→import {
+    56→  Select,
+    57→  SelectContent,
+    58→  SelectItem,
+    59→  SelectTrigger,
+    60→  SelectValue,
+    61→} from '@/components/ui/select';
+    62→
+    63→// Lazy load tab components
+    64→import dynamic from 'next/dynamic';
+    65→import LoginPage from '@/components/login-page';
+    66→
+    67→const OverviewTab = dynamic(() => import('@/components/dashboard/overview-tab'), {
+    68→  loading: () => <TabSkeleton />,
+    69→});
+    70→const CalendarTab = dynamic(() => import('@/components/dashboard/calendar-tab'), {
+    71→  loading: () => <TabSkeleton />,
+    72→});
+    73→const BlogPlannerTab = dynamic(() => import('@/components/dashboard/blog-planner-tab'), {
+    74→  loading: () => <TabSkeleton />,
+    75→});
+    76→const SocialPlannerTab = dynamic(() => import('@/components/dashboard/social-planner-tab'), {
+    77→  loading: () => <TabSkeleton />,
+    78→});
+    79→const IdeaResearcherTab = dynamic(() => import('@/components/dashboard/idea-researcher-tab'), {
+    80→  loading: () => <TabSkeleton />,
+    81→});
+    82→const SeoTab = dynamic(() => import('@/components/dashboard/seo-tab'), {
+    83→  loading: () => <TabSkeleton />,
+    84→});
+    85→const CampaignsTab = dynamic(() => import('@/components/dashboard/campaigns-tab'), {
+    86→  loading: () => <TabSkeleton />,
+    87→});
+    88→const SocialAnalyticsTab = dynamic(() => import('@/components/dashboard/social-analytics-tab'), {
+    89→  loading: () => <TabSkeleton />,
+    90→});
+    91→const LeadsTab = dynamic(() => import('@/components/dashboard/leads-tab'), {
+    92→  loading: () => <TabSkeleton />,
+    93→});
+    94→const CompetitorTab = dynamic(() => import('@/components/dashboard/competitor-tab'), {
+    95→  loading: () => <TabSkeleton />,
+    96→});
+    97→const BudgetTab = dynamic(() => import('@/components/dashboard/budget-tab'), {
+    98→  loading: () => <TabSkeleton />,
+    99→});
+   100→const EmailTab = dynamic(() => import('@/components/dashboard/email-tab'), {
+   101→  loading: () => <TabSkeleton />,
+   102→});
+   103→const ReportsTab = dynamic(() => import('@/components/dashboard/reports-tab'), {
+   104→  loading: () => <TabSkeleton />,
+   105→});
+   106→const AbTestingTab = dynamic(() => import('@/components/dashboard/ab-testing-tab'), {
+   107→  loading: () => <TabSkeleton />,
+   108→});
+   109→const AttributionTab = dynamic(() => import('@/components/dashboard/attribution-tab'), {
+   110→  loading: () => <TabSkeleton />,
+   111→});
+   112→const SeoMasterTab = dynamic(() => import('@/components/dashboard/seo-master-tab'), {
+   113→  loading: () => <TabSkeleton />,
+   114→});
+   115→const ReportBuilderTab = dynamic(() => import('@/components/dashboard/report-builder-tab'), {
+   116→  loading: () => <TabSkeleton />,
+   117→});
+   118→const FunnelTab = dynamic(() => import('@/components/dashboard/funnel-tab'), {
+   119→  loading: () => <TabSkeleton />,
+   120→});
+   121→const SocialAccountsTab = dynamic(() => import('@/components/dashboard/social-accounts-tab'), {
+   122→  loading: () => <TabSkeleton />,
+   123→});
+   124→const LeadPipelineTab = dynamic(() => import('@/components/dashboard/lead-pipeline-tab'), {
+   125→  loading: () => <TabSkeleton />,
+   126→});
+   127→
+   128→type TabKey = 'overview' | 'calendar' | 'blogs' | 'social-planner' | 'ideas' | 'seo' | 'campaigns' | 'social-analytics' | 'leads' | 'report-builder' | 'budget' | 'competitors' | 'email' | 'ab-testing' | 'reports' | 'funnel' | 'attribution' | 'social-accounts' | 'seo-master' | 'lead-pipeline';
+   129→
+   130→interface NavItem {
+   131→  key: TabKey;
+   132→  label: string;
+   133→  icon: React.ComponentType<{ className?: string }>;
+   134→  category?: string;
+   135→  shortcut?: string;
+   136→  badge?: string;
+   137→}
+   138→
+   139→const navItems: NavItem[] = [
+   140→  // Core
+   141→  { key: 'overview', label: 'Overview', icon: LayoutDashboard, category: 'Core', shortcut: '1' },
+   142→  // Content & Planning
+   143→  { key: 'calendar', label: 'Content Calendar', icon: Calendar, category: 'Content & Planning', shortcut: '2' },
+   144→  { key: 'blogs', label: 'Blog Planner', icon: FileText, category: 'Content & Planning', shortcut: '3', badge: '3' },
+   145→  { key: 'social-planner', label: 'Social Planner', icon: Share2, category: 'Content & Planning', shortcut: '4' },
+   146→  { key: 'ideas', label: 'Idea Researcher', icon: Lightbulb, category: 'Content & Planning', shortcut: '5', badge: 'AI' },
+   147→  // Performance
+   148→  { key: 'seo', label: 'SEO Dashboard', icon: Search, category: 'Performance', shortcut: '6' },
+   149→  { key: 'campaigns', label: 'Campaigns', icon: Target, category: 'Performance', shortcut: '7', badge: '5' },
+   150→  { key: 'social-analytics', label: 'Social Analytics', icon: BarChart3, category: 'Performance', shortcut: '8' },
+   151→  { key: 'leads', label: 'Leads & Revenue', icon: Users, category: 'Performance', shortcut: '9', badge: '12' },
+   152→  // Analytics & Insights
+   153→  { key: 'report-builder', label: 'Report Builder', icon: ClipboardList, category: 'Analytics', shortcut: '0' },
+   154→  { key: 'budget', label: 'Budget Planner', icon: Wallet, category: 'Analytics' },
+   155→  { key: 'competitors', label: 'Competitor Analysis', icon: Swords, category: 'Analytics' },
+   156→  { key: 'attribution', label: 'Attribution', icon: GitBranch, category: 'Analytics' },
+   157→  { key: 'funnel', label: 'Funnel', icon: Filter, category: 'Analytics' },
+   158→  // Outreach
+   159→  { key: 'email', label: 'Email Campaigns', icon: Mail, category: 'Outreach' },
+   160→  { key: 'reports', label: 'Reports', icon: FileBarChart, category: 'Outreach', badge: '2' },
+   161→  { key: 'ab-testing', label: 'A/B Testing', icon: FlaskConical, category: 'Outreach' },
+   162→  // Advanced
+   163→  { key: 'social-accounts', label: 'Social Accounts', icon: Globe, category: 'Advanced' },
+   164→  { key: 'seo-master', label: 'AI SEO Master', icon: Wand2, category: 'Advanced', badge: 'AI' },
+   165→  { key: 'lead-pipeline', label: 'Lead Pipeline', icon: Contact, category: 'Advanced', badge: '8' },
+   166→];
+   167→
+   168→function TabSkeleton() {
+   169→  return (
+   170→    <div className="space-y-6 p-1">
+   171→      <div className="flex items-center justify-between">
+   172→        <Skeleton className="h-8 w-48" />
+   173→        <Skeleton className="h-10 w-32" />
+   174→      </div>
+   175→      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   176→        {[...Array(4)].map((_, i) => (
+   177→          <Skeleton key={i} className="h-28 rounded-xl" />
+   178→        ))}
+   179→      </div>
+   180→      <Skeleton className="h-80 rounded-xl" />
+   181→      <Skeleton className="h-60 rounded-xl" />
+   182→    </div>
+   183→  );
+   184→}
+   185→
+   186→function SidebarContent({
+   187→  activeTab,
+   188→  onTabChange,
+   189→  collapsed,
+   190→  onLogout,
+   191→  scrollRef,
+   192→  user,
+   193→}: {
+   194→  activeTab: TabKey;
+   195→  onTabChange: (key: TabKey) => void;
+   196→  collapsed: boolean;
+   197→  onLogout?: () => void;
+   198→  scrollRef?: React.RefObject<HTMLDivElement | null>;
+   199→  user?: { email: string; name: string; role: string } | null;
+   200→}) {
+   201→  const activeItemRef = useRef<HTMLButtonElement | null>(null);
+   202→  const [userMenuOpen, setUserMenuOpen] = useState(false);
+   203→  const userMenuRef = useRef<HTMLDivElement>(null);
+   204→
+   205→  // Close user menu on outside click
+   206→  useEffect(() => {
+   207→    if (!userMenuOpen) return;
+   208→    const handler = (e: MouseEvent) => {
+   209→      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+   210→        setUserMenuOpen(false);
+   211→      }
+   212→    };
+   213→    document.addEventListener('mousedown', handler);
+   214→    return () => document.removeEventListener('mousedown', handler);
+   215→  }, [userMenuOpen]);
+   216→
+   217→  // Smooth scroll active nav item into view
+   218→  useEffect(() => {
+   219→    if (activeItemRef.current) {
+   220→      activeItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+   221→    }
+   222→  }, [activeTab]);
+   223→
+   224→  return (
+   225→    <div className="flex h-full flex-col">
+   226→      {/* Logo */}
+   227→      <div className="flex h-16 items-center gap-3 px-4 border-b border-border/50 relative">
+   228→        <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-[#D4A843]/20 via-[#D4A843]/10 to-transparent" />
+   229→        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg gold-gradient shadow-md shadow-[#D4A843]/15">
+   230→          <Gem className="h-5 w-5 text-primary-foreground" />
+   231→        </div>
+   232→        {!collapsed && (
+   233→          <div className="overflow-hidden">
+   234→            <h1 className="text-lg font-bold gold-gradient-text tracking-wider text-glow-gold-sm">LAXREE</h1>
+   235→            <p className="text-[9px] text-muted-foreground/70 -mt-0.5 tracking-[0.25em] uppercase">Marketing Suite</p>
+   236→          </div>
+   237→        )}
+   238→      </div>
+   239→
+   240→      {/* Navigation - Smooth Animated Scroll with Categories */}
+   241→      <ScrollArea className="flex-1 min-h-0 py-3 scroll-smooth">
+   242→        <nav className="px-3 pb-4" ref={scrollRef as React.RefObject<HTMLElement>}>
+   243→          {navItems.reduce<React.ReactNode[]>((acc, item) => {
+   244→            const Icon = item.icon;
+   245→            const isActive = activeTab === item.key;
+   246→            const prevItem = navItems[navItems.indexOf(item) - 1];
+   247→            const showCategory = !collapsed && item.category && (!prevItem || prevItem.category !== item.category);
+   248→            const badgeColor = item.badge === 'AI' ? 'bg-[#D4A843]/20 text-[#D4A843]' : 'bg-[#D4A843]/10 text-[#D4A843]/70';
+   249→
+   250→            if (collapsed) {
+   251→              acc.push(
+   252→                <TooltipProvider key={item.key} delayDuration={0}>
+   253→                  <Tooltip>
+   254→                    <TooltipTrigger asChild>
+   255→                      <button
+   256→                        ref={isActive ? activeItemRef : undefined}
+   257→                        onClick={() => onTabChange(item.key)}
+   258→                        className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-300 ease-out mx-auto nav-item-hover focus-ring-gold my-0.5 ${
+   259→                          isActive
+   260→                            ? 'bg-[#D4A843]/15 text-[#D4A843] sidebar-glow-active'
+   261→                            : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+   262→                        }`}
+   263→                      >
+   264→                        {isActive && (
+   265→                          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full gold-gradient" />
+   266→                        )}
+   267→                        <Icon className="h-[18px] w-[18px]" />
+   268→                        {item.badge && (
+   269→                          <span className={`absolute -top-0.5 -right-0.5 h-3.5 min-w-3.5 flex items-center justify-center rounded-full px-1 text-[8px] font-bold ${badgeColor}`}>{item.badge}</span>
+   270→                        )}
+   271→                      </button>
+   272→                    </TooltipTrigger>
+   273→                    <TooltipContent side="right" className="bg-card border-border text-foreground">
+   274→                      <div className="flex items-center gap-2">
+   275→                        {item.label}
+   276→                        {item.shortcut && <span className="text-[10px] text-muted-foreground/50 ml-2">⌘{item.shortcut}</span>}
+   277→                      </div>
+   278→                    </TooltipContent>
+   279→                  </Tooltip>
+   280→                </TooltipProvider>
+   281→              );
+   282→            } else {
+   283→              acc.push(
+   284→                <div key={item.key}>
+   285→                  {showCategory && (
+   286→                    <div className="flex items-center gap-2 mt-4 mb-1.5 first:mt-0">
+   287→                      <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">{item.category}</span>
+   288→                      <div className="flex-1 h-px bg-border/30" />
+   289→                    </div>
+   290→                  )}
+   291→                  <button
+   292→                    ref={isActive ? activeItemRef : undefined}
+   293→                    onClick={() => onTabChange(item.key)}
+   294→                    className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-300 ease-out w-full focus-ring-gold my-0.5 group ${
+   295→                      isActive
+   296→                        ? 'bg-[#D4A843]/10 text-[#D4A843] sidebar-glow-active'
+   297→                        : 'text-muted-foreground/80 hover:text-foreground hover:bg-white/5'
+   298→                    }`}
+   299→                  >
+   300→                    {isActive && (
+   301→                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full gold-gradient" />
+   302→                    )}
+   303→                    <Icon className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`} />
+   304→                    <span className="truncate flex-1">{item.label}</span>
+   305→                    {item.badge && (
+   306→                      <span className={`h-5 min-w-5 flex items-center justify-center rounded-full px-1.5 text-[9px] font-bold ${badgeColor}`}>{item.badge}</span>
+   307→                    )}
+   308→                    {item.shortcut && (
+   309→                      <span className="text-[10px] text-muted-foreground/30 font-mono group-hover:text-muted-foreground/50 transition-colors">{item.shortcut}</span>
+   310→                    )}
+   311→                  </button>
+   312→                </div>
+   313→              );
+   314→            }
+   315→            return acc;
+   316→          }, [])}
+   317→        </nav>
+   318→      </ScrollArea>
+   319→
+   320→      {/* Quick Stats */}
+   321→      <div className={"border-t border-border/50 px-3 pt-3 pb-1" + (collapsed ? ' px-2' : '')}>
+   322→        {collapsed ? (
+   323→          <div className="flex flex-col items-center gap-2">
+   324→            <div className="flex items-center gap-1">
+   325→              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+   326→              <span className="text-[10px] font-bold text-muted-foreground">8</span>
+   327→            </div>
+   328→            <div className="flex items-center gap-1">
+   329→              <span className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
+   330→              <span className="text-[10px] font-bold text-muted-foreground">12</span>
+   331→            </div>
+   332→            <div className="flex items-center gap-1">
+   333→              <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+   334→              <span className="text-[10px] font-bold text-muted-foreground">3</span>
+   335→            </div>
+   336→          </div>
+   337→        ) : (
+   338→          <div className="flex items-center justify-between px-2 pb-1">
+   339→            <div className="flex items-center gap-1.5">
+   340→              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+   341→              <span className="text-[10px] font-semibold text-muted-foreground">8 <span className="text-[9px] text-muted-foreground/60">Active</span></span>
+   342→            </div>
+   343→            <div className="flex items-center gap-1.5">
+   344→              <span className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
+   345→              <span className="text-[10px] font-semibold text-muted-foreground">12 <span className="text-[9px] text-muted-foreground/60">Pending</span></span>
+   346→            </div>
+   347→            <div className="flex items-center gap-1.5">
+   348→              <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+   349→              <span className="text-[10px] font-semibold text-muted-foreground">3 <span className="text-[9px] text-muted-foreground/60">Alerts</span></span>
+   350→            </div>
+   351→          </div>
+   352→        )}
+   353→      </div>
+   354→
+   355→      {/* User Section with Logout */}
+   356→      <div className="relative border-t border-border/30 p-3" ref={userMenuRef}>
+   357→        <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-[#D4A843]/15 via-[#D4A843]/8 to-transparent" />
+   358→        {!collapsed ? (
+   359→          <div className="space-y-1">
+   360→            <button
+   361→              onClick={() => setUserMenuOpen(!userMenuOpen)}
+   362→              className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-white/5 transition-all duration-200 cursor-pointer group w-full text-left"
+   363→            >
+   364→              <Avatar className="h-8 w-8 border border-[#D4A843]/30 group-hover:border-[#D4A843]/50 transition-colors">
+   365→                <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">{user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'LT'}</AvatarFallback>
+   366→              </Avatar>
+   367→              <div className="flex-1 min-w-0">
+   368→                <p className="text-sm font-medium text-foreground truncate">{user?.name || 'Laxree Team'}</p>
+   369→                <div className="flex items-center gap-1.5">
+   370→                  <p className="text-[11px] text-muted-foreground/70 truncate">{user?.role === 'admin' ? 'Administrator' : user?.role === 'manager' ? 'Marketing Manager' : 'Analytics Viewer'}</p>
+   371→                  {user?.role === 'admin' && (
+   372→                    <span className="h-3.5 px-1.5 rounded-full bg-[#D4A843]/15 text-[8px] font-bold text-[#D4A843] tracking-wider uppercase">Admin</span>
+   373→                  )}
+   374→                </div>
+   375→              </div>
+   376→              <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200 ${userMenuOpen ? 'rotate-90' : ''}`} />
+   377→            </button>
+   378→            {/* User dropdown menu */}
+   379→            <AnimatePresence>
+   380→              {userMenuOpen && onLogout && (
+   381→                <motion.div
+   382→                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
+   383→                  animate={{ opacity: 1, height: 'auto', marginTop: 4 }}
+   384→                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+   385→                  transition={{ duration: 0.2, ease: 'easeOut' }}
+   386→                  className="overflow-hidden"
+   387→                >
+   388→                  <div className="rounded-lg border border-[#D4A843]/15 bg-[#0a0a0a] p-1">
+   389→                    <div className="px-3 py-2 border-b border-border/30 mb-1">
+   390→                      <p className="text-[11px] text-muted-foreground truncate">{user?.email || ''}</p>
+   391→                    </div>
+   392→                    <button
+   393→                      onClick={() => { onLogout(); setUserMenuOpen(false); }}
+   394→                      className="flex items-center gap-2.5 w-full rounded-md px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+   395→                    >
+   396→                      <LogOut className="h-3.5 w-3.5" />
+   397→                      Sign Out
+   398→                    </button>
+   399→                  </div>
+   400→                </motion.div>
+   401→              )}
+   402→            </AnimatePresence>
+   403→          </div>
+   404→        ) : (
+   405→          <TooltipProvider delayDuration={0}>
+   406→            <Tooltip>
+   407→              <TooltipTrigger asChild>
+   408→                <button
+   409→                  onClick={() => { if (onLogout) onLogout(); }}
+   410→                  className="flex justify-center"
+   411→                >
+   412→                  <Avatar className="h-8 w-8 border border-[#D4A843]/30 cursor-pointer hover:border-red-500/50 hover:opacity-80 transition-all">
+   413→                    <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">{user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'LT'}</AvatarFallback>
+   414→                  </Avatar>
+   415→                </button>
+   416→              </TooltipTrigger>
+   417→              <TooltipContent side="right" className="bg-card border-border text-foreground">
+   418→                {user?.name || 'Laxree Team'} — Click to sign out
+   419→              </TooltipContent>
+   420→            </Tooltip>
+   421→          </TooltipProvider>
+   422→        )}
+   423→      </div>
+   424→    </div>
+   425→  );
+   426→}
+   427→
+   428→const notifications = [
+   429→  { id: 1, title: 'Diwali Collection campaign ROAS increased by 15%', time: '2 hours ago', type: 'success' as const },
+   430→  { id: 2, title: 'New lead from Tata Group via Google Ads', time: '5 hours ago', type: 'info' as const },
+   431→  { id: 3, title: "Blog '10 Luxe Jewellery Trends' hit #3 on Google", time: '1 day ago', type: 'success' as const },
+   432→  { id: 4, title: 'YouTube Brand Video campaign is at risk', time: '1 day ago', type: 'warning' as const },
+   433→  { id: 5, title: 'Instagram milestone: 135K followers reached!', time: '2 days ago', type: 'info' as const },
+   434→  { id: 6, title: 'Monthly SEO report is ready for review', time: '3 days ago', type: 'info' as const },
+   435→];
+   436→
+   437→const notifDotColor = { success: 'bg-green-500', warning: 'bg-red-500', info: 'bg-[#D4A843]' };
+   438→
+   439→const quickActions = [
+   440→  { label: 'New Blog Post', tab: 'blogs' as TabKey, icon: FilePlus2 },
+   441→  { label: 'Schedule Post', tab: 'social-planner' as TabKey, icon: Clock },
+   442→  { label: 'Add Calendar Event', tab: 'calendar' as TabKey, icon: Calendar },
+   443→  { label: 'Generate Ideas', tab: 'ideas' as TabKey, icon: Sparkles },
+   444→  { label: 'View SEO Report', tab: 'seo' as TabKey, icon: BarChart },
+   445→];
+   446→
+   447→export default function Home() {
+   448→  // Auth state - use lazy initializer to read session without useEffect setState
+   449→  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+   450→    if (typeof window !== 'undefined') {
+   451→      try {
+   452→        return !!sessionStorage.getItem('laxree_session');
+   453→      } catch { return false; }
+   454→    }
+   455→    return false;
+   456→  });
+   457→  const [user, setUser] = useState<{ email: string; name: string; role: string } | null>(() => {
+   458→    if (typeof window !== 'undefined') {
+   459→      try {
+   460→        const s = sessionStorage.getItem('laxree_session');
+   461→        return s ? JSON.parse(s) : null;
+   462→      } catch { return null; }
+   463→    }
+   464→    return null;
+   465→  });
+   466→  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+   467→  const navScrollRef = useRef<HTMLDivElement>(null);
+   468→
+   469→  const handleLogin = useCallback((loggedInUser: { email: string; name: string; role: string }) => {
+   470→    setIsLoggedIn(true);
+   471→    setUser(loggedInUser);
+   472→    sessionStorage.setItem('laxree_session', JSON.stringify(loggedInUser));
+   473→  }, []);
+   474→
+   475→  const handleLogout = useCallback(() => {
+   476→    setIsLoggedIn(false);
+   477→    setUser(null);
+   478→    sessionStorage.removeItem('laxree_session');
+   479→  }, []);
+   480→
+   481→  // Dashboard state
+   482→  const [activeTab, setActiveTab] = useState<TabKey>('overview');
+   483→  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+   484→  const [fabOpen, setFabOpen] = useState(false);
+   485→  const [cmdOpen, setCmdOpen] = useState(false);
+   486→  const [cmdQuery, setCmdQuery] = useState('');
+   487→
+   488→  const activeNavItem = navItems.find((n) => n.key === activeTab);
+   489→
+   490→  // Handle tab change with smooth scroll & mobile sheet close
+   491→  const handleTabChange = useCallback((key: TabKey) => {
+   492→    setActiveTab(key);
+   493→    setMobileSheetOpen(false);
+   494→  }, []);
+   495→
+   496→  // Command palette: filter nav items
+   497→  const filteredNavItems = cmdQuery
+   498→    ? navItems.filter((n) => n.label.toLowerCase().includes(cmdQuery.toLowerCase()))
+   499→    : navItems;
+   500→
+   501→  // Cmd+K shortcut + Alt+number for quick nav
+   502→  useEffect(() => {
+   503→    const handler = (e: KeyboardEvent) => {
+   504→      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+   505→        e.preventDefault();
+   506→        setCmdOpen((v) => !v);
+   507→        setCmdQuery('');
+   508→      }
+   509→      if (e.key === 'Escape') {
+   510→        setCmdOpen(false);
+   511→        setFabOpen(false);
+   512→      }
+   513→      // Alt+1 through Alt+0 for quick navigation
+   514→      if (e.altKey && !e.metaKey && !e.ctrlKey) {
+   515→        const shortcutItem = navItems.find(n => n.shortcut === e.key);
+   516→        if (shortcutItem) {
+   517→          e.preventDefault();
+   518→          handleTabChange(shortcutItem.key);
+   519→        }
+   520→      }
+   521→    };
+   522→    window.addEventListener('keydown', handler);
+   523→    return () => window.removeEventListener('keydown', handler);
+   524→  }, []);
+   525→
+   526→  // Show login if not authenticated
+   527→  if (!isLoggedIn) {
+   528→    return <LoginPage onLogin={handleLogin} />;
+   529→  }
+   530→
+   531→  const renderTab = () => {
+   532→    switch (activeTab) {
+   533→      case 'overview': return <OverviewTab />;
+   534→      case 'calendar': return <CalendarTab />;
+   535→      case 'blogs': return <BlogPlannerTab />;
+   536→      case 'social-planner': return <SocialPlannerTab />;
+   537→      case 'ideas': return <IdeaResearcherTab />;
+   538→      case 'seo': return <SeoTab />;
+   539→      case 'campaigns': return <CampaignsTab />;
+   540→      case 'social-analytics': return <SocialAnalyticsTab />;
+   541→      case 'leads': return <LeadsTab />;
+   542→      case 'report-builder': return <ReportBuilderTab />;
+   543→      case 'budget': return <BudgetTab />;
+   544→      case 'competitors': return <CompetitorTab />;
+   545→      case 'email': return <EmailTab />;
+   546→      case 'ab-testing': return <AbTestingTab />;
+   547→      case 'reports': return <ReportsTab />;
+   548→      case 'funnel': return <FunnelTab />;
+   549→      case 'social-accounts': return <SocialAccountsTab />;
+   550→      case 'attribution': return <AttributionTab />;
+   551→      case 'seo-master': return <SeoMasterTab />;
+   552→      case 'lead-pipeline': return <LeadPipelineTab />;
+   553→      default: return <OverviewTab />;
+   554→    }
+   555→  };
+   556→
+   557→  return (
+   558→    <div className="flex h-screen overflow-hidden bg-[#0a0a0a]">
+   559→      {/* Desktop Sidebar */}
+   560→      <aside
+   561→        className={`hidden lg:flex flex-col border-r border-border/50 bg-[#0d0d0d] transition-all duration-300 shrink-0 ${
+   562→          sidebarCollapsed ? 'w-[70px]' : 'w-[260px]'
+   563→        }`}
+   564→      >
+   565→        <SidebarContent
+   566→          activeTab={activeTab}
+   567→          onTabChange={handleTabChange}
+   568→          collapsed={sidebarCollapsed}
+   569→          onLogout={handleLogout}
+   570→          scrollRef={navScrollRef}
+   571→          user={user}
+   572→        />
+   573→        {/* Collapse Toggle */}
+   574→        <button
+   575→          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+   576→          className="absolute top-5 z-10 hidden lg:flex items-center justify-center h-6 w-6 rounded-full bg-[#1a1a1a] border border-border/50 text-muted-foreground hover:text-[#D4A843] hover:border-[#D4A843]/30 transition-all"
+   577→          style={{ left: sidebarCollapsed ? '52px' : '242px' }}
+   578→        >
+   579→          {sidebarCollapsed ? (
+   580→            <ChevronRight className="h-3 w-3" />
+   581→          ) : (
+   582→            <ChevronLeft className="h-3 w-3" />
+   583→          )}
+   584→        </button>
+   585→      </aside>
+   586→
+   587→      {/* Mobile Sidebar (Controlled) */}
+   588→      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+   589→        <SheetTrigger asChild>
+   590→          <Button
+   591→            variant="ghost"
+   592→            size="icon"
+   593→            className="fixed top-3 left-3 z-50 lg:hidden text-muted-foreground hover:text-[#D4A843] bg-[#111]/80 backdrop-blur-sm border border-border/50"
+   594→          >
+   595→            <Menu className="h-5 w-5" />
+   596→          </Button>
+   597→        </SheetTrigger>
+   598→        <SheetContent side="left" className="w-[280px] p-0 bg-[#0d0d0d] border-border/50">
+   599→          <SheetTitle className="sr-only">Navigation</SheetTitle>
+   600→          <SidebarContent
+   601→            activeTab={activeTab}
+   602→            onTabChange={handleTabChange}
+   603→            collapsed={false}
+   604→            onLogout={handleLogout}
+   605→            user={user}
+   606→          />
+   607→        </SheetContent>
+   608→      </Sheet>
+   609→
+   610→      {/* Main Content */}
+   611→      <div className="flex flex-1 flex-col overflow-hidden">
+   612→        {/* Top Header */}
+   613→        <header className="relative sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border/50 bg-[#0a0a0a]/95 backdrop-blur-md px-4 lg:px-6 shrink-0">
+   614→          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4A843]/30 to-transparent" />
+   615→          <div className="flex items-center gap-3 lg:gap-4 pl-12 lg:pl-0">
+   616→            {activeNavItem && (
+   617→              <>
+   618→                <activeNavItem.icon className="h-4 w-4 text-[#D4A843] shrink-0" />
+   619→                <h2 className="text-sm font-semibold text-foreground hidden sm:block truncate">
+   620→                  {activeNavItem.label}
+   621→                </h2>
+   622→              </>
+   623→            )}
+   624→          </div>
+   625→
+   626→          <div className="flex items-center gap-2">
+   627→            {/* Command Palette Trigger */}
+   628→            <Button
+   629→              variant="ghost"
+   630→              size="sm"
+   631→              className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-[#D4A843] h-8 px-3 border border-border/40 hover:border-[#D4A843]/30 bg-[#111]/30 transition-all"
+   632→              onClick={() => { setCmdOpen(true); setCmdQuery(''); }}
+   633→            >
+   634→              <SearchIcon className="h-3.5 w-3.5" />
+   635→              <span className="text-xs">Search...</span>
+   636→              <kbd className="ml-1 inline-flex h-5 items-center gap-0.5 rounded border border-border/60 bg-[#0a0a0a] px-1.5 text-[10px] font-mono text-muted-foreground/70">
+   637→                ⌘K
+   638→              </kbd>
+   639→            </Button>
+   640→            {/* Mobile search */}
+   641→            <Button
+   642→              variant="ghost"
+   643→              size="icon"
+   644→              className="sm:hidden text-muted-foreground hover:text-[#D4A843] h-8 w-8"
+   645→              onClick={() => { setCmdOpen(true); setCmdQuery(''); }}
+   646→            >
+   647→              <SearchIcon className="h-4 w-4" />
+   648→            </Button>
+   649→
+   650→            {/* Date Range */}
+   651→            <Select defaultValue="30d">
+   652→              <SelectTrigger className="h-8 w-auto gap-1.5 border-border/50 bg-[#111]/50 text-xs text-muted-foreground focus:ring-[#D4A843]/20">
+   653→                <SelectValue />
+   654→              </SelectTrigger>
+   655→              <SelectContent className="bg-[#111] border-border">
+   656→                <SelectItem value="7d">Last 7 days</SelectItem>
+   657→                <SelectItem value="30d">Last 30 days</SelectItem>
+   658→                <SelectItem value="90d">Last 90 days</SelectItem>
+   659→                <SelectItem value="12m">Last 12 months</SelectItem>
+   660→              </SelectContent>
+   661→            </Select>
+   662→
+   663→            {/* Notifications */}
+   664→            <Popover>
+   665→              <PopoverTrigger asChild>
+   666→                <Button
+   667→                  variant="ghost"
+   668→                  size="icon"
+   669→                  className="relative text-muted-foreground hover:text-[#D4A843] h-8 w-8"
+   670→                >
+   671→                  <Bell className="h-4 w-4" />
+   672→                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#D4A843] ring-2 ring-[#0a0a0a] notif-pulse" />
+   673→                </Button>
+   674→              </PopoverTrigger>
+   675→              <PopoverContent align="end" className="w-80 p-0 bg-[#111] border-[#D4A843]/20 rounded-xl shadow-2xl shadow-black/50">
+   676→                <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+   677→                  <div className="flex items-center gap-2">
+   678→                    <Bell className="h-4 w-4 text-[#D4A843]" />
+   679→                    <span className="text-sm font-semibold text-foreground">Notifications</span>
+   680→                    <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-[#D4A843]/20 text-[10px] font-bold text-[#D4A843]">{notifications.length}</span>
+   681→                  </div>
+   682→                  <button className="text-[11px] text-[#D4A843] hover:underline">Mark all read</button>
+   683→                </div>
+   684→                <ScrollArea className="max-h-[340px]">
+   685→                  {notifications.map((n) => (
+   686→                    <button
+   687→                      key={n.id}
+   688→                      className="flex items-start gap-3 w-full px-4 py-3 text-left transition-colors hover:bg-[#D4A843]/5 border-b border-border/20 last:border-0"
+   689→                    >
+   690→                      <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${notifDotColor[n.type]}`} />
+   691→                      <div className="flex-1 min-w-0">
+   692→                        <p className="text-[13px] text-foreground leading-snug">{n.title}</p>
+   693→                        <p className="text-[11px] text-muted-foreground mt-1">{n.time}</p>
+   694→                      </div>
+   695→                      <Eye className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0 mt-1" />
+   696→                    </button>
+   697→                  ))}
+   698→                </ScrollArea>
+   699→                <div className="px-4 py-2.5 border-t border-border/50">
+   700→                  <button className="text-[12px] text-[#D4A843] hover:underline flex items-center gap-1">
+   701→                    View all notifications
+   702→                    <ChevronRight className="h-3 w-3" />
+   703→                  </button>
+   704→                </div>
+   705→              </PopoverContent>
+   706→            </Popover>
+   707→
+   708→            {/* User name badge (desktop) */}
+   709→            {user && (
+   710→              <div className="hidden md:flex items-center gap-2 mr-1">
+   711→                <div className="h-5 px-2 rounded-full bg-[#D4A843]/10 border border-[#D4A843]/15 flex items-center gap-1.5">
+   712→                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-sm shadow-green-500/30" />
+   713→                  <span className="text-[11px] font-medium text-[#D4A843]/80">{user.name}</span>
+   714→                </div>
+   715→              </div>
+   716→            )}
+   717→            <Separator orientation="vertical" className="h-5 bg-border/50 mx-1" />
+   718→
+   719→            {/* User Avatar (mobile) */}
+   720→            <Avatar className="h-7 w-7 border border-[#D4A843]/20 lg:hidden">
+   721→              <AvatarFallback className="bg-[#D4A843]/15 text-[#D4A843] text-[10px] font-bold">{user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'LT'}</AvatarFallback>
+   722→            </Avatar>
+   723→          </div>
+   724→        </header>
+   725→
+   726→        {/* Page Content */}
+   727→        <main className="flex-1 overflow-y-auto">
+   728→          <div className="mx-auto max-w-[1440px] p-4 lg:p-6">
+   729→            {renderTab()}
+   730→          </div>
+   731→
+   732→          {/* Footer */}
+   733→          <footer className="relative border-t border-border/20 mt-8 bg-gradient-to-t from-[#080808] to-transparent">
+   734→            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#D4A843]/15 to-transparent" />
+   735→            <div className="mx-auto max-w-[1440px] flex h-10 items-center justify-between px-4 lg:px-6">
+   736→              <p className="text-[11px] text-muted-foreground/60">
+   737→                © {new Date().getFullYear()} <span className="text-[#D4A843]/50 font-medium">Laxree</span> Jewellery — Marketing Analytics Platform
+   738→              </p>
+   739→              <div className="flex items-center gap-1.5">
+   740→                <span className="h-1.5 w-1.5 rounded-full bg-green-500 dot-pulse shadow-sm shadow-green-500/30" />
+   741→                <span className="text-[11px] text-muted-foreground/60">All systems operational</span>
+   742→              </div>
+   743→            </div>
+   744→          </footer>
+   745→        </main>
+   746→
+   747→        {/* ── Quick Actions FAB ──────────────────────────────────────── */}
+   748→        <div className="fixed bottom-20 right-6 z-50 flex flex-col-reverse items-end gap-3">
+   749→          {/* FAB Button */}
+   750→          <button
+   751→            onClick={() => setFabOpen(!fabOpen)}
+   752→            className="pulse-gold flex h-14 w-14 items-center justify-center rounded-full gold-gradient text-primary-foreground shadow-lg shadow-[#D4A843]/20 transition-transform duration-200 hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A843]/50"
+   753→            aria-label="Quick Actions"
+   754→          >
+   755→            <motion.div
+   756→              animate={{ rotate: fabOpen ? 45 : 0 }}
+   757→              transition={{ duration: 0.2 }}
+   758→            >
+   759→              <Zap className="h-6 w-6" />
+   760→            </motion.div>
+   761→          </button>
+   762→
+   763→          {/* Expanded Menu */}
+   764→          <AnimatePresence>
+   765→            {fabOpen && (
+   766→              <motion.div
+   767→                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+   768→                animate={{ opacity: 1, y: 0, scale: 1 }}
+   769→                exit={{ opacity: 0, y: 20, scale: 0.9 }}
+   770→                transition={{ duration: 0.2, ease: 'easeOut' }}
+   771→                className="flex flex-col gap-2"
+   772→              >
+   773→                {quickActions.map((action, i) => (
+   774→                  <motion.button
+   775→                    key={action.label}
+   776→                    initial={{ opacity: 0, x: 20 }}
+   777→                    animate={{ opacity: 1, x: 0 }}
+   778→                    exit={{ opacity: 0, x: 20 }}
+   779→                    transition={{ duration: 0.15, delay: i * 0.04 }}
+   780→                    onClick={() => {
+   781→                      setActiveTab(action.tab);
+   782→                      setFabOpen(false);
+   783→                    }}
+   784→                    className="group flex items-center gap-3 rounded-xl bg-[#141414] border border-[#D4A843]/15 px-4 py-3 shadow-lg shadow-black/40 transition-all duration-200 hover:border-[#D4A843]/40 hover:bg-[#1a1a1a] hover:shadow-[#D4A843]/5 hover:shadow-xl"
+   785→                  >
+   786→                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#D4A843]/10 transition-colors group-hover:bg-[#D4A843]/20">
+   787→                      <action.icon className="h-4 w-4 text-[#D4A843]" />
+   788→                    </div>
+   789→                    <span className="text-sm font-medium text-foreground whitespace-nowrap">
+   790→                      {action.label}
+   791→                    </span>
+   792→                  </motion.button>
+   793→                ))}
+   794→              </motion.div>
+   795→            )}
+   796→          </AnimatePresence>
+   797→        </div>
+   798→      </div>
+   799→
+   800→      {/* ── Command Palette (⌘K) ─────────────────────────────────── */}
+   801→      <Dialog open={cmdOpen} onOpenChange={setCmdOpen}>
+   802→        <DialogContent className="sm:max-w-lg p-0 gap-0 bg-[#111] border-[#D4A843]/15 shadow-2xl shadow-black/60 rounded-xl overflow-hidden">
+   803→          <div className="flex items-center gap-3 border-b border-border/50 px-4 py-3">
+   804→            <SearchIcon className="h-4 w-4 text-[#D4A843] shrink-0" />
+   805→            <input
+   806→              autoFocus
+   807→              value={cmdQuery}
+   808→              onChange={(e) => setCmdQuery(e.target.value)}
+   809→              placeholder="Search tabs, actions..."
+   810→              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+   811→            />
+   812→            <kbd className="inline-flex h-5 items-center rounded border border-border/60 bg-[#0a0a0a] px-1.5 text-[10px] font-mono text-muted-foreground/50">ESC</kbd>
+   813→          </div>
+   814→          <div className="max-h-[320px] overflow-y-auto py-2 px-2">
+   815→            <p className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Navigation</p>
+   816→            <div className="space-y-0.5">
+   817→              {filteredNavItems.map((item) => {
+   818→                const Icon = item.icon;
+   819→                const isActive = activeTab === item.key;
+   820→                return (
+   821→                  <button
+   822→                    key={item.key}
+   823→                    onClick={() => { setActiveTab(item.key); setCmdOpen(false); }}
+   824→                    className={`flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm transition-all duration-150 ${
+   825→                      isActive
+   826→                        ? 'bg-[#D4A843]/10 text-[#D4A843]'
+   827→                        : 'text-foreground hover:bg-white/5'
+   828→                    }`}
+   829→                  >
+   830→                    <Icon className="h-4 w-4 shrink-0 opacity-60" />
+   831→                    <span className="flex-1 text-left">{item.label}</span>
+   832→                    {isActive && <span className="text-[10px] text-[#D4A843]/60">Current</span>}
+   833→                  </button>
+   834→                );
+   835→              })}
+   836→            </div>
+   837→            {cmdQuery && filteredNavItems.length === 0 && (
+   838→              <div className="py-8 text-center text-sm text-muted-foreground">No results found</div>
+   839→            )}
+   840→            <div className="gold-divider my-2" />
+   841→            <p className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Quick Actions</p>
+   842→            <div className="space-y-0.5">
+   843→              {quickActions.map((action) => {
+   844→                const Icon = action.icon;
+   845→                return (
+   846→                  <button
+   847→                    key={action.label}
+   848→                    onClick={() => { setActiveTab(action.tab); setCmdOpen(false); }}
+   849→                    className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-white/5 transition-all duration-150"
+   850→                  >
+   851→                    <Icon className="h-4 w-4 shrink-0 opacity-60" />
+   852→                    <span className="flex-1 text-left">{action.label}</span>
+   853→                    <Zap className="h-3 w-3 text-[#D4A843]/40" />
+   854→                  </button>
+   855→                );
+   856→              })}
+   857→            </div>
+   858→          </div>
+   859→          <div className="border-t border-border/30 px-4 py-2 flex items-center justify-between">
+   860→            <div className="flex items-center gap-3 text-[10px] text-muted-foreground/50">
+   861→              <span className="flex items-center gap-1"><kbd className="inline-flex h-4 items-center rounded border border-border/40 bg-[#0a0a0a] px-1 text-[9px]">↑↓</kbd> Navigate</span>
+   862→              <span className="flex items-center gap-1"><kbd className="inline-flex h-4 items-center rounded border border-border/40 bg-[#0a0a0a] px-1 text-[9px]">↵</kbd> Select</span>
+   863→            </div>
+   864→            <span className="text-[10px] text-muted-foreground/40">Laxree Marketing Suite</span>
+   865→          </div>
+   866→        </DialogContent>
+   867→      </Dialog>
+   868→    </div>
+   869→  );
+   870→}

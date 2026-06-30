@@ -677,3 +677,33 @@ Stage Summary:
 6. Add data export (CSV/Excel) to more tabs
 7. Add notification bell badge counter with mark-as-read
 8. Add dashboard widget customization (drag-and-drop layout)
+
+---
+Task ID: sidebar-scroll-fix
+Agent: Main Orchestrator
+Task: Fix sidebar scrollbar visibility — all 20 nav items were being cut off
+
+Work Log:
+- Diagnosed issue: sidebar used native `overflow-y-auto` with 5px wide, 0.35 opacity scrollbar that was nearly invisible on dark background
+- Changed `overflow-y-auto` to `overflow-y-scroll` (always show scrollbar)
+- Increased scrollbar width from 5px to 7px
+- Increased scrollbar thumb opacity from 0.35 to 0.45 (hover: 0.70)
+- Added scrollbar track background for better contrast
+- Added gold border on scrollbar thumb for premium feel
+- Added `min-height: 40px` on thumb for better grabability
+- Wrapped scroll area in relative container with bottom fade gradient overlay to visually indicate more content below
+- Increased bottom padding on nav to `pb-6` to prevent last item being hidden behind fade
+- Removed unused `.sidebar-scroll-fade` CSS class
+- Verified via agent-browser:
+  - Desktop: scrollHeight=919px, clientHeight=395px, all 20 items accessible via scroll
+  - Collapsed mode: scrollHeight=890px, clientHeight=378px, scrollbar works
+  - Mobile sheet (375x812): scrollHeight=919px, clientHeight=630px, scrollbar works
+  - Scrolled to bottom (524px), clicked "Lead Pipeline" — tab activated correctly
+  - Scrolled back to top, clicked "Overview" — tab activated correctly
+  - Zero console errors, zero lint errors
+
+Stage Summary:
+- Sidebar scrollbar is now always visible (7px wide, gold-themed) on all viewport sizes
+- Bottom fade gradient overlay indicates scrollable content
+- All 20 nav items + 6 category headers fully accessible via smooth scrolling
+- Lint: 0 errors, Dev server: 0 runtime errors

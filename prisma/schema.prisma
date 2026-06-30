@@ -159,3 +159,26 @@ model EmailCampaign {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+model Integration {
+  id              String   @id @default(cuid())
+  platform        String
+  platformName    String
+  status          String   @default("disconnected")
+  authType        String   @default("api_key")
+  apiKey          String?
+  apiSecret       String?
+  accessToken     String?
+  refreshToken    String?
+  accountId       String?
+  accountName     String?
+  accountAvatar   String?
+  lastSyncAt      DateTime?
+  syncInterval    Int      @default(3600)
+  metadata        String?
+  connectedAt     DateTime?
+  disconnectedAt  DateTime?
+  error           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

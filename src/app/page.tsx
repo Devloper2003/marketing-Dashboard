@@ -39,6 +39,7 @@ import {
   ClipboardList,
   Contact,
   LogOut,
+  Plug,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -124,8 +125,11 @@ const SocialAccountsTab = dynamic(() => import('@/components/dashboard/social-ac
 const LeadPipelineTab = dynamic(() => import('@/components/dashboard/lead-pipeline-tab'), {
   loading: () => <TabSkeleton />,
 });
+const IntegrationsTab = dynamic(() => import('@/components/dashboard/integrations-tab'), {
+  loading: () => <TabSkeleton />,
+});
 
-type TabKey = 'overview' | 'calendar' | 'blogs' | 'social-planner' | 'ideas' | 'seo' | 'campaigns' | 'social-analytics' | 'leads' | 'report-builder' | 'budget' | 'competitors' | 'email' | 'ab-testing' | 'reports' | 'funnel' | 'attribution' | 'social-accounts' | 'seo-master' | 'lead-pipeline';
+type TabKey = 'overview' | 'calendar' | 'blogs' | 'social-planner' | 'ideas' | 'seo' | 'campaigns' | 'social-analytics' | 'leads' | 'report-builder' | 'budget' | 'competitors' | 'email' | 'ab-testing' | 'reports' | 'funnel' | 'attribution' | 'social-accounts' | 'seo-master' | 'lead-pipeline' | 'integrations';
 
 interface NavItem {
   key: TabKey;
@@ -163,6 +167,8 @@ const navItems: NavItem[] = [
   { key: 'social-accounts', label: 'Social Accounts', icon: Globe, category: 'Advanced' },
   { key: 'seo-master', label: 'AI SEO Master', icon: Wand2, category: 'Advanced', badge: 'AI' },
   { key: 'lead-pipeline', label: 'Lead Pipeline', icon: Contact, category: 'Advanced', badge: '8' },
+  // Settings
+  { key: 'integrations', label: 'Integrations', icon: Plug, category: 'Settings', badge: 'NEW' },
 ];
 
 function TabSkeleton() {
@@ -222,7 +228,7 @@ function SidebarContent({
   }, [activeTab]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-hidden">
       {/* Logo */}
       <div className="flex h-16 items-center gap-3 px-4 border-b border-border/50 relative">
         <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-[#D4A843]/20 via-[#D4A843]/10 to-transparent" />
@@ -238,14 +244,16 @@ function SidebarContent({
       </div>
 
       {/* Navigation - Smooth Animated Scroll with Categories */}
-      <ScrollArea className="flex-1 py-3 scroll-smooth">
-        <nav className="px-3" ref={scrollRef as React.RefObject<HTMLElement>}>
+      <div className="flex-1 min-h-0 relative">
+        <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-[#0a0a0a] to-transparent z-10 pointer-events-none" />
+        <div className="h-full overflow-y-scroll py-3 scroll-smooth sidebar-nav-scroll">
+          <nav className="px-3 pb-6" ref={scrollRef as React.RefObject<HTMLElement>}>
           {navItems.reduce<React.ReactNode[]>((acc, item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.key;
             const prevItem = navItems[navItems.indexOf(item) - 1];
             const showCategory = !collapsed && item.category && (!prevItem || prevItem.category !== item.category);
-            const badgeColor = item.badge === 'AI' ? 'bg-[#D4A843]/20 text-[#D4A843]' : 'bg-[#D4A843]/10 text-[#D4A843]/70';
+            const badgeColor = item.badge === 'AI' ? 'bg-[#D4A843]/20 text-[#D4A843]' : item.badge === 'NEW' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' : 'bg-[#D4A843]/10 text-[#D4A843]/70';
 
             if (collapsed) {
               acc.push(
@@ -315,7 +323,8 @@ function SidebarContent({
             return acc;
           }, [])}
         </nav>
-      </ScrollArea>
+        </div>
+      </div>
 
       {/* Quick Stats */}
       <div className={"border-t border-border/50 px-3 pt-3 pb-1" + (collapsed ? ' px-2' : '')}>
@@ -550,6 +559,7 @@ export default function Home() {
       case 'attribution': return <AttributionTab />;
       case 'seo-master': return <SeoMasterTab />;
       case 'lead-pipeline': return <LeadPipelineTab />;
+      case 'integrations': return <IntegrationsTab />;
       default: return <OverviewTab />;
     }
   };
