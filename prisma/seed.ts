@@ -10,6 +10,9 @@ async function main() {
   await db.lead.deleteMany();
   await db.ideaNote.deleteMany();
   await db.channelGoal.deleteMany();
+  await db.budgetItem.deleteMany();
+  await db.competitor.deleteMany();
+  await db.emailCampaign.deleteMany();
 
   // Seed Campaigns
   await db.campaign.createMany({
@@ -118,6 +121,23 @@ async function main() {
     ],
   });
 
+  // Seed Email Campaigns
+  await db.emailCampaign.deleteMany();
+  await db.emailCampaign.createMany({
+    data: [
+      { name: 'Diwali Dhamaka Sale', subject: '✨ Diwali Dhamaka — Up to 40% Off on Exquisite Gold & Diamond Pieces', status: 'sent', sentAt: new Date('2025-05-02T10:30:00'), openRate: 42.3, clickRate: 8.7, bounceRate: 1.2, conversions: 342, revenue: 324500, listSize: 12500 },
+      { name: 'New Collection Launch', subject: 'Introducing "Asha" — Our Finest Kundan & Polki Collection for the Modern Bride', status: 'sent', sentAt: new Date('2025-05-15T09:00:00'), openRate: 47.8, clickRate: 11.2, bounceRate: 0.8, conversions: 420, revenue: 420000, listSize: 15000 },
+      { name: 'Loyalty Rewards', subject: 'Thank You for Being Part of the Laxree Family — Exclusive Rewards Inside 🎁', status: 'sent', sentAt: new Date('2025-05-28T11:00:00'), openRate: 38.5, clickRate: 6.4, bounceRate: 1.5, conversions: 198, revenue: 85600, listSize: 8500 },
+      { name: 'Abandoned Cart Recovery', subject: 'Your Selected Pieces Are Waiting — Complete Your Purchase & Get Free Shipping', status: 'sent', sentAt: new Date('2025-06-05T14:00:00'), openRate: 35.1, clickRate: 9.8, bounceRate: 2.1, conversions: 267, revenue: 178000, listSize: 4200 },
+      { name: 'Festive Season Preview', subject: 'Sneak Peek: Our Grand Festive Collection Drops Next Week 🪔', status: 'scheduled', openRate: 0, clickRate: 0, bounceRate: 0, conversions: 0, revenue: 0, listSize: 15000 },
+      { name: 'Bridal Collection Spotlight', subject: 'Make Your Wedding Day Magical — Explore Our Curated Bridal Sets', status: 'draft', openRate: 0, clickRate: 0, bounceRate: 0, conversions: 0, revenue: 0, listSize: 9800 },
+      { name: 'Flash Sale - 24 Hours', subject: '⚡ 24-Hour Flash Sale: Flat 25% Off on Bestselling Diamond Earrings & Pendants', status: 'sent', sentAt: new Date('2025-06-12T08:00:00'), openRate: 44.2, clickRate: 10.5, bounceRate: 1.8, conversions: 315, revenue: 195000, listSize: 11200 },
+      { name: 'Monthly Newsletter #12', subject: 'Laxree Edit — June Edition: Styling Tips, New Arrivals & Behind the Craft', status: 'sent', sentAt: new Date('2025-06-18T10:00:00'), openRate: 28.6, clickRate: 4.3, bounceRate: 0.5, conversions: 87, revenue: 42300, listSize: 18000 },
+      { name: 'VIP Customer Exclusive', subject: 'An Exclusive Invitation — Preview Our Platinum Collection Before Anyone Else', status: 'scheduled', openRate: 0, clickRate: 0, bounceRate: 0, conversions: 0, revenue: 0, listSize: 2500 },
+      { name: "Valentine's Day Special", subject: 'Say It with Gold — Timeless Gifts for Your Loved One 💝', status: 'draft', openRate: 0, clickRate: 0, bounceRate: 0, conversions: 0, revenue: 0, listSize: 10000 },
+    ],
+  });
+
   // Seed Channel Goals
   await db.channelGoal.createMany({
     data: [
@@ -129,6 +149,135 @@ async function main() {
       { channel: 'Organic', metric: 'Monthly Traffic', current: 45000, target: 60000, status: 'off_track' },
       { channel: 'Facebook', metric: 'ROAS', current: 5.8, target: 6.0, status: 'on_track' },
       { channel: 'YouTube', metric: 'Subscribers', current: 3200, target: 5000, status: 'off_track' },
+    ],
+  });
+
+  // Seed Competitors
+  await db.competitor.deleteMany();
+  await db.competitor.createMany({
+    data: [
+      {
+        name: 'Tanishq',
+        website: 'tanishq.co.in',
+        category: 'Organised Retail Chain',
+        marketShare: 18.5,
+        avgPriceRange: '₹25,000 - ₹3,50,000',
+        socialFollowers: 5200000,
+        monthlyTraffic: 18500000,
+        seoAuthority: 82,
+        strengths: 'Strong brand trust,450+ stores,Pan-India presence,Tata backing',
+        weaknesses: 'Premium pricing,Limited online presence,Slow digital adoption',
+        notes: 'Market leader in organised jewellery retail in India',
+      },
+      {
+        name: 'CaratLane',
+        website: 'caratlane.com',
+        category: 'D2C Online',
+        marketShare: 8.2,
+        avgPriceRange: '₹10,000 - ₹1,20,000',
+        socialFollowers: 3200000,
+        monthlyTraffic: 8900000,
+        seoAuthority: 75,
+        strengths: 'Strong online presence,Augmented reality try-on,Affordable luxury,Innovative designs',
+        weaknesses: 'No offline stores,Lower brand recall,Limited high-end segment',
+        notes: 'Largest online jewellery brand in India, acquired by Titan',
+      },
+      {
+        name: 'Kalyan Jewellers',
+        website: 'kalyanjewellers.net',
+        category: 'Organised Retail Chain',
+        marketShare: 12.3,
+        avgPriceRange: '₹15,000 - ₹5,00,000',
+        socialFollowers: 2800000,
+        monthlyTraffic: 6200000,
+        seoAuthority: 68,
+        strengths: 'South India dominance,Celebrity endorsements,Wide product range,Trust factor',
+        weaknesses: 'Weak digital presence,Regional brand perception,Slow e-commerce adoption',
+        notes: 'Strong in South India, expanding to North with aggressive store openings',
+      },
+      {
+        name: 'Malabar Gold',
+        website: 'malabargoldanddiamonds.com',
+        category: 'Organised Retail Chain',
+        marketShare: 10.8,
+        avgPriceRange: '₹20,000 - ₹4,50,000',
+        socialFollowers: 2100000,
+        monthlyTraffic: 5100000,
+        seoAuthority: 65,
+        strengths: 'Global presence (10 countries),Ethical sourcing certification,Competitive pricing',
+        weaknesses: 'Inconsistent brand image,Overseas focus dilutes India presence,Lower digital engagement',
+        notes: 'Largest jewellery retail chain globally by store count',
+      },
+      {
+        name: 'PC Jeweller',
+        website: 'pcjeweller.com',
+        category: 'Organised Retail Chain',
+        marketShare: 7.5,
+        avgPriceRange: '₹8,000 - ₹2,00,000',
+        socialFollowers: 1500000,
+        monthlyTraffic: 3200000,
+        seoAuthority: 58,
+        strengths: 'Value pricing,Lightweight jewellery segment,Strong North India network,ETF expertise',
+        weaknesses: 'Perceived as mass-market,Lower brand prestige,Quality concerns in past',
+        notes: 'Focuses on affordable and lightweight jewellery, strong in North India',
+      },
+      {
+        name: 'Senco Gold',
+        website: 'sencogold.com',
+        category: 'Organised Retail Chain',
+        marketShare: 5.6,
+        avgPriceRange: '₹12,000 - ₹2,50,000',
+        socialFollowers: 890000,
+        monthlyTraffic: 2100000,
+        seoAuthority: 52,
+        strengths: 'East India stronghold,Affordable bridal range,Strong wholesale channel',
+        weaknesses: 'Limited national presence,Weak online sales,Lower marketing budget',
+        notes: 'Dominant in Eastern India, expanding via franchise model',
+      },
+      {
+        name: 'BlueStone',
+        website: 'bluestone.com',
+        category: 'D2C Online',
+        marketShare: 4.8,
+        avgPriceRange: '₹8,000 - ₹1,50,000',
+        socialFollowers: 1800000,
+        monthlyTraffic: 4500000,
+        seoAuthority: 71,
+        strengths: 'Modern designs,Strong UI/UX,Personalization options,Good returns policy',
+        weaknesses: 'Limited brand heritage,High customer acquisition cost,Unprofitable operations',
+        notes: 'Direct competitor to CaratLane in online space, better design aesthetics',
+      },
+      {
+        name: 'Voylla',
+        website: 'voylla.com',
+        category: 'Fashion / Artificial',
+        marketShare: 3.2,
+        avgPriceRange: '₹500 - ₹15,000',
+        socialFollowers: 2400000,
+        monthlyTraffic: 5800000,
+        seoAuthority: 63,
+        strengths: 'Very affordable,Mass market appeal,Strong Instagram marketing,Trendy designs',
+        weaknesses: 'Low quality perception,Not real gold/jewellery,High return rates,Low repeat purchase',
+        notes: 'Primarily fashion jewellery, not direct luxury competitor but captures aspirational segment',
+      },
+    ],
+  });
+
+  // Seed Budget Items
+  await db.budgetItem.createMany({
+    data: [
+      { category: 'Paid Ads', channel: 'Google Ads', allocated: 180000, spent: 153000, period: 'June 2026', status: 'on_track' },
+      { category: 'Paid Ads', channel: 'Facebook', allocated: 95000, spent: 87200, period: 'June 2026', status: 'at_risk' },
+      { category: 'Social Media', channel: 'Instagram', allocated: 120000, spent: 78000, period: 'June 2026', status: 'on_track' },
+      { category: 'Social Media', channel: 'YouTube', allocated: 60000, spent: 54600, period: 'Q2 2026', status: 'at_risk' },
+      { category: 'Content Marketing', channel: null, allocated: 45000, spent: 31500, period: 'June 2026', status: 'on_track' },
+      { category: 'Email Marketing', channel: 'Email', allocated: 25000, spent: 10250, period: 'June 2026', status: 'on_track' },
+      { category: 'Email Marketing', channel: 'WhatsApp', allocated: 10000, spent: 9200, period: 'June 2026', status: 'at_risk' },
+      { category: 'SEO', channel: null, allocated: 35000, spent: 24500, period: 'Q2 2026', status: 'on_track' },
+      { category: 'Influencer Marketing', channel: 'Instagram', allocated: 85000, spent: 80750, period: 'June 2026', status: 'over_budget' },
+      { category: 'Events', channel: null, allocated: 50000, spent: 42500, period: 'Q2 2026', status: 'at_risk' },
+      { category: 'Video Production', channel: 'YouTube', allocated: 40000, spent: 38000, period: 'Q2 2026', status: 'over_budget' },
+      { category: 'Paid Ads', channel: 'Instagram', allocated: 70000, spent: 59500, period: 'June 2026', status: 'on_track' },
     ],
   });
 

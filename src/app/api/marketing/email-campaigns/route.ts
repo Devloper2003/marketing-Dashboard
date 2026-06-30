@@ -1,0 +1,88 @@
+import { db } from '@/lib/db';
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  const campaigns = await db.emailCampaign.findMany({
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const sentCampaigns = campaigns.filter((c) => c.status === 'sent');
+  const totalSent = sentCampaigns.reduce((sum, c) => sum + c.listSize, 0);
+  const avgOpenRate = sentCampaigns.length > 0
+    ? sentCampaigns.reduce((sum, c) => sum + c.openRate, 0) / sentCampaigns.length
+    : 0;
+  const totalRevenue = sentCampaigns.reduce((sum, c) => sum + c.revenue, 0);
+  const totalConversions = sentCampaigns.reduce((sum, c) => sum + c.conversions, 0);
+  const avgClickRate = sentCampaigns.length > 0
+    ? sentCampaigns.reduce((sum, c) => sum + c.clickRate, 0) / sentCampaigns.length
+    : 0;
+  const avgBounceRate = sentCampaigns.length > 0
+    ? sentCampaigns.reduce((sum, c) => sum + c.bounceRate, 0) / sentCampaigns.length
+    : 0;
+
+  // Mock weekly trend data
+  const weeklyTrend = [
+    { week: 'W1', openRate: 30.2, clickRate: 6.8 },
+    { week: 'W2', openRate: 33.5, clickRate: 7.2 },
+    { week: 'W3', openRate: 36.1, clickRate: 8.1 },
+    { week: 'W4', openRate: 34.8, clickRate: 7.5 },
+    { week: 'W5', openRate: 39.2, clickRate: 9.3 },
+    { week: 'W6', openRate: 41.5, clickRate: 10.1 },
+    { week: 'W7', openRate: 43.8, clickRate: 11.5 },
+    { week: 'W8', openRate: avgOpenRate, clickRate: avgClickRate },
+  ];
+
+  // Engagement funnel
+  const totalOpens = Math.round(totalSent * (avgOpenRate / 100));
+  const totalClicks = Math.round(totalSent * (avgClickRate / 100));
+  const funnel = [
+    { stage: 'Emails Sent', value: totalSent, pct: 100 },
+    { stage: 'Opened', value: totalOpens, pct: avgOpenRate },
+    { stage: 'Clicked', value: totalClicks, pct: avgClickRate },
+    { stage: 'Converted', value: totalConversions, pct: totalSent > 0 ? (totalConversions / totalSent) * 100 : 0 },
+  ];
+
+  return NextResponse.json({
+    campaigns,
+    summary: {
+      totalSent,
+      avgOpenRate: Math.round(avgOpenRate * 10) / 10,
+      totalRevenue,
+      totalConversions,
+      avgClickRate: Math.round(avgClickRate * 10) / 10,
+      avgBounceRate: Math.round(avgBounceRate * 10) / 10,
+      sentCount: sentCampaigns.length,
+      scheduledCount: campaigns.filter((c) => c.status === 'scheduled').length,
+      draftCount: campaigns.filter((c) => c.status === 'draft').length,
+    },
+    weeklyTrend,
+    funnel,
+  });
+}
+
+export async function POST(req: Request) {
+  const body = await req.json();
+  const campaign = await db.emailCampaign.create({
+    data: {
+      name: body.name || 'Untitled Campaign',
+      subject: body.subject,
+      status: body.status || 'draft',
+      listSize: body.listSize || 0,
+    },
+  });
+  return NextResponse.json(campaign);
+}
+
+export async function PUT(req: Request) {
+  const body = await req.json();
+  if (!body.id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
+  const campaign = await db.emailCampaign.update({
+    where: { id: body.id },
+    data: {
+      ...(body.name !== undefined && { name: body.name }),
+      ...(body.subject !== undefined && { subject: body.subject }),
+      ...(body.status !== undefined && { status: body.status }),
+    },
+  });
+  return NextResponse.json(campaign);
+}

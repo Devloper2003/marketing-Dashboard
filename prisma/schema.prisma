@@ -114,3 +114,48 @@ model ChannelGoal {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Competitor {
+  id              String   @id @default(cuid())
+  name            String
+  website         String?
+  category        String?
+  marketShare     Float    @default(0)
+  avgPriceRange   String?
+  socialFollowers Int      @default(0)
+  monthlyTraffic  Int      @default(0)
+  seoAuthority    Int      @default(0)
+  strengths       String?
+  weaknesses      String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model BudgetItem {
+  id          String   @id @default(cuid())
+  category    String
+  channel     String?
+  allocated   Float
+  spent       Float    @default(0)
+ period      String?
+  status      String   @default("on_track")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EmailCampaign {
+  id           String   @id @default(cuid())
+  name         String
+  subject      String?
+  status       String   @default("draft")
+  sentAt       DateTime?
+  openRate     Float    @default(0)
+  clickRate    Float    @default(0)
+  bounceRate   Float    @default(0)
+  conversions  Int      @default(0)
+  revenue      Float    @default(0)
+  listSize     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

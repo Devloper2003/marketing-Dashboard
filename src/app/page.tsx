@@ -16,6 +16,8 @@ import {
   ChevronRight,
   Menu,
   Gem,
+  Swords,
+  Mail,
   Bell,
   Search as SearchIcon,
   X,
@@ -28,6 +30,9 @@ import {
   AlertTriangle,
   Check,
   Eye,
+  Wallet,
+  FlaskConical,
+  FileBarChart,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -78,8 +83,23 @@ const SocialAnalyticsTab = dynamic(() => import('@/components/dashboard/social-a
 const LeadsTab = dynamic(() => import('@/components/dashboard/leads-tab'), {
   loading: () => <TabSkeleton />,
 });
+const CompetitorTab = dynamic(() => import('@/components/dashboard/competitor-tab'), {
+  loading: () => <TabSkeleton />,
+});
+const BudgetTab = dynamic(() => import('@/components/dashboard/budget-tab'), {
+  loading: () => <TabSkeleton />,
+});
+const EmailTab = dynamic(() => import('@/components/dashboard/email-tab'), {
+  loading: () => <TabSkeleton />,
+});
+const ReportsTab = dynamic(() => import('@/components/dashboard/reports-tab'), {
+  loading: () => <TabSkeleton />,
+});
+const AbTestingTab = dynamic(() => import('@/components/dashboard/ab-testing-tab'), {
+  loading: () => <TabSkeleton />,
+});
 
-type TabKey = 'overview' | 'calendar' | 'blogs' | 'social-planner' | 'ideas' | 'seo' | 'campaigns' | 'social-analytics' | 'leads';
+type TabKey = 'overview' | 'calendar' | 'blogs' | 'social-planner' | 'ideas' | 'seo' | 'campaigns' | 'social-analytics' | 'leads' | 'budget' | 'competitors' | 'email' | 'ab-testing' | 'reports';
 
 interface NavItem {
   key: TabKey;
@@ -97,6 +117,11 @@ const navItems: NavItem[] = [
   { key: 'campaigns', label: 'Campaigns', icon: Target },
   { key: 'social-analytics', label: 'Social Analytics', icon: BarChart3 },
   { key: 'leads', label: 'Leads & Revenue', icon: Users },
+  { key: 'budget', label: 'Budget Planner', icon: Wallet },
+  { key: 'competitors', label: 'Competitor Analysis', icon: Swords },
+  { key: 'email', label: 'Email Campaigns', icon: Mail },
+  { key: 'reports', label: 'Reports', icon: FileBarChart },
+  { key: 'ab-testing', label: 'A/B Testing', icon: FlaskConical },
 ];
 
 function TabSkeleton() {
@@ -129,24 +154,26 @@ function SidebarContent({
   return (
     <div className="flex h-full flex-col">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 px-4 border-b border-border/50">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg gold-gradient">
+      <div className="flex h-16 items-center gap-3 px-4 border-b border-border/50 relative">
+        <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-[#D4A843]/20 via-[#D4A843]/10 to-transparent" />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg gold-gradient shadow-md shadow-[#D4A843]/15">
           <Gem className="h-5 w-5 text-primary-foreground" />
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-lg font-bold gold-gradient-text tracking-wide">LAXREE</h1>
-            <p className="text-[9px] text-muted-foreground -mt-0.5 tracking-[0.2em] uppercase">Marketing Suite</p>
+            <h1 className="text-lg font-bold gold-gradient-text tracking-wider text-glow-gold-sm">LAXREE</h1>
+            <p className="text-[9px] text-muted-foreground/70 -mt-0.5 tracking-[0.25em] uppercase">Marketing Suite</p>
           </div>
         )}
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 py-4">
-        <nav className="space-y-1 px-3">
-          {navItems.map((item) => {
+      <ScrollArea className="flex-1 py-3">
+        <nav className="space-y-0.5 px-3">
+          {navItems.map((item, idx) => {
             const Icon = item.icon;
             const isActive = activeTab === item.key;
+            const showDivider = idx === 9; // Divider before Budget/Competitor/Email/Reports/A-B Testing
 
             if (collapsed) {
               return (
@@ -155,9 +182,9 @@ function SidebarContent({
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => onTabChange(item.key)}
-                        className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 mx-auto ${
+                        className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 mx-auto nav-item-hover focus-ring-gold ${
                           isActive
-                            ? 'bg-[#D4A843]/15 text-[#D4A843]'
+                            ? 'bg-[#D4A843]/15 text-[#D4A843] sidebar-glow-active'
                             : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
                         }`}
                       >
@@ -176,21 +203,25 @@ function SidebarContent({
             }
 
             return (
-              <button
-                key={item.key}
-                onClick={() => onTabChange(item.key)}
-                className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 w-full ${
-                  isActive
-                    ? 'bg-[#D4A843]/10 text-[#D4A843]'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-                }`}
-              >
-                {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full gold-gradient" />
+              <div key={item.key}>
+                {showDivider && (
+                  <div className="gold-divider my-2.5" />
                 )}
-                <Icon className="h-[18px] w-[18px] shrink-0" />
-                <span className="truncate">{item.label}</span>
-              </button>
+                <button
+                  onClick={() => onTabChange(item.key)}
+                  className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 w-full focus-ring-gold ${
+                    isActive
+                      ? 'bg-[#D4A843]/10 text-[#D4A843] sidebar-glow-active'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                  }`}
+                >
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full gold-gradient" />
+                  )}
+                  <Icon className="h-[18px] w-[18px] shrink-0" />
+                  <span className="truncate">{item.label}</span>
+                </button>
+              </div>
             );
           })}
         </nav>
@@ -232,23 +263,25 @@ function SidebarContent({
       </div>
 
       {/* User Section */}
-      <div className="border-t border-border/50 p-3">
+      <div className="relative border-t border-border/30 p-3">
+        <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-[#D4A843]/15 via-[#D4A843]/8 to-transparent" />
         {!collapsed ? (
-          <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-white/5 transition-colors cursor-pointer">
-            <Avatar className="h-8 w-8 border border-[#D4A843]/30">
+          <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-white/5 transition-all duration-200 cursor-pointer group">
+            <Avatar className="h-8 w-8 border border-[#D4A843]/30 group-hover:border-[#D4A843]/50 transition-colors">
               <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">LT</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">Laxree Team</p>
-              <p className="text-[11px] text-muted-foreground truncate">Marketing Manager</p>
+              <p className="text-[11px] text-muted-foreground/70 truncate">Marketing Manager</p>
             </div>
+            <div className="h-2 w-2 rounded-full bg-[#D4A843]/50 group-hover:bg-[#D4A843] transition-colors" />
           </div>
         ) : (
           <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex justify-center">
-                  <Avatar className="h-8 w-8 border border-[#D4A843]/30 cursor-pointer">
+                  <Avatar className="h-8 w-8 border border-[#D4A843]/30 cursor-pointer hover:border-[#D4A843]/50 transition-colors">
                     <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">LT</AvatarFallback>
                   </Avatar>
                 </div>
@@ -303,6 +336,11 @@ export default function Home() {
       case 'campaigns': return <CampaignsTab />;
       case 'social-analytics': return <SocialAnalyticsTab />;
       case 'leads': return <LeadsTab />;
+      case 'budget': return <BudgetTab />;
+      case 'competitors': return <CompetitorTab />;
+      case 'email': return <EmailTab />;
+      case 'ab-testing': return <AbTestingTab />;
+      case 'reports': return <ReportsTab />;
       default: return <OverviewTab />;
     }
   };
@@ -474,14 +512,15 @@ export default function Home() {
           </div>
 
           {/* Footer */}
-          <footer className="border-t border-border/30 mt-8">
+          <footer className="relative border-t border-border/20 mt-8 bg-gradient-to-t from-[#080808] to-transparent">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#D4A843]/15 to-transparent" />
             <div className="mx-auto max-w-[1440px] flex h-10 items-center justify-between px-4 lg:px-6">
-              <p className="text-[11px] text-muted-foreground">
-                © {new Date().getFullYear()} Laxree Jewellery — Marketing Analytics Platform
+              <p className="text-[11px] text-muted-foreground/60">
+                © {new Date().getFullYear()} <span className="text-[#D4A843]/50 font-medium">Laxree</span> Jewellery — Marketing Analytics Platform
               </p>
               <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 dot-pulse" />
-                <span className="text-[11px] text-muted-foreground">All systems operational</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500 dot-pulse shadow-sm shadow-green-500/30" />
+                <span className="text-[11px] text-muted-foreground/60">All systems operational</span>
               </div>
             </div>
           </footer>

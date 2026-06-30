@@ -486,3 +486,937 @@ button:active, [role="button"]:active {
 .progress-gold > div {
   background: linear-gradient(90deg, #B8922F, #D4A843, #E8C46A) !important;
 }
+
+/* ─── Enhanced Glass-morphism Cards ─────────────────────────────── */
+.glass-card-premium {
+  background: linear-gradient(135deg, rgba(17, 17, 17, 0.9) 0%, rgba(26, 26, 26, 0.7) 100%);
+  backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid rgba(212, 168, 67, 0.1);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(212, 168, 67, 0.05);
+}
+
+.glass-card-premium:hover {
+  border-color: rgba(212, 168, 67, 0.25);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(212, 168, 67, 0.06),
+    inset 0 1px 0 rgba(212, 168, 67, 0.1);
+}
+
+/* ─── Gold Divider ──────────────────────────────────────────────── */
+.gold-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.3), transparent);
+  border: none;
+}
+
+.gold-divider-v {
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(212, 168, 67, 0.3), transparent);
+}
+
+/* ─── Advanced Animations ───────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes shimmerGold {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes borderGlow {
+  0%, 100% { border-color: rgba(212, 168, 67, 0.15); }
+  50% { border-color: rgba(212, 168, 67, 0.4); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes rotateIn {
+  from { opacity: 0; transform: rotate(-8deg) scale(0.95); }
+  to { opacity: 1; transform: rotate(0) scale(1); }
+}
+
+@keyframes countPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.animate-fade-in-up { animation: fadeInUp 0.4s ease-out; }
+.animate-fade-in-down { animation: fadeInDown 0.35s ease-out; }
+.animate-fade-in-left { animation: fadeInLeft 0.4s ease-out; }
+.animate-fade-in-right { animation: fadeInRight 0.4s ease-out; }
+.animate-slide-up { animation: slideUp 0.3s ease-out; }
+.animate-slide-down { animation: slideDown 0.3s ease-out; }
+.animate-rotate-in { animation: rotateIn 0.35s ease-out; }
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-breathe { animation: breathe 3s ease-in-out infinite; }
+.animate-count-pulse { animation: countPulse 0.6s ease-out; }
+
+.animate-shimmer-gold {
+  background: linear-gradient(90deg, #D4A843 0%, #F0D78C 25%, #D4A843 50%, #F0D78C 75%, #D4A843 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmerGold 3s linear infinite;
+}
+
+.animate-border-glow {
+  animation: borderGlow 2.5s ease-in-out infinite;
+}
+
+/* ─── Tooltip Gold Enhancement ──────────────────────────────────── */
+.tooltip-gold {
+  position: relative;
+}
+
+.tooltip-gold::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #1a1a1a;
+  color: #f5f0e8;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  border: 1px solid rgba(212, 168, 67, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 50;
+}
+
+.tooltip-gold:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ─── Gold Select & Input Focus ──────────────────────────────────── */
+.gold-select > [role="combobox"] {
+  border-color: rgba(212, 168, 67, 0.15) !important;
+  transition: all 0.25s ease;
+}
+
+.gold-select > [role="combobox"]:hover {
+  border-color: rgba(212, 168, 67, 0.3) !important;
+}
+
+.gold-select > [role="combobox"]:focus,
+.gold-select > [role="combobox"][data-state="open"] {
+  border-color: rgba(212, 168, 67, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.08) !important;
+}
+
+.gold-input {
+  border: 1px solid rgba(212, 168, 67, 0.15) !important;
+  transition: all 0.25s ease;
+}
+
+.gold-input:hover {
+  border-color: rgba(212, 168, 67, 0.3) !important;
+}
+
+.gold-input:focus {
+  border-color: rgba(212, 168, 67, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.08) !important;
+  outline: none;
+}
+
+/* ─── Gold Tab Styling ───────────────────────────────────────────── */
+.gold-tab-active {
+  color: #D4A843 !important;
+  border-bottom: 2px solid #D4A843 !important;
+}
+
+.gold-tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #D4A843, transparent);
+}
+
+/* ─── Scroll Fade Effect ─────────────────────────────────────────── */
+.scroll-fade {
+  mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+}
+
+.scroll-fade-top {
+  mask-image: linear-gradient(to bottom, transparent, black 10%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%);
+}
+
+.scroll-fade-both {
+  mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+}
+
+/* ─── Enhanced Badge Variants ────────────────────────────────────── */
+.badge-cyan {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.badge-pink {
+  background: rgba(236, 72, 153, 0.15);
+  color: #ec4899;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+.badge-orange {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.badge-teal {
+  background: rgba(20, 184, 166, 0.15);
+  color: #14b8a6;
+  border: 1px solid rgba(20, 184, 166, 0.3);
+}
+
+/* ─── Card Hover Lift Group ──────────────────────────────────────── */
+.card-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-lift:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(212, 168, 67, 0.08);
+}
+
+/* ─── Gradient Border Card ──────────────────────────────────────── */
+.gradient-border {
+  position: relative;
+  background: #111;
+  border-radius: var(--radius);
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: calc(var(--radius) + 1px);
+  background: linear-gradient(135deg, rgba(212, 168, 67, 0.3), transparent 40%, transparent 60%, rgba(212, 168, 67, 0.2));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gradient-border:hover::before {
+  opacity: 1;
+}
+
+/* ─── Hover Underline Effect ─────────────────────────────────────── */
+.hover-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.hover-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: #D4A843;
+  transition: width 0.3s ease;
+}
+
+.hover-underline:hover::after {
+  width: 100%;
+}
+
+/* ─── Number Highlight Animation ─────────────────────────────────── */
+.number-highlight {
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.number-highlight:hover {
+  color: #D4A843;
+  text-shadow: 0 0 12px rgba(212, 168, 67, 0.4);
+  transform: scale(1.02);
+}
+
+/* ─── Status Dot Variants ────────────────────────────────────────── */
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot-green { background: #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.4); }
+.status-dot-yellow { background: #eab308; box-shadow: 0 0 6px rgba(234, 179, 8, 0.4); }
+.status-dot-red { background: #ef4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+.status-dot-blue { background: #3b82f6; box-shadow: 0 0 6px rgba(59, 130, 246, 0.4); }
+.status-dot-gold { background: #D4A843; box-shadow: 0 0 6px rgba(212, 168, 67, 0.4); }
+
+/* ─── Enhanced Input/Textarea Styling ────────────────────────────── */
+textarea:focus, input[type="text"]:focus {
+  border-color: rgba(212, 168, 67, 0.4) !important;
+  box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.06), 0 0 12px rgba(212, 168, 67, 0.04) !important;
+}
+
+/* ─── Enhanced Dialog Entrance ───────────────────────────────────── */
+[data-radix-dialog-content] {
+  animation: fadeInUp 0.25s ease-out !important;
+  border: 1px solid rgba(212, 168, 67, 0.15) !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 40px rgba(212, 168, 67, 0.04) !important;
+}
+
+/* ─── Enhanced Chart Tooltip ─────────────────────────────────────── */
+.recharts-tooltip-wrapper {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+}
+
+/* ─── Sidebar Nav Hover Micro-animation ──────────────────────────── */
+.nav-item-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item-hover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.05), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.4s ease;
+}
+
+.nav-item-hover:hover::before {
+  transform: translateX(100%);
+}
+
+/* ─── Section Heading Style ──────────────────────────────────────── */
+.section-heading {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-heading::after {
+  content: '';
+  display: block;
+  height: 1px;
+  flex: 1;
+  min-width: 40px;
+  background: linear-gradient(90deg, rgba(212, 168, 67, 0.3), transparent);
+  margin-left: 8px;
+}
+
+/* ─── Metric Card Mini Sparkline Background ──────────────────────── */
+.metric-sparkle {
+  position: relative;
+}
+
+.metric-sparkle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60%;
+  height: 100%;
+  background: radial-gradient(ellipse at top right, rgba(212, 168, 67, 0.06), transparent 70%);
+  pointer-events: none;
+}
+
+/* ─── Scrollbar Fade for Long Tables ─────────────────────────────── */
+.table-scroll-fade {
+  position: relative;
+}
+
+.table-scroll-fade::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(to top, #111, transparent);
+  pointer-events: none;
+  display: block;
+}
+
+/* ─── Loading Skeleton Variants ──────────────────────────────────── */
+.skeleton-card {
+  background: linear-gradient(145deg, #111111, #0d0d0d);
+  border: 1px solid rgba(42, 37, 32, 0.5);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.skeleton-card::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 25%, rgba(212, 168, 67, 0.03) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ─── Ambient Gold Particles Background ─────────────────────────── */
+@keyframes particleFloat {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(-120px) translateX(30px); opacity: 0; }
+}
+
+.ambient-particles {
+  position: relative;
+  overflow: hidden;
+}
+
+.ambient-particles::before,
+.ambient-particles::after {
+  content: '';
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #D4A843;
+  border-radius: 50%;
+  animation: particleFloat 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.ambient-particles::before {
+  left: 20%;
+  bottom: 0;
+  animation-delay: 0s;
+}
+
+.ambient-particles::after {
+  left: 70%;
+  bottom: 0;
+  animation-delay: 2s;
+  width: 2px;
+  height: 2px;
+}
+
+/* ─── Luxury Diamond Separator ──────────────────────────────────── */
+.diamond-separator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.diamond-separator::before,
+.diamond-separator::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.3), transparent);
+}
+
+.diamond-separator > * {
+  position: relative;
+}
+
+.diamond-separator .diamond-icon {
+  width: 8px;
+  height: 8px;
+  background: #D4A843;
+  transform: rotate(45deg);
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(212, 168, 67, 0.4);
+}
+
+/* ─── Gold Noise Texture Overlay ────────────────────────────────── */
+.gold-texture {
+  position: relative;
+}
+
+.gold-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+/* ─── Premium Card with Inner Glow ─────────────────────────────── */
+.premium-card {
+  background: linear-gradient(160deg, #131313 0%, #0e0e0e 50%, #111 100%);
+  border: 1px solid rgba(212, 168, 67, 0.12);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.premium-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.2), transparent);
+}
+
+.premium-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at top left, rgba(212, 168, 67, 0.03), transparent 50%);
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  opacity: 0;
+}
+
+.premium-card:hover {
+  border-color: rgba(212, 168, 67, 0.3);
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(212, 168, 67, 0.1),
+    inset 0 1px 0 rgba(212, 168, 67, 0.08);
+}
+
+.premium-card:hover::after {
+  opacity: 1;
+}
+
+/* ─── Animated Gold Border (rotating gradient) ──────────────────── */
+@keyframes rotateBorder {
+  0% { --angle: 0deg; }
+  100% { --angle: 360deg; }
+}
+
+.animated-border {
+  position: relative;
+  border-radius: 12px;
+  padding: 1px;
+  background: conic-gradient(from var(--angle, 0deg), transparent 70%, rgba(212, 168, 67, 0.4) 80%, rgba(212, 168, 67, 0.1) 90%, transparent 100%);
+  animation: rotateBorder 4s linear infinite;
+}
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.animated-border > * {
+  border-radius: 11px;
+  background: #111;
+}
+
+/* ─── Text Glow Effects ─────────────────────────────────────────── */
+.text-glow-gold {
+  text-shadow:
+    0 0 7px rgba(212, 168, 67, 0.4),
+    0 0 15px rgba(212, 168, 67, 0.2),
+    0 0 30px rgba(212, 168, 67, 0.1);
+}
+
+.text-glow-gold-sm {
+  text-shadow:
+    0 0 4px rgba(212, 168, 67, 0.3),
+    0 0 8px rgba(212, 168, 67, 0.15);
+}
+
+/* ─── Hover Scale Micro-animation ───────────────────────────────── */
+.hover-scale-sm {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-scale-sm:hover {
+  transform: scale(1.02);
+}
+
+.hover-scale-md {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hover-scale-md:hover {
+  transform: scale(1.04);
+}
+
+/* ─── Gold Pulse Ring (for important elements) ──────────────────── */
+@keyframes goldPulseRing {
+  0% { box-shadow: 0 0 0 0 rgba(212, 168, 67, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(212, 168, 67, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(212, 168, 67, 0); }
+}
+
+.gold-pulse-ring {
+  animation: goldPulseRing 2s ease-in-out infinite;
+}
+
+/* ─── Striped Accent Bar ────────────────────────────────────────── */
+.striped-bar {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(212, 168, 67, 0.15),
+    rgba(212, 168, 67, 0.15) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+}
+
+/* ─── Glass Morphism Enhancements ───────────────────────────────── */
+.glass-premium {
+  background: linear-gradient(135deg, rgba(17, 17, 17, 0.95) 0%, rgba(13, 13, 13, 0.8) 100%);
+  backdrop-filter: blur(24px) saturate(1.3);
+  border: 1px solid rgba(212, 168, 67, 0.1);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    inset 0 0 0 1px rgba(212, 168, 67, 0.05);
+}
+
+/* ─── Animated Counter ──────────────────────────────────────────── */
+@keyframes countUpSmooth {
+  from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+.count-up-smooth {
+  animation: countUpSmooth 0.6s ease-out forwards;
+}
+
+/* ─── Decorative Corner Accents ─────────────────────────────────── */
+.corner-accent {
+  position: relative;
+}
+
+.corner-accent::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 16px;
+  height: 16px;
+  border-top: 2px solid #D4A843;
+  border-left: 2px solid #D4A843;
+  border-radius: 2px 0 0 0;
+  pointer-events: none;
+}
+
+.corner-accent::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 16px;
+  height: 16px;
+  border-bottom: 2px solid #D4A843;
+  border-right: 2px solid #D4A843;
+  border-radius: 0 0 2px 0;
+  pointer-events: none;
+}
+
+/* ─── Interactive Hover Underline (animated) ────────────────────── */
+.animated-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.animated-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, #D4A843, #E8C46A);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform: translateX(-50%);
+}
+
+.animated-underline:hover::after {
+  width: 100%;
+}
+
+/* ─── Sidebar Active Nav Glow ───────────────────────────────────── */
+.sidebar-glow-active {
+  box-shadow:
+    inset 3px 0 0 #D4A843,
+    0 0 20px rgba(212, 168, 67, 0.06);
+}
+
+/* ─── Chart Container Styling ───────────────────────────────────── */
+.chart-container {
+  position: relative;
+  background: linear-gradient(145deg, rgba(17, 17, 17, 0.6), rgba(13, 13, 13, 0.4));
+  border: 1px solid rgba(212, 168, 67, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.chart-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 10%, rgba(212, 168, 67, 0.15) 50%, transparent 90%);
+  border-radius: 12px 12px 0 0;
+}
+
+/* ─── Badge with Dot Indicator ──────────────────────────────────── */
+.badge-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+.badge-dot::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.badge-dot-success {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.badge-dot-success::before { background: #22c55e; }
+
+.badge-dot-warning {
+  background: rgba(234, 179, 8, 0.1);
+  color: #eab308;
+  border-color: rgba(234, 179, 8, 0.25);
+}
+
+.badge-dot-warning::before { background: #eab308; }
+
+.badge-dot-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.badge-dot-danger::before { background: #ef4444; }
+
+.badge-dot-gold {
+  background: rgba(212, 168, 67, 0.1);
+  color: #D4A843;
+  border-color: rgba(212, 168, 67, 0.25);
+}
+
+.badge-dot-gold::before { background: #D4A843; }
+
+/* ─── Empty State Styling ───────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(212, 168, 67, 0.08);
+  border: 1px dashed rgba(212, 168, 67, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+/* ─── Tooltip Arrow Enhancement ─────────────────────────────────── */
+[data-radix-popper-content-wrapper] [data-side="top"]::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: #1a1a1a;
+  border-right: 1px solid rgba(212, 168, 67, 0.25);
+  border-bottom: 1px solid rgba(212, 168, 67, 0.25);
+}
+
+/* ─── Scrollbar for Tables ──────────────────────────────────────── */
+.table-scroll-gold::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.table-scroll-gold::-webkit-scrollbar-track {
+  background: rgba(10, 10, 10, 0.5);
+  border-radius: 4px;
+}
+
+.table-scroll-gold::-webkit-scrollbar-thumb {
+  background: rgba(212, 168, 67, 0.2);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.table-scroll-gold::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 168, 67, 0.5);
+}
+
+/* ─── Focus Ring Utility ────────────────────────────────────────── */
+.focus-ring-gold:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(212, 168, 67, 0.3), 0 0 0 4px rgba(212, 168, 67, 0.1);
+}
+
+/* ─── Transition Group for Lists ────────────────────────────────── */
+@keyframes listSlideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.list-slide-in > * {
+  animation: listSlideIn 0.3s ease-out forwards;
+}
+
+.list-slide-in > *:nth-child(1) { animation-delay: 0ms; }
+.list-slide-in > *:nth-child(2) { animation-delay: 40ms; }
+.list-slide-in > *:nth-child(3) { animation-delay: 80ms; }
+.list-slide-in > *:nth-child(4) { animation-delay: 120ms; }
+.list-slide-in > *:nth-child(5) { animation-delay: 160ms; }
+.list-slide-in > *:nth-child(6) { animation-delay: 200ms; }
+.list-slide-in > *:nth-child(7) { animation-delay: 240ms; }
+.list-slide-in > *:nth-child(8) { animation-delay: 280ms; }
+
+/* ─── Enhanced Select Styling ───────────────────────────────────── */
+[data-radix-select-viewport] {
+  padding: 4px !important;
+}
+
+[data-radix-select-item] {
+  border-radius: 6px !important;
+  padding: 6px 8px !important;
+  margin: 1px 0 !important;
+  transition: all 0.15s ease !important;
+}
+
+[data-radix-select-item][data-highlighted] {
+  background: rgba(212, 168, 67, 0.12) !important;
+  color: #D4A843 !important;
+}
+
+/* ─── Badge Hover Effect ────────────────────────────────────────── */
+.badge-interactive {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.badge-interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ─── Data Grid Cell Hover ──────────────────────────────────────── */
+.data-cell-hover {
+  position: relative;
+  transition: background-color 0.15s ease;
+}
+
+.data-cell-hover:hover {
+  background: rgba(212, 168, 67, 0.04);
+}
+
+/* ─── Skeleton Shimmer Gold ─────────────────────────────────────── */
+.skeleton-gold-bar {
+  background: linear-gradient(90deg, rgba(212, 168, 67, 0.05) 25%, rgba(212, 168, 67, 0.12) 50%, rgba(212, 168, 67, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+/* ─── Responsive Card Grid Animations ───────────────────────────── */
+@keyframes gridFadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.grid-fade-in > * {
+  animation: gridFadeIn 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.grid-fade-in > *:nth-child(1) { animation-delay: 0ms; }
+.grid-fade-in > *:nth-child(2) { animation-delay: 50ms; }
+.grid-fade-in > *:nth-child(3) { animation-delay: 100ms; }
+.grid-fade-in > *:nth-child(4) { animation-delay: 150ms; }
+.grid-fade-in > *:nth-child(5) { animation-delay: 200ms; }
+.grid-fade-in > *:nth-child(6) { animation-delay: 250ms; }
+.grid-fade-in > *:nth-child(7) { animation-delay: 300ms; }
+.grid-fade-in > *:nth-child(8) { animation-delay: 350ms; }
+.grid-fade-in > *:nth-child(9) { animation-delay: 400ms; }
+.grid-fade-in > *:nth-child(10) { animation-delay: 450ms; }
+.grid-fade-in > *:nth-child(11) { animation-delay: 500ms; }
+.grid-fade-in > *:nth-child(12) { animation-delay: 550ms; }

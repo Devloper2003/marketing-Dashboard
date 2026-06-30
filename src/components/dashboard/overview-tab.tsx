@@ -336,52 +336,54 @@ export default function OverviewTab() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <Card className="relative overflow-hidden border-0 bg-gradient-to-r from-[#1a1610] via-[#151210] to-[#0d0d0d] border border-[#D4A843]/15">
+      <div className="premium-card ambient-particles p-0">
         <CardContent className="relative p-5 sm:p-6">
           {/* Background decorative elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#D4A843]/5 to-transparent rounded-full -translate-y-1/2 translate-x-1/4" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#D4A843]/3 to-transparent rounded-full translate-y-1/3 -translate-x-1/4" />
+          <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-[#D4A843]/6 to-transparent rounded-full -translate-y-1/2 translate-x-1/4" />
+          <div className="absolute bottom-0 left-0 w-56 h-56 bg-gradient-to-tr from-[#D4A843]/4 to-transparent rounded-full translate-y-1/3 -translate-x-1/4" />
+          <div className="absolute top-3 right-3 w-1 h-1 rounded-full bg-[#D4A843]/40 animate-breathe" />
+          <div className="absolute bottom-3 left-1/2 w-0.5 h-0.5 rounded-full bg-[#E8C46A]/30 animate-breathe" style={{ animationDelay: '1.5s' }} />
           
           <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl gold-gradient shadow-lg shadow-[#D4A843]/20">
+              <div className="flex h-13 w-13 items-center justify-center rounded-xl gold-gradient shadow-lg shadow-[#D4A843]/25 gold-pulse-ring">
                 <Gem className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h2 className="text-xl font-bold gold-gradient-text">{getGreeting()}, Laxree Team</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  Your marketing dashboard is performing <span className="text-green-400 font-medium">12% better</span> than last month. 
-                  3 campaigns need attention.
+                <h2 className="text-xl font-bold gold-gradient-text text-glow-gold-sm">{getGreeting()}, Laxree Team</h2>
+                <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
+                  Your marketing dashboard is performing <span className="text-green-400 font-semibold">12% better</span> than last month. 
+                  <span className="text-[#D4A843]/80"> 3 campaigns</span> need attention.
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3 sm:gap-4 mt-3 sm:mt-0">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#D4A843]/10 border border-[#D4A843]/20">
+            <div className="flex items-center gap-2.5 sm:gap-3 mt-3 sm:mt-0">
+              <div className="hover-scale-sm flex items-center gap-2 px-3 py-2 rounded-lg bg-[#D4A843]/8 border border-[#D4A843]/15 cursor-default">
                 <TrendingUp className="h-4 w-4 text-green-400" />
                 <div>
-                  <p className="text-xs text-muted-foreground">ROAS</p>
-                  <p className="text-sm font-bold text-green-400">+11.2%</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">ROAS</p>
+                  <p className="text-sm font-bold text-green-400 count-up-smooth">+11.2%</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#D4A843]/10 border border-[#D4A843]/20">
+              <div className="hover-scale-sm flex items-center gap-2 px-3 py-2 rounded-lg bg-[#D4A843]/8 border border-[#D4A843]/15 cursor-default">
                 <Users className="h-4 w-4 text-[#D4A843]" />
                 <div>
-                  <p className="text-xs text-muted-foreground">New Leads</p>
-                  <p className="text-sm font-bold text-[#D4A843]">+48</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Leads</p>
+                  <p className="text-sm font-bold text-[#D4A843] count-up-smooth" style={{ animationDelay: '100ms' }}>+48</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#D4A843]/10 border border-[#D4A843]/20">
+              <div className="hover-scale-sm flex items-center gap-2 px-3 py-2 rounded-lg bg-[#D4A843]/8 border border-[#D4A843]/15 cursor-default">
                 <Target className="h-4 w-4 text-[#E8C46A]" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Conversions</p>
-                  <p className="text-sm font-bold text-[#E8C46A]">+8.3%</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Conversions</p>
+                  <p className="text-sm font-bold text-[#E8C46A] count-up-smooth" style={{ animationDelay: '200ms' }}>+8.3%</p>
                 </div>
               </div>
             </div>
           </div>
         </CardContent>
-      </Card>
+      </div>
 
       {/* ── KPI Cards ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 stagger-children count-animate">
@@ -391,7 +393,7 @@ export default function OverviewTab() {
           kpiCards!.map((kpi, idx) => (
             <div
               key={kpi.label}
-              className="stat-animate gold-card-hover gold-shimmer rounded-xl p-4"
+              className="premium-card metric-sparkle stat-animate gold-shimmer rounded-xl p-4"
               style={{ animationDelay: `${idx * 80}ms` }}
             >
               <div className="flex items-center justify-between mb-2">
