@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  name        String
+  channel     String
+  spend       Float
+  conversions Int
+  cac         Float
+  roas        Float
+  status      String   @default("active")
+  performance String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  title       String
+  content     String?
+  status      String   @default("draft")
+  author      String?
+  category    String?
+  tags        String?
+  seoScore    Int      @default(0)
+  publishDate DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SocialPost {
+  id          String   @id @default(cuid())
+  platform    String
+  content     String?
+  status      String   @default("draft")
+  scheduledAt DateTime?
+  likes       Int      @default(0)
+  comments    Int      @default(0)
+  shares      Int      @default(0)
+  saves       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ContentCalendar {
+  id          String   @id @default(cuid())
+  title       String
+  type        String
+  platform    String?
+  status      String   @default("planned")
+  scheduledAt DateTime
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SeoKeyword {
+  id          String   @id @default(cuid())
+  keyword     String
+  position    Int
+  volume      Int
+  difficulty  Int
+  url         String?
+  change      Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  company   String?
+  email     String?
+  utmSource String?
+  quality   String   @default("NEW")
+  country   String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model IdeaNote {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  category  String?
+  priority  String   @default("medium")
+  status    String   @default("new")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ChannelGoal {
+  id        String   @id @default(cuid())
+  channel   String
+  metric    String
+  current   Float
+  target    Float
+  status    String   @default("on_track")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Competitor {
+  id              String   @id @default(cuid())
+  name            String
+  website         String?
+  category        String?
+  marketShare     Float    @default(0)
+  avgPriceRange   String?
+  socialFollowers Int      @default(0)
+  monthlyTraffic  Int      @default(0)
+  seoAuthority    Int      @default(0)
+  strengths       String?
+  weaknesses      String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model BudgetItem {
+  id          String   @id @default(cuid())
+  category    String
+  channel     String?
+  allocated   Float
+  spent       Float    @default(0)
+ period      String?
+  status      String   @default("on_track")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EmailCampaign {
+  id           String   @id @default(cuid())
+  name         String
+  subject      String?
+  status       String   @default("draft")
+  sentAt       DateTime?
+  openRate     Float    @default(0)
+  clickRate    Float    @default(0)
+  bounceRate   Float    @default(0)
+  conversions  Int      @default(0)
+  revenue      Float    @default(0)
+  listSize     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Integration {
+  id              String   @id @default(cuid())
+  platform        String
+  platformName    String
+  status          String   @default("disconnected")
+  authType        String   @default("api_key")
+  apiKey          String?
+  apiSecret       String?
+  accessToken     String?
+  refreshToken    String?
+  accountId       String?
+  accountName     String?
+  accountAvatar   String?
+  lastSyncAt      DateTime?
+  syncInterval    Int      @default(3600)
+  metadata        String?
+  connectedAt     DateTime?
+  disconnectedAt  DateTime?
+  error           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

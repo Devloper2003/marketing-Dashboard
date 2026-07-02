@@ -1,0 +1,707 @@
+     1→     1→'use client';
+     2→     2→
+     3→     3→import { useState, useEffect, Suspense } from 'react';
+     4→     4→import {
+     5→     5→  Wand2,
+     6→     6→  LayoutDashboard,
+     7→     7→  Calendar,
+     8→     8→  FileText,
+     9→     9→  Share2,
+    10→    10→  Lightbulb,
+    11→    11→  Search,
+    12→    12→  Target,
+    13→    13→  BarChart3,
+    14→    14→  Users,
+    15→    15→  ChevronLeft,
+    16→    16→  ChevronRight,
+    17→    17→  Menu,
+    18→    18→  Gem,
+    19→    19→  Swords,
+    20→    20→  Mail,
+    21→    21→  Bell,
+    22→    22→  Search as SearchIcon,
+    23→    23→  X,
+    24→    24→  Zap,
+    25→    25→  FilePlus2,
+    26→    26→  Clock,
+    27→    27→  Sparkles,
+    28→    28→  BarChart,
+    29→    29→  TrendingUp,
+    30→    30→  AlertTriangle,
+    31→    31→  Check,
+    32→    32→  Eye,
+    33→    33→  Wallet,
+    34→    34→  FlaskConical,
+    35→    35→  FileBarChart,
+    36→    36→  Filter,
+    37→    37→  GitBranch,
+    38→    38→  Globe,
+    39→    39→  ClipboardList,
+    40→    40→  Contact,
+    41→    41→} from 'lucide-react';
+    42→    42→import { AnimatePresence, motion } from 'framer-motion';
+    43→    43→import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+    44→    44→import { Button } from '@/components/ui/button';
+    45→    45→import { Input } from '@/components/ui/input';
+    46→    46→import { Badge } from '@/components/ui/badge';
+    47→    47→import { Skeleton } from '@/components/ui/skeleton';
+    48→    48→import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+    49→    49→import { ScrollArea } from '@/components/ui/scroll-area';
+    50→    50→import { Separator } from '@/components/ui/separator';
+    51→    51→import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+    52→    52→import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+    53→    53→import { Dialog, DialogContent } from '@/components/ui/dialog';
+    54→    54→import {
+    55→    55→  Select,
+    56→    56→  SelectContent,
+    57→    57→  SelectItem,
+    58→    58→  SelectTrigger,
+    59→    59→  SelectValue,
+    60→    60→} from '@/components/ui/select';
+    61→    61→
+    62→    62→// Lazy load tab components
+    63→    63→import dynamic from 'next/dynamic';
+    64→    64→
+    65→    65→const OverviewTab = dynamic(() => import('@/components/dashboard/overview-tab'), {
+    66→    66→  loading: () => <TabSkeleton />,
+    67→    67→});
+    68→    68→const CalendarTab = dynamic(() => import('@/components/dashboard/calendar-tab'), {
+    69→    69→  loading: () => <TabSkeleton />,
+    70→    70→});
+    71→    71→const BlogPlannerTab = dynamic(() => import('@/components/dashboard/blog-planner-tab'), {
+    72→    72→  loading: () => <TabSkeleton />,
+    73→    73→});
+    74→    74→const SocialPlannerTab = dynamic(() => import('@/components/dashboard/social-planner-tab'), {
+    75→    75→  loading: () => <TabSkeleton />,
+    76→    76→});
+    77→    77→const IdeaResearcherTab = dynamic(() => import('@/components/dashboard/idea-researcher-tab'), {
+    78→    78→  loading: () => <TabSkeleton />,
+    79→    79→});
+    80→    80→const SeoTab = dynamic(() => import('@/components/dashboard/seo-tab'), {
+    81→    81→  loading: () => <TabSkeleton />,
+    82→    82→});
+    83→    83→const CampaignsTab = dynamic(() => import('@/components/dashboard/campaigns-tab'), {
+    84→    84→  loading: () => <TabSkeleton />,
+    85→    85→});
+    86→    86→const SocialAnalyticsTab = dynamic(() => import('@/components/dashboard/social-analytics-tab'), {
+    87→    87→  loading: () => <TabSkeleton />,
+    88→    88→});
+    89→    89→const LeadsTab = dynamic(() => import('@/components/dashboard/leads-tab'), {
+    90→    90→  loading: () => <TabSkeleton />,
+    91→    91→});
+    92→    92→const CompetitorTab = dynamic(() => import('@/components/dashboard/competitor-tab'), {
+    93→    93→  loading: () => <TabSkeleton />,
+    94→    94→});
+    95→    95→const BudgetTab = dynamic(() => import('@/components/dashboard/budget-tab'), {
+    96→    96→  loading: () => <TabSkeleton />,
+    97→    97→});
+    98→    98→const EmailTab = dynamic(() => import('@/components/dashboard/email-tab'), {
+    99→    99→  loading: () => <TabSkeleton />,
+   100→   100→});
+   101→   101→const ReportsTab = dynamic(() => import('@/components/dashboard/reports-tab'), {
+   102→   102→  loading: () => <TabSkeleton />,
+   103→   103→});
+   104→   104→const AbTestingTab = dynamic(() => import('@/components/dashboard/ab-testing-tab'), {
+   105→   105→  loading: () => <TabSkeleton />,
+   106→   106→});
+   107→   107→const AttributionTab = dynamic(() => import('@/components/dashboard/attribution-tab'), {
+   108→   108→  loading: () => <TabSkeleton />,
+   109→   109→});
+   110→   110→const SeoMasterTab = dynamic(() => import('@/components/dashboard/seo-master-tab'), {
+   111→   111→  loading: () => <TabSkeleton />,
+   112→   112→});
+   113→   113→const ReportBuilderTab = dynamic(() => import('@/components/dashboard/report-builder-tab'), {
+   114→   114→  loading: () => <TabSkeleton />,
+   115→   115→});
+   116→   116→const FunnelTab = dynamic(() => import('@/components/dashboard/funnel-tab'), {
+   117→   117→  loading: () => <TabSkeleton />,
+   118→   118→});
+   119→   119→const SocialAccountsTab = dynamic(() => import('@/components/dashboard/social-accounts-tab'), {
+   120→   120→  loading: () => <TabSkeleton />,
+   121→   121→});
+   122→   122→const LeadPipelineTab = dynamic(() => import('@/components/dashboard/lead-pipeline-tab'), {
+   123→   123→  loading: () => <TabSkeleton />,
+   124→   124→});
+   125→   125→
+   126→   126→type TabKey = 'overview' | 'calendar' | 'blogs' | 'social-planner' | 'ideas' | 'seo' | 'campaigns' | 'social-analytics' | 'leads' | 'report-builder' | 'budget' | 'competitors' | 'email' | 'ab-testing' | 'reports' | 'funnel' | 'attribution' | 'social-accounts' | 'seo-master' | 'lead-pipeline';
+   127→   127→
+   128→   128→interface NavItem {
+   129→   129→  key: TabKey;
+   130→   130→  label: string;
+   131→   131→  icon: React.ComponentType<{ className?: string }>;
+   132→   132→}
+   133→   133→
+   134→   134→const navItems: NavItem[] = [
+   135→   135→  { key: 'overview', label: 'Overview', icon: LayoutDashboard },
+   136→   136→  { key: 'calendar', label: 'Content Calendar', icon: Calendar },
+   137→   137→  { key: 'blogs', label: 'Blog Planner', icon: FileText },
+   138→   138→  { key: 'social-planner', label: 'Social Planner', icon: Share2 },
+   139→   139→  { key: 'ideas', label: 'Idea Researcher', icon: Lightbulb },
+   140→   140→  { key: 'seo', label: 'SEO Dashboard', icon: Search },
+   141→   141→  { key: 'campaigns', label: 'Campaigns', icon: Target },
+   142→   142→  { key: 'social-analytics', label: 'Social Analytics', icon: BarChart3 },
+   143→   143→  { key: 'leads', label: 'Leads & Revenue', icon: Users },
+   144→   144→  { key: 'report-builder', label: 'Report Builder', icon: ClipboardList },
+   145→   145→  { key: 'budget', label: 'Budget Planner', icon: Wallet },
+   146→   146→  { key: 'competitors', label: 'Competitor Analysis', icon: Swords },
+   147→   147→  { key: 'email', label: 'Email Campaigns', icon: Mail },
+   148→   148→  { key: 'reports', label: 'Reports', icon: FileBarChart },
+   149→   149→  { key: 'ab-testing', label: 'A/B Testing', icon: FlaskConical },
+   150→   150→  { key: 'funnel', label: 'Funnel', icon: Filter },
+   151→   151→  { key: 'social-accounts', label: 'Social Accounts', icon: Globe },
+   152→   152→  { key: 'attribution', label: 'Attribution', icon: GitBranch },
+   153→   153→  { key: 'seo-master', label: 'AI SEO Master', icon: Wand2 },
+   154→   154→  { key: 'lead-pipeline', label: 'Lead Pipeline', icon: Contact },
+   155→   155→];
+   156→   156→
+   157→   157→function TabSkeleton() {
+   158→   158→  return (
+   159→   159→    <div className="space-y-6 p-1">
+   160→   160→      <div className="flex items-center justify-between">
+   161→   161→        <Skeleton className="h-8 w-48" />
+   162→   162→        <Skeleton className="h-10 w-32" />
+   163→   163→      </div>
+   164→   164→      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   165→   165→        {[...Array(4)].map((_, i) => (
+   166→   166→          <Skeleton key={i} className="h-28 rounded-xl" />
+   167→   167→        ))}
+   168→   168→      </div>
+   169→   169→      <Skeleton className="h-80 rounded-xl" />
+   170→   170→      <Skeleton className="h-60 rounded-xl" />
+   171→   171→    </div>
+   172→   172→  );
+   173→   173→}
+   174→   174→
+   175→   175→function SidebarContent({
+   176→   176→  activeTab,
+   177→   177→  onTabChange,
+   178→   178→  collapsed,
+   179→   179→}: {
+   180→   180→  activeTab: TabKey;
+   181→   181→  onTabChange: (key: TabKey) => void;
+   182→   182→  collapsed: boolean;
+   183→   183→}) {
+   184→   184→  return (
+   185→   185→    <div className="flex h-full flex-col">
+   186→   186→      {/* Logo */}
+   187→   187→      <div className="flex h-16 items-center gap-3 px-4 border-b border-border/50 relative">
+   188→   188→        <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-[#D4A843]/20 via-[#D4A843]/10 to-transparent" />
+   189→   189→        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg gold-gradient shadow-md shadow-[#D4A843]/15">
+   190→   190→          <Gem className="h-5 w-5 text-primary-foreground" />
+   191→   191→        </div>
+   192→   192→        {!collapsed && (
+   193→   193→          <div className="overflow-hidden">
+   194→   194→            <h1 className="text-lg font-bold gold-gradient-text tracking-wider text-glow-gold-sm">LAXREE</h1>
+   195→   195→            <p className="text-[9px] text-muted-foreground/70 -mt-0.5 tracking-[0.25em] uppercase">Marketing Suite</p>
+   196→   196→          </div>
+   197→   197→        )}
+   198→   198→      </div>
+   199→   199→
+   200→   200→      {/* Navigation */}
+   201→   201→      <ScrollArea className="flex-1 py-3">
+   202→   202→        <nav className="space-y-0.5 px-3">
+   203→   203→          {navItems.map((item, idx) => {
+   204→   204→            const Icon = item.icon;
+   205→   205→            const isActive = activeTab === item.key;
+   206→   206→            const showDivider = idx === 10; // Divider before Budget/Competitor/Email/Reports/A-B Testing
+   207→   207→
+   208→   208→            if (collapsed) {
+   209→   209→              return (
+   210→   210→                <TooltipProvider key={item.key} delayDuration={0}>
+   211→   211→                  <Tooltip>
+   212→   212→                    <TooltipTrigger asChild>
+   213→   213→                      <button
+   214→   214→                        onClick={() => onTabChange(item.key)}
+   215→   215→                        className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 mx-auto nav-item-hover focus-ring-gold ${
+   216→   216→                          isActive
+   217→   217→                            ? 'bg-[#D4A843]/15 text-[#D4A843] sidebar-glow-active'
+   218→   218→                            : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+   219→   219→                        }`}
+   220→   220→                      >
+   221→   221→                        {isActive && (
+   222→   222→                          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full gold-gradient" />
+   223→   223→                        )}
+   224→   224→                        <Icon className="h-[18px] w-[18px]" />
+   225→   225→                      </button>
+   226→   226→                    </TooltipTrigger>
+   227→   227→                    <TooltipContent side="right" className="bg-card border-border text-foreground">
+   228→   228→                      {item.label}
+   229→   229→                    </TooltipContent>
+   230→   230→                  </Tooltip>
+   231→   231→                </TooltipProvider>
+   232→   232→              );
+   233→   233→            }
+   234→   234→
+   235→   235→            return (
+   236→   236→              <div key={item.key}>
+   237→   237→                {showDivider && (
+   238→   238→                  <div className="gold-divider my-2.5" />
+   239→   239→                )}
+   240→   240→                <button
+   241→   241→                  onClick={() => onTabChange(item.key)}
+   242→   242→                  className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 w-full focus-ring-gold ${
+   243→   243→                    isActive
+   244→   244→                      ? 'bg-[#D4A843]/10 text-[#D4A843] sidebar-glow-active'
+   245→   245→                      : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+   246→   246→                  }`}
+   247→   247→                >
+   248→   248→                  {isActive && (
+   249→   249→                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full gold-gradient" />
+   250→   250→                  )}
+   251→   251→                  <Icon className="h-[18px] w-[18px] shrink-0" />
+   252→   252→                  <span className="truncate">{item.label}</span>
+   253→   253→                </button>
+   254→   254→              </div>
+   255→   255→            );
+   256→   256→          })}
+   257→   257→        </nav>
+   258→   258→      </ScrollArea>
+   259→   259→
+   260→   260→      {/* Quick Stats */}
+   261→   261→      <div className={"border-t border-border/50 px-3 pt-3 pb-1" + (collapsed ? ' px-2' : '')}>
+   262→   262→        {collapsed ? (
+   263→   263→          <div className="flex flex-col items-center gap-2">
+   264→   264→            <div className="flex items-center gap-1">
+   265→   265→              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+   266→   266→              <span className="text-[10px] font-bold text-muted-foreground">8</span>
+   267→   267→            </div>
+   268→   268→            <div className="flex items-center gap-1">
+   269→   269→              <span className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
+   270→   270→              <span className="text-[10px] font-bold text-muted-foreground">12</span>
+   271→   271→            </div>
+   272→   272→            <div className="flex items-center gap-1">
+   273→   273→              <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+   274→   274→              <span className="text-[10px] font-bold text-muted-foreground">3</span>
+   275→   275→            </div>
+   276→   276→          </div>
+   277→   277→        ) : (
+   278→   278→          <div className="flex items-center justify-between px-2 pb-1">
+   279→   279→            <div className="flex items-center gap-1.5">
+   280→   280→              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+   281→   281→              <span className="text-[10px] font-semibold text-muted-foreground">8 <span className="text-[9px] text-muted-foreground/60">Active</span></span>
+   282→   282→            </div>
+   283→   283→            <div className="flex items-center gap-1.5">
+   284→   284→              <span className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
+   285→   285→              <span className="text-[10px] font-semibold text-muted-foreground">12 <span className="text-[9px] text-muted-foreground/60">Pending</span></span>
+   286→   286→            </div>
+   287→   287→            <div className="flex items-center gap-1.5">
+   288→   288→              <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+   289→   289→              <span className="text-[10px] font-semibold text-muted-foreground">3 <span className="text-[9px] text-muted-foreground/60">Alerts</span></span>
+   290→   290→            </div>
+   291→   291→          </div>
+   292→   292→        )}
+   293→   293→      </div>
+   294→   294→
+   295→   295→      {/* User Section */}
+   296→   296→      <div className="relative border-t border-border/30 p-3">
+   297→   297→        <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-[#D4A843]/15 via-[#D4A843]/8 to-transparent" />
+   298→   298→        {!collapsed ? (
+   299→   299→          <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-white/5 transition-all duration-200 cursor-pointer group">
+   300→   300→            <Avatar className="h-8 w-8 border border-[#D4A843]/30 group-hover:border-[#D4A843]/50 transition-colors">
+   301→   301→              <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">LT</AvatarFallback>
+   302→   302→            </Avatar>
+   303→   303→            <div className="flex-1 min-w-0">
+   304→   304→              <p className="text-sm font-medium text-foreground truncate">Laxree Team</p>
+   305→   305→              <p className="text-[11px] text-muted-foreground/70 truncate">Marketing Manager</p>
+   306→   306→            </div>
+   307→   307→            <div className="h-2 w-2 rounded-full bg-[#D4A843]/50 group-hover:bg-[#D4A843] transition-colors" />
+   308→   308→          </div>
+   309→   309→        ) : (
+   310→   310→          <TooltipProvider delayDuration={0}>
+   311→   311→            <Tooltip>
+   312→   312→              <TooltipTrigger asChild>
+   313→   313→                <div className="flex justify-center">
+   314→   314→                  <Avatar className="h-8 w-8 border border-[#D4A843]/30 cursor-pointer hover:border-[#D4A843]/50 transition-colors">
+   315→   315→                    <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">LT</AvatarFallback>
+   316→   316→                  </Avatar>
+   317→   317→                </div>
+   318→   318→              </TooltipTrigger>
+   319→   319→              <TooltipContent side="right" className="bg-card border-border text-foreground">
+   320→   320→                Laxree Team
+   321→   321→              </TooltipContent>
+   322→   322→            </Tooltip>
+   323→   323→          </TooltipProvider>
+   324→   324→        )}
+   325→   325→      </div>
+   326→   326→    </div>
+   327→   327→  );
+   328→   328→}
+   329→   329→
+   330→   330→const notifications = [
+   331→   331→  { id: 1, title: 'Diwali Collection campaign ROAS increased by 15%', time: '2 hours ago', type: 'success' as const },
+   332→   332→  { id: 2, title: 'New lead from Tata Group via Google Ads', time: '5 hours ago', type: 'info' as const },
+   333→   333→  { id: 3, title: "Blog '10 Luxe Jewellery Trends' hit #3 on Google", time: '1 day ago', type: 'success' as const },
+   334→   334→  { id: 4, title: 'YouTube Brand Video campaign is at risk', time: '1 day ago', type: 'warning' as const },
+   335→   335→  { id: 5, title: 'Instagram milestone: 135K followers reached!', time: '2 days ago', type: 'info' as const },
+   336→   336→  { id: 6, title: 'Monthly SEO report is ready for review', time: '3 days ago', type: 'info' as const },
+   337→   337→];
+   338→   338→
+   339→   339→const notifDotColor = { success: 'bg-green-500', warning: 'bg-red-500', info: 'bg-[#D4A843]' };
+   340→   340→
+   341→   341→const quickActions = [
+   342→   342→  { label: 'New Blog Post', tab: 'blogs' as TabKey, icon: FilePlus2 },
+   343→   343→  { label: 'Schedule Post', tab: 'social-planner' as TabKey, icon: Clock },
+   344→   344→  { label: 'Add Calendar Event', tab: 'calendar' as TabKey, icon: Calendar },
+   345→   345→  { label: 'Generate Ideas', tab: 'ideas' as TabKey, icon: Sparkles },
+   346→   346→  { label: 'View SEO Report', tab: 'seo' as TabKey, icon: BarChart },
+   347→   347→];
+   348→   348→
+   349→   349→export default function Home() {
+   350→   350→  const [activeTab, setActiveTab] = useState<TabKey>('overview');
+   351→   351→  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+   352→   352→  const [fabOpen, setFabOpen] = useState(false);
+   353→   353→  const [cmdOpen, setCmdOpen] = useState(false);
+   354→   354→  const [cmdQuery, setCmdQuery] = useState('');
+   355→   355→
+   356→   356→  const activeNavItem = navItems.find((n) => n.key === activeTab);
+   357→   357→
+   358→   358→  // Command palette: filter nav items
+   359→   359→  const filteredNavItems = cmdQuery
+   360→   360→    ? navItems.filter((n) => n.label.toLowerCase().includes(cmdQuery.toLowerCase()))
+   361→   361→    : navItems;
+   362→   362→
+   363→   363→  // Cmd+K shortcut
+   364→   364→  useEffect(() => {
+   365→   365→    const handler = (e: KeyboardEvent) => {
+   366→   366→      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+   367→   367→        e.preventDefault();
+   368→   368→        setCmdOpen((v) => !v);
+   369→   369→        setCmdQuery('');
+   370→   370→      }
+   371→   371→      if (e.key === 'Escape') {
+   372→   372→        setCmdOpen(false);
+   373→   373→        setFabOpen(false);
+   374→   374→      }
+   375→   375→    };
+   376→   376→    window.addEventListener('keydown', handler);
+   377→   377→    return () => window.removeEventListener('keydown', handler);
+   378→   378→  }, []);
+   379→   379→
+   380→   380→  const renderTab = () => {
+   381→   381→    switch (activeTab) {
+   382→   382→      case 'overview': return <OverviewTab />;
+   383→   383→      case 'calendar': return <CalendarTab />;
+   384→   384→      case 'blogs': return <BlogPlannerTab />;
+   385→   385→      case 'social-planner': return <SocialPlannerTab />;
+   386→   386→      case 'ideas': return <IdeaResearcherTab />;
+   387→   387→      case 'seo': return <SeoTab />;
+   388→   388→      case 'campaigns': return <CampaignsTab />;
+   389→   389→      case 'social-analytics': return <SocialAnalyticsTab />;
+   390→   390→      case 'leads': return <LeadsTab />;
+   391→   391→      case 'report-builder': return <ReportBuilderTab />;
+   392→   392→      case 'budget': return <BudgetTab />;
+   393→   393→      case 'competitors': return <CompetitorTab />;
+   394→   394→      case 'email': return <EmailTab />;
+   395→   395→      case 'ab-testing': return <AbTestingTab />;
+   396→   396→      case 'reports': return <ReportsTab />;
+   397→   397→      case 'funnel': return <FunnelTab />;
+   398→   398→      case 'social-accounts': return <SocialAccountsTab />;
+   399→   399→      case 'attribution': return <AttributionTab />;
+   400→   400→      case 'seo-master': return <SeoMasterTab />;
+   401→   401→      case 'lead-pipeline': return <LeadPipelineTab />;
+   402→   402→      default: return <OverviewTab />;
+   403→   403→    }
+   404→   404→  };
+   405→   405→
+   406→   406→  return (
+   407→   407→    <div className="flex h-screen overflow-hidden bg-[#0a0a0a]">
+   408→   408→      {/* Desktop Sidebar */}
+   409→   409→      <aside
+   410→   410→        className={`hidden lg:flex flex-col border-r border-border/50 bg-[#0d0d0d] transition-all duration-300 shrink-0 ${
+   411→   411→          sidebarCollapsed ? 'w-[70px]' : 'w-[260px]'
+   412→   412→        }`}
+   413→   413→      >
+   414→   414→        <SidebarContent
+   415→   415→          activeTab={activeTab}
+   416→   416→          onTabChange={setActiveTab}
+   417→   417→          collapsed={sidebarCollapsed}
+   418→   418→        />
+   419→   419→        {/* Collapse Toggle */}
+   420→   420→        <button
+   421→   421→          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+   422→   422→          className="absolute top-5 z-10 hidden lg:flex items-center justify-center h-6 w-6 rounded-full bg-[#1a1a1a] border border-border/50 text-muted-foreground hover:text-[#D4A843] hover:border-[#D4A843]/30 transition-all"
+   423→   423→          style={{ left: sidebarCollapsed ? '52px' : '242px' }}
+   424→   424→        >
+   425→   425→          {sidebarCollapsed ? (
+   426→   426→            <ChevronRight className="h-3 w-3" />
+   427→   427→          ) : (
+   428→   428→            <ChevronLeft className="h-3 w-3" />
+   429→   429→          )}
+   430→   430→        </button>
+   431→   431→      </aside>
+   432→   432→
+   433→   433→      {/* Mobile Sidebar */}
+   434→   434→      <Sheet>
+   435→   435→        <SheetTrigger asChild>
+   436→   436→          <Button
+   437→   437→            variant="ghost"
+   438→   438→            size="icon"
+   439→   439→            className="fixed top-3 left-3 z-50 lg:hidden text-muted-foreground hover:text-[#D4A843] bg-[#111]/80 backdrop-blur-sm border border-border/50"
+   440→   440→          >
+   441→   441→            <Menu className="h-5 w-5" />
+   442→   442→          </Button>
+   443→   443→        </SheetTrigger>
+   444→   444→        <SheetContent side="left" className="w-[280px] p-0 bg-[#0d0d0d] border-border/50">
+   445→   445→          <SheetTitle className="sr-only">Navigation</SheetTitle>
+   446→   446→          <SidebarContent
+   447→   447→            activeTab={activeTab}
+   448→   448→            onTabChange={(key) => {
+   449→   449→              setActiveTab(key);
+   450→   450→            }}
+   451→   451→            collapsed={false}
+   452→   452→          />
+   453→   453→        </SheetContent>
+   454→   454→      </Sheet>
+   455→   455→
+   456→   456→      {/* Main Content */}
+   457→   457→      <div className="flex flex-1 flex-col overflow-hidden">
+   458→   458→        {/* Top Header */}
+   459→   459→        <header className="relative sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border/50 bg-[#0a0a0a]/95 backdrop-blur-md px-4 lg:px-6 shrink-0">
+   460→   460→          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4A843]/30 to-transparent" />
+   461→   461→          <div className="flex items-center gap-3 lg:gap-4 pl-12 lg:pl-0">
+   462→   462→            {activeNavItem && (
+   463→   463→              <>
+   464→   464→                <activeNavItem.icon className="h-4 w-4 text-[#D4A843] shrink-0" />
+   465→   465→                <h2 className="text-sm font-semibold text-foreground hidden sm:block truncate">
+   466→   466→                  {activeNavItem.label}
+   467→   467→                </h2>
+   468→   468→              </>
+   469→   469→            )}
+   470→   470→          </div>
+   471→   471→
+   472→   472→          <div className="flex items-center gap-2">
+   473→   473→            {/* Command Palette Trigger */}
+   474→   474→            <Button
+   475→   475→              variant="ghost"
+   476→   476→              size="sm"
+   477→   477→              className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-[#D4A843] h-8 px-3 border border-border/40 hover:border-[#D4A843]/30 bg-[#111]/30 transition-all"
+   478→   478→              onClick={() => { setCmdOpen(true); setCmdQuery(''); }}
+   479→   479→            >
+   480→   480→              <SearchIcon className="h-3.5 w-3.5" />
+   481→   481→              <span className="text-xs">Search...</span>
+   482→   482→              <kbd className="ml-1 inline-flex h-5 items-center gap-0.5 rounded border border-border/60 bg-[#0a0a0a] px-1.5 text-[10px] font-mono text-muted-foreground/70">
+   483→   483→                ⌘K
+   484→   484→              </kbd>
+   485→   485→            </Button>
+   486→   486→            {/* Mobile search */}
+   487→   487→            <Button
+   488→   488→              variant="ghost"
+   489→   489→              size="icon"
+   490→   490→              className="sm:hidden text-muted-foreground hover:text-[#D4A843] h-8 w-8"
+   491→   491→              onClick={() => { setCmdOpen(true); setCmdQuery(''); }}
+   492→   492→            >
+   493→   493→              <SearchIcon className="h-4 w-4" />
+   494→   494→            </Button>
+   495→   495→
+   496→   496→            {/* Date Range */}
+   497→   497→            <Select defaultValue="30d">
+   498→   498→              <SelectTrigger className="h-8 w-auto gap-1.5 border-border/50 bg-[#111]/50 text-xs text-muted-foreground focus:ring-[#D4A843]/20">
+   499→   499→                <SelectValue />
+   500→   500→              </SelectTrigger>
+   501→   501→              <SelectContent className="bg-[#111] border-border">
+   502→   502→                <SelectItem value="7d">Last 7 days</SelectItem>
+   503→   503→                <SelectItem value="30d">Last 30 days</SelectItem>
+   504→   504→                <SelectItem value="90d">Last 90 days</SelectItem>
+   505→   505→                <SelectItem value="12m">Last 12 months</SelectItem>
+   506→   506→              </SelectContent>
+   507→   507→            </Select>
+   508→   508→
+   509→   509→            {/* Notifications */}
+   510→   510→            <Popover>
+   511→   511→              <PopoverTrigger asChild>
+   512→   512→                <Button
+   513→   513→                  variant="ghost"
+   514→   514→                  size="icon"
+   515→   515→                  className="relative text-muted-foreground hover:text-[#D4A843] h-8 w-8"
+   516→   516→                >
+   517→   517→                  <Bell className="h-4 w-4" />
+   518→   518→                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#D4A843] ring-2 ring-[#0a0a0a] notif-pulse" />
+   519→   519→                </Button>
+   520→   520→              </PopoverTrigger>
+   521→   521→              <PopoverContent align="end" className="w-80 p-0 bg-[#111] border-[#D4A843]/20 rounded-xl shadow-2xl shadow-black/50">
+   522→   522→                <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+   523→   523→                  <div className="flex items-center gap-2">
+   524→   524→                    <Bell className="h-4 w-4 text-[#D4A843]" />
+   525→   525→                    <span className="text-sm font-semibold text-foreground">Notifications</span>
+   526→   526→                    <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-[#D4A843]/20 text-[10px] font-bold text-[#D4A843]">{notifications.length}</span>
+   527→   527→                  </div>
+   528→   528→                  <button className="text-[11px] text-[#D4A843] hover:underline">Mark all read</button>
+   529→   529→                </div>
+   530→   530→                <ScrollArea className="max-h-[340px]">
+   531→   531→                  {notifications.map((n) => (
+   532→   532→                    <button
+   533→   533→                      key={n.id}
+   534→   534→                      className="flex items-start gap-3 w-full px-4 py-3 text-left transition-colors hover:bg-[#D4A843]/5 border-b border-border/20 last:border-0"
+   535→   535→                    >
+   536→   536→                      <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${notifDotColor[n.type]}`} />
+   537→   537→                      <div className="flex-1 min-w-0">
+   538→   538→                        <p className="text-[13px] text-foreground leading-snug">{n.title}</p>
+   539→   539→                        <p className="text-[11px] text-muted-foreground mt-1">{n.time}</p>
+   540→   540→                      </div>
+   541→   541→                      <Eye className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0 mt-1" />
+   542→   542→                    </button>
+   543→   543→                  ))}
+   544→   544→                </ScrollArea>
+   545→   545→                <div className="px-4 py-2.5 border-t border-border/50">
+   546→   546→                  <button className="text-[12px] text-[#D4A843] hover:underline flex items-center gap-1">
+   547→   547→                    View all notifications
+   548→   548→                    <ChevronRight className="h-3 w-3" />
+   549→   549→                  </button>
+   550→   550→                </div>
+   551→   551→              </PopoverContent>
+   552→   552→            </Popover>
+   553→   553→
+   554→   554→            <Separator orientation="vertical" className="h-5 bg-border/50 mx-1" />
+   555→   555→
+   556→   556→            {/* User Avatar (mobile) */}
+   557→   557→            <Avatar className="h-7 w-7 border border-[#D4A843]/20 lg:hidden">
+   558→   558→              <AvatarFallback className="bg-[#D4A843]/15 text-[#D4A843] text-[10px] font-bold">LT</AvatarFallback>
+   559→   559→            </Avatar>
+   560→   560→          </div>
+   561→   561→        </header>
+   562→   562→
+   563→   563→        {/* Page Content */}
+   564→   564→        <main className="flex-1 overflow-y-auto">
+   565→   565→          <div className="mx-auto max-w-[1440px] p-4 lg:p-6">
+   566→   566→            {renderTab()}
+   567→   567→          </div>
+   568→   568→
+   569→   569→          {/* Footer */}
+   570→   570→          <footer className="relative border-t border-border/20 mt-8 bg-gradient-to-t from-[#080808] to-transparent">
+   571→   571→            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#D4A843]/15 to-transparent" />
+   572→   572→            <div className="mx-auto max-w-[1440px] flex h-10 items-center justify-between px-4 lg:px-6">
+   573→   573→              <p className="text-[11px] text-muted-foreground/60">
+   574→   574→                © {new Date().getFullYear()} <span className="text-[#D4A843]/50 font-medium">Laxree</span> Jewellery — Marketing Analytics Platform
+   575→   575→              </p>
+   576→   576→              <div className="flex items-center gap-1.5">
+   577→   577→                <span className="h-1.5 w-1.5 rounded-full bg-green-500 dot-pulse shadow-sm shadow-green-500/30" />
+   578→   578→                <span className="text-[11px] text-muted-foreground/60">All systems operational</span>
+   579→   579→              </div>
+   580→   580→            </div>
+   581→   581→          </footer>
+   582→   582→        </main>
+   583→   583→
+   584→   584→        {/* ── Quick Actions FAB ──────────────────────────────────────── */}
+   585→   585→        <div className="fixed bottom-20 right-6 z-50 flex flex-col-reverse items-end gap-3">
+   586→   586→          {/* FAB Button */}
+   587→   587→          <button
+   588→   588→            onClick={() => setFabOpen(!fabOpen)}
+   589→   589→            className="pulse-gold flex h-14 w-14 items-center justify-center rounded-full gold-gradient text-primary-foreground shadow-lg shadow-[#D4A843]/20 transition-transform duration-200 hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A843]/50"
+   590→   590→            aria-label="Quick Actions"
+   591→   591→          >
+   592→   592→            <motion.div
+   593→   593→              animate={{ rotate: fabOpen ? 45 : 0 }}
+   594→   594→              transition={{ duration: 0.2 }}
+   595→   595→            >
+   596→   596→              <Zap className="h-6 w-6" />
+   597→   597→            </motion.div>
+   598→   598→          </button>
+   599→   599→
+   600→   600→          {/* Expanded Menu */}
+   601→   601→          <AnimatePresence>
+   602→   602→            {fabOpen && (
+   603→   603→              <motion.div
+   604→   604→                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+   605→   605→                animate={{ opacity: 1, y: 0, scale: 1 }}
+   606→   606→                exit={{ opacity: 0, y: 20, scale: 0.9 }}
+   607→   607→                transition={{ duration: 0.2, ease: 'easeOut' }}
+   608→   608→                className="flex flex-col gap-2"
+   609→   609→              >
+   610→   610→                {quickActions.map((action, i) => (
+   611→   611→                  <motion.button
+   612→   612→                    key={action.label}
+   613→   613→                    initial={{ opacity: 0, x: 20 }}
+   614→   614→                    animate={{ opacity: 1, x: 0 }}
+   615→   615→                    exit={{ opacity: 0, x: 20 }}
+   616→   616→                    transition={{ duration: 0.15, delay: i * 0.04 }}
+   617→   617→                    onClick={() => {
+   618→   618→                      setActiveTab(action.tab);
+   619→   619→                      setFabOpen(false);
+   620→   620→                    }}
+   621→   621→                    className="group flex items-center gap-3 rounded-xl bg-[#141414] border border-[#D4A843]/15 px-4 py-3 shadow-lg shadow-black/40 transition-all duration-200 hover:border-[#D4A843]/40 hover:bg-[#1a1a1a] hover:shadow-[#D4A843]/5 hover:shadow-xl"
+   622→   622→                  >
+   623→   623→                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#D4A843]/10 transition-colors group-hover:bg-[#D4A843]/20">
+   624→   624→                      <action.icon className="h-4 w-4 text-[#D4A843]" />
+   625→   625→                    </div>
+   626→   626→                    <span className="text-sm font-medium text-foreground whitespace-nowrap">
+   627→   627→                      {action.label}
+   628→   628→                    </span>
+   629→   629→                  </motion.button>
+   630→   630→                ))}
+   631→   631→              </motion.div>
+   632→   632→            )}
+   633→   633→          </AnimatePresence>
+   634→   634→        </div>
+   635→   635→      </div>
+   636→   636→
+   637→   637→      {/* ── Command Palette (⌘K) ─────────────────────────────────── */}
+   638→   638→      <Dialog open={cmdOpen} onOpenChange={setCmdOpen}>
+   639→   639→        <DialogContent className="sm:max-w-lg p-0 gap-0 bg-[#111] border-[#D4A843]/15 shadow-2xl shadow-black/60 rounded-xl overflow-hidden">
+   640→   640→          <div className="flex items-center gap-3 border-b border-border/50 px-4 py-3">
+   641→   641→            <SearchIcon className="h-4 w-4 text-[#D4A843] shrink-0" />
+   642→   642→            <input
+   643→   643→              autoFocus
+   644→   644→              value={cmdQuery}
+   645→   645→              onChange={(e) => setCmdQuery(e.target.value)}
+   646→   646→              placeholder="Search tabs, actions..."
+   647→   647→              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+   648→   648→            />
+   649→   649→            <kbd className="inline-flex h-5 items-center rounded border border-border/60 bg-[#0a0a0a] px-1.5 text-[10px] font-mono text-muted-foreground/50">ESC</kbd>
+   650→   650→          </div>
+   651→   651→          <div className="max-h-[320px] overflow-y-auto py-2 px-2">
+   652→   652→            <p className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Navigation</p>
+   653→   653→            <div className="space-y-0.5">
+   654→   654→              {filteredNavItems.map((item) => {
+   655→   655→                const Icon = item.icon;
+   656→   656→                const isActive = activeTab === item.key;
+   657→   657→                return (
+   658→   658→                  <button
+   659→   659→                    key={item.key}
+   660→   660→                    onClick={() => { setActiveTab(item.key); setCmdOpen(false); }}
+   661→   661→                    className={`flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm transition-all duration-150 ${
+   662→   662→                      isActive
+   663→   663→                        ? 'bg-[#D4A843]/10 text-[#D4A843]'
+   664→   664→                        : 'text-foreground hover:bg-white/5'
+   665→   665→                    }`}
+   666→   666→                  >
+   667→   667→                    <Icon className="h-4 w-4 shrink-0 opacity-60" />
+   668→   668→                    <span className="flex-1 text-left">{item.label}</span>
+   669→   669→                    {isActive && <span className="text-[10px] text-[#D4A843]/60">Current</span>}
+   670→   670→                  </button>
+   671→   671→                );
+   672→   672→              })}
+   673→   673→            </div>
+   674→   674→            {cmdQuery && filteredNavItems.length === 0 && (
+   675→   675→              <div className="py-8 text-center text-sm text-muted-foreground">No results found</div>
+   676→   676→            )}
+   677→   677→            <div className="gold-divider my-2" />
+   678→   678→            <p className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Quick Actions</p>
+   679→   679→            <div className="space-y-0.5">
+   680→   680→              {quickActions.map((action) => {
+   681→   681→                const Icon = action.icon;
+   682→   682→                return (
+   683→   683→                  <button
+   684→   684→                    key={action.label}
+   685→   685→                    onClick={() => { setActiveTab(action.tab); setCmdOpen(false); }}
+   686→   686→                    className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-white/5 transition-all duration-150"
+   687→   687→                  >
+   688→   688→                    <Icon className="h-4 w-4 shrink-0 opacity-60" />
+   689→   689→                    <span className="flex-1 text-left">{action.label}</span>
+   690→   690→                    <Zap className="h-3 w-3 text-[#D4A843]/40" />
+   691→   691→                  </button>
+   692→   692→                );
+   693→   693→              })}
+   694→   694→            </div>
+   695→   695→          </div>
+   696→   696→          <div className="border-t border-border/30 px-4 py-2 flex items-center justify-between">
+   697→   697→            <div className="flex items-center gap-3 text-[10px] text-muted-foreground/50">
+   698→   698→              <span className="flex items-center gap-1"><kbd className="inline-flex h-4 items-center rounded border border-border/40 bg-[#0a0a0a] px-1 text-[9px]">↑↓</kbd> Navigate</span>
+   699→   699→              <span className="flex items-center gap-1"><kbd className="inline-flex h-4 items-center rounded border border-border/40 bg-[#0a0a0a] px-1 text-[9px]">↵</kbd> Select</span>
+   700→   700→            </div>
+   701→   701→            <span className="text-[10px] text-muted-foreground/40">Laxree Marketing Suite</span>
+   702→   702→          </div>
+   703→   703→        </DialogContent>
+   704→   704→      </Dialog>
+   705→   705→    </div>
+   706→   706→  );
+   707→   707→}
