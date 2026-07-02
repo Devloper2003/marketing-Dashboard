@@ -1,0 +1,814 @@
+     1→'use client';
+     2→
+     3→import { useState, useEffect } from 'react';
+     4→import {
+     5→  Plug,
+     6→  Key,
+     7→  CheckCircle2,
+     8→  XCircle,
+     9→  RefreshCw,
+    10→  ExternalLink,
+    11→  Shield,
+    12→  Clock,
+    13→  Zap,
+    14→  AlertCircle,
+    15→  ChevronRight,
+    16→  Eye,
+    17→  EyeOff,
+    18→  Link2,
+    19→  Unplug,
+    20→  Settings,
+    21→  ArrowRight,
+    22→  Globe,
+    23→  Loader2,
+    24→} from 'lucide-react';
+    25→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+    26→import { Button } from '@/components/ui/button';
+    27→import { Input } from '@/components/ui/input';
+    28→import { Badge } from '@/components/ui/badge';
+    29→import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+    30→import { Separator } from '@/components/ui/separator';
+    31→import { motion, AnimatePresence } from 'framer-motion';
+    32→
+    33→interface PlatformConfig {
+    34→  id: string;
+    35→  name: string;
+    36→  description: string;
+    37→  icon: string;
+    38→  color: string;
+    39→  bgColor: string;
+    40→  borderColor: string;
+    41→  authType: 'oauth' | 'api_key' | 'both';
+    42→  docsUrl: string;
+    43→  fields: { key: string; label: string; placeholder: string; type: 'text' | 'password'; required: boolean }[];
+    44→  capabilities: string[];
+    45→  category: string;
+    46→}
+    47→
+    48→const PLATFORMS: PlatformConfig[] = [
+    49→  {
+    50→    id: 'google_ads',
+    51→    name: 'Google Ads',
+    52→    description: 'Run ad campaigns, track conversions, and optimize spend across Google Search, Display, and YouTube.',
+    53→    icon: 'G',
+    54→    color: '#4285F4',
+    55→    bgColor: 'rgba(66,133,244,0.1)',
+    56→    borderColor: 'rgba(66,133,244,0.3)',
+    57→    authType: 'both',
+    58→    docsUrl: 'https://developers.google.com/google-ads/api/docs/start',
+    59→    fields: [
+    60→      { key: 'apiKey', label: 'Client ID', placeholder: 'xxxxxx.apps.googleusercontent.com', type: 'text', required: true },
+    61→      { key: 'apiSecret', label: 'Client Secret', placeholder: 'GOCSPX-xxxxxxxx', type: 'password', required: true },
+    62→      { key: 'accountId', label: 'Customer ID', placeholder: '123-456-7890', type: 'text', required: false },
+    63→    ],
+    64→    capabilities: ['Ad Performance', 'Conversion Tracking', 'Spend Analytics', 'ROAS'],
+    65→    category: 'Advertising',
+    66→  },
+    67→  {
+    68→    id: 'meta',
+    69→    name: 'Meta (Facebook)',
+    70→    description: 'Connect Facebook & Instagram ad accounts for campaign analytics and audience insights.',
+    71→    icon: 'M',
+    72→    color: '#1877F2',
+    73→    bgColor: 'rgba(24,119,242,0.1)',
+    74→    borderColor: 'rgba(24,119,242,0.3)',
+    75→    authType: 'oauth',
+    76→    docsUrl: 'https://developers.facebook.com/docs/marketing-apis/',
+    77→    fields: [
+    78→      { key: 'apiKey', label: 'App ID', placeholder: '123456789012345', type: 'text', required: true },
+    79→      { key: 'apiSecret', label: 'App Secret', placeholder: 'abcdef1234567890', type: 'password', required: true },
+    80→      { key: 'accountId', label: 'Ad Account ID', placeholder: 'act_1234567890', type: 'text', required: false },
+    81→    ],
+    82→    capabilities: ['Ad Campaigns', 'Audience Insights', 'Pixel Data', 'Conversions'],
+    83→    category: 'Advertising',
+    84→  },
+    85→  {
+    86→    id: 'instagram',
+    87→    name: 'Instagram Business',
+    88→    description: 'Track engagement, followers growth, and content performance for your Instagram business profile.',
+    89→    icon: 'I',
+    90→    color: '#E4405F',
+    91→    bgColor: 'rgba(228,64,95,0.1)',
+    92→    borderColor: 'rgba(228,64,95,0.3)',
+    93→    authType: 'oauth',
+    94→    docsUrl: 'https://developers.facebook.com/docs/instagram-api/',
+    95→    fields: [
+    96→      { key: 'apiKey', label: 'Instagram Business ID', placeholder: '17841400xxxxx', type: 'text', required: true },
+    97→      { key: 'apiSecret', label: 'Access Token', placeholder: 'IGQVJX...', type: 'password', required: true },
+    98→    ],
+    99→    capabilities: ['Post Analytics', 'Stories Insights', 'Reels Data', 'Follower Demographics'],
+   100→    category: 'Social Media',
+   101→  },
+   102→  {
+   103→    id: 'google_analytics',
+   104→    name: 'Google Analytics 4',
+   105→    description: 'Website traffic analysis, user behavior, conversion funnels, and real-time reporting.',
+   106→    icon: 'GA',
+   107→    color: '#F9AB00',
+   108→    bgColor: 'rgba(249,171,0,0.1)',
+   109→    borderColor: 'rgba(249,171,0,0.3)',
+   110→    authType: 'both',
+   111→    docsUrl: 'https://developers.google.com/analytics/devguides/reporting/data/v1',
+   112→    fields: [
+   113→      { key: 'apiKey', label: 'Measurement ID', placeholder: 'G-XXXXXXXXXX', type: 'text', required: true },
+   114→      { key: 'apiSecret', label: 'API Secret', placeholder: 'your-api-secret', type: 'password', required: true },
+   115→      { key: 'accountId', label: 'Property ID', placeholder: '123456789', type: 'text', required: false },
+   116→    ],
+   117→    capabilities: ['Traffic Analysis', 'User Behavior', 'Conversion Funnels', 'Real-time Data'],
+   118→    category: 'Analytics',
+   119→  },
+   120→  {
+   121→    id: 'youtube',
+   122→    name: 'YouTube',
+   123→    description: 'Channel analytics, video performance, subscriber growth, and revenue tracking.',
+   124→    icon: 'YT',
+   125→    color: '#FF0000',
+   126→    bgColor: 'rgba(255,0,0,0.08)',
+   127→    borderColor: 'rgba(255,0,0,0.25)',
+   128→    authType: 'oauth',
+   129→    docsUrl: 'https://developers.google.com/youtube/v3',
+   130→    fields: [
+   131→      { key: 'apiKey', label: 'API Key', placeholder: 'AIzaSy...', type: 'text', required: true },
+   132→      { key: 'accountId', label: 'Channel ID', placeholder: 'UCxxxxxxxx', type: 'text', required: false },
+   133→    ],
+   134→    capabilities: ['Video Analytics', 'Subscriber Growth', 'Revenue', 'Audience Retention'],
+   135→    category: 'Social Media',
+   136→  },
+   137→  {
+   138→    id: 'sendgrid',
+   139→    name: 'SendGrid Email',
+   140→    description: 'Email delivery analytics, campaign performance, and subscriber management.',
+   141→    icon: 'SG',
+   142→    color: '#1A82E2',
+   143→    bgColor: 'rgba(26,130,226,0.1)',
+   144→    borderColor: 'rgba(26,130,226,0.3)',
+   145→    authType: 'api_key',
+   146→    docsUrl: 'https://docs.sendgrid.com/api-reference/',
+   147→    fields: [
+   148→      { key: 'apiKey', label: 'API Key', placeholder: 'SG.xxxxxxxx.xxxxxxxx', type: 'password', required: true },
+   149→    ],
+   150→    capabilities: ['Email Delivery', 'Open/Click Tracking', 'Bounce Analysis', 'List Management'],
+   151→    category: 'Email',
+   152→  },
+   153→  {
+   154→    id: 'mailchimp',
+   155→    name: 'Mailchimp',
+   156→    description: 'Email marketing campaigns, audience segments, and automation analytics.',
+   157→    icon: 'MC',
+   158→    color: '#FFE01B',
+   159→    bgColor: 'rgba(255,224,27,0.08)',
+   160→    borderColor: 'rgba(255,224,27,0.25)',
+   161→    authType: 'api_key',
+   162→    docsUrl: 'https://mailchimp.com/developer/marketing/api/',
+   163→    fields: [
+   164→      { key: 'apiKey', label: 'API Key', placeholder: 'xxxxxxxxxxxxxxxx-us1', type: 'password', required: true },
+   165→      { key: 'accountId', label: 'Audience ID', placeholder: 'abc123def4', type: 'text', required: false },
+   166→    ],
+   167→    capabilities: ['Campaign Analytics', 'Audience Segments', 'Automation', 'E-commerce'],
+   168→    category: 'Email',
+   169→  },
+   170→  {
+   171→    id: 'semrush',
+   172→    name: 'SEMrush',
+   173→    description: 'SEO analysis, keyword research, competitor tracking, and backlink monitoring.',
+   174→    icon: 'SE',
+   175→    color: '#FF662F',
+   176→    bgColor: 'rgba(255,102,47,0.1)',
+   177→    borderColor: 'rgba(255,102,47,0.3)',
+   178→    authType: 'api_key',
+   179→    docsUrl: 'https://www.semrush.com/api-docs/',
+   180→    fields: [
+   181→      { key: 'apiKey', label: 'API Key', placeholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', type: 'password', required: true },
+   182→    ],
+   183→    capabilities: ['Keyword Research', 'Site Audit', 'Backlink Analysis', 'Position Tracking'],
+   184→    category: 'SEO',
+   185→  },
+   186→  {
+   187→    id: 'shopify',
+   188→    name: 'Shopify',
+   189→    description: 'E-commerce analytics, order tracking, revenue data, and customer insights.',
+   190→    icon: 'SH',
+   191→    color: '#96BF48',
+   192→    bgColor: 'rgba(150,191,72,0.1)',
+   193→    borderColor: 'rgba(150,191,72,0.3)',
+   194→    authType: 'api_key',
+   195→    docsUrl: 'https://shopify.dev/docs/api/admin',
+   196→    fields: [
+   197→      { key: 'apiKey', label: 'Store Domain', placeholder: 'your-store.myshopify.com', type: 'text', required: true },
+   198→      { key: 'apiSecret', label: 'Access Token', placeholder: 'shpat_xxxxxxxxxxxxxxxx', type: 'password', required: true },
+   199→    ],
+   200→    capabilities: ['Order Analytics', 'Revenue Tracking', 'Customer Data', 'Product Performance'],
+   201→    category: 'E-Commerce',
+   202→  },
+   203→  {
+   204→    id: 'google_search_console',
+   205→    name: 'Google Search Console',
+   206→    description: 'Search performance, indexing status, sitemap monitoring, and Core Web Vitals.',
+   207→    icon: 'SC',
+   208→    color: '#34A853',
+   209→    bgColor: 'rgba(52,168,83,0.1)',
+   210→    borderColor: 'rgba(52,168,83,0.3)',
+   211→    authType: 'oauth',
+   212→    docsUrl: 'https://developers.google.com/webmaster-tools/search-console-api-original',
+   213→    fields: [
+   214→      { key: 'apiKey', label: 'Site URL', placeholder: 'https://www.laxree.com', type: 'text', required: true },
+   215→      { key: 'apiSecret', label: 'Verification Token', placeholder: 'your-verification-token', type: 'password', required: false },
+   216→    ],
+   217→    capabilities: ['Search Queries', 'Index Coverage', 'Page Experience', 'Sitemap Status'],
+   218→    category: 'SEO',
+   219→  },
+   220→];
+   221→
+   222→interface StoredIntegration {
+   223→  id: string;
+   224→  platform: string;
+   225→  platformName: string;
+   226→  status: string;
+   227→  authType: string;
+   228→  accountId?: string;
+   229→  accountName?: string;
+   230→  lastSyncAt?: string;
+   231→  syncInterval: number;
+   232→  connectedAt?: string;
+   233→  error?: string;
+   234→  hasApiKey?: boolean;
+   235→  hasApiSecret?: boolean;
+   236→  hasAccessToken?: boolean;
+   237→}
+   238→
+   239→function formatTimeAgo(dateStr?: string): string {
+   240→  if (!dateStr) return 'Never';
+   241→  const diff = Date.now() - new Date(dateStr).getTime();
+   242→  const mins = Math.floor(diff / 60000);
+   243→  if (mins < 1) return 'Just now';
+   244→  if (mins < 60) return `${mins}m ago`;
+   245→  const hrs = Math.floor(mins / 60);
+   246→  if (hrs < 24) return `${hrs}h ago`;
+   247→  const days = Math.floor(hrs / 24);
+   248→  return `${days}d ago`;
+   249→}
+   250→
+   251→export default function IntegrationsTab() {
+   252→  const [integrations, setIntegrations] = useState<StoredIntegration[]>([]);
+   253→  const [loading, setLoading] = useState(true);
+   254→  const [connectDialog, setConnectDialog] = useState<PlatformConfig | null>(null);
+   255→  const [formData, setFormData] = useState<Record<string, string>>({});
+   256→  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
+   257→  const [saving, setSaving] = useState(false);
+   258→  const [testing, setTesting] = useState<string | null>(null);
+   259→  const [testResult, setTestResult] = useState<Record<string, { ok: boolean; latency?: number; message?: string }>>({});
+   260→  const [syncing, setSyncing] = useState<string | null>(null);
+   261→  const [filter, setFilter] = useState('all');
+   262→
+   263→  const [fetchKey, setFetchKey] = useState(0);
+   264→
+   265→  useEffect(() => {
+   266→    let cancelled = false;
+   267→    const load = async () => {
+   268→      try {
+   269→        const res = await fetch('/api/integrations');
+   270→        const data = await res.json();
+   271→        if (!cancelled && data.success) setIntegrations(data.integrations);
+   272→      } catch { /* ignore */ }
+   273→      if (!cancelled) setLoading(false);
+   274→    };
+   275→    load();
+   276→    return () => { cancelled = true; };
+   277→  }, [fetchKey]);
+   278→
+   279→  const refresh = () => setFetchKey(k => k + 1);
+   280→
+   281→  const getIntegration = (platformId: string) => integrations.find(i => i.platform === platformId);
+   282→
+   283→  const getConnectedCount = () => integrations.filter(i => i.status === 'connected').length;
+   284→
+   285→  const handleConnect = (platform: PlatformConfig) => {
+   286→    const existing = getIntegration(platform.id);
+   287→    if (existing) {
+   288→      setFormData({
+   289→        apiKey: '',
+   290→        apiSecret: '',
+   291→        accountId: existing.accountId || '',
+   292→      });
+   293→    } else {
+   294→      setFormData({});
+   295→    }
+   296→    setShowSecrets({});
+   297→    setTestResult(prev => ({ ...prev, [platform.id]: undefined }));
+   298→    setConnectDialog(platform);
+   299→  };
+   300→
+   301→  const handleSave = async () => {
+   302→    if (!connectDialog) return;
+   303→    setSaving(true);
+   304→    try {
+   305→      const res = await fetch('/api/integrations', {
+   306→        method: 'POST',
+   307→        headers: { 'Content-Type': 'application/json' },
+   308→        body: JSON.stringify({
+   309→          platform: connectDialog.id,
+   310→          platformName: connectDialog.name,
+   311→          authType: connectDialog.authType === 'oauth' ? 'oauth' : 'api_key',
+   312→          ...formData,
+   313→        }),
+   314→      });
+   315→      const data = await res.json();
+   316→      if (data.success) {
+   317→        setConnectDialog(null);
+   318→        refresh();
+   319→      }
+   320→    } catch { /* ignore */ }
+   321→    setSaving(false);
+   322→  };
+   323→
+   324→  const handleDisconnect = async (platformId: string) => {
+   325→    try {
+   326→      await fetch(`/api/integrations?platform=${platformId}`, { method: 'DELETE' });
+   327→      refresh();
+   328→    } catch { /* ignore */ }
+   329→  };
+   330→
+   331→  const handleTest = async (platformId: string) => {
+   332→    setTesting(platformId);
+   333→    try {
+   334→      const res = await fetch('/api/integrations', {
+   335→        method: 'PATCH',
+   336→        headers: { 'Content-Type': 'application/json' },
+   337→        body: JSON.stringify({ platform: platformId, action: 'test' }),
+   338→      });
+   339→      const data = await res.json();
+   340→      if (data.success) {
+   341→        setTestResult(prev => ({ ...prev, [platformId]: { ok: true, latency: data.testResult.latency, message: data.testResult.message } }));
+   342→        refresh();
+   343→      } else {
+   344→        setTestResult(prev => ({ ...prev, [platformId]: { ok: false, message: data.error || 'Test failed' } }));
+   345→      }
+   346→    } catch {
+   347→      setTestResult(prev => ({ ...prev, [platformId]: { ok: false, message: 'Network error' } }));
+   348→    }
+   349→    setTesting(null);
+   350→  };
+   351→
+   352→  const handleSync = async (platformId: string) => {
+   353→    setSyncing(platformId);
+   354→    try {
+   355→      await fetch('/api/integrations', {
+   356→        method: 'PATCH',
+   357→        headers: { 'Content-Type': 'application/json' },
+   358→        body: JSON.stringify({ platform: platformId, action: 'sync' }),
+   359→      });
+   360→      refresh();
+   361→    } catch { /* ignore */ }
+   362→    setSyncing(null);
+   363→  };
+   364→
+   365→  const categories = ['all', ...Array.from(new Set(PLATFORMS.map(p => p.category)))];
+   366→  const filteredPlatforms = filter === 'all' ? PLATFORMS : PLATFORMS.filter(p => p.category === filter);
+   367→
+   368→  return (
+   369→    <div className="space-y-6">
+   370→      {/* Header */}
+   371→      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+   372→        <div>
+   373→          <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+   374→            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D4A843]/15">
+   375→              <Plug className="h-5 w-5 text-[#D4A843]" />
+   376→            </div>
+   377→            Account Integrations
+   378→          </h2>
+   379→          <p className="text-muted-foreground text-sm mt-1.5">
+   380→            Connect your real marketing accounts for live data sync and advanced analytics
+   381→          </p>
+   382→        </div>
+   383→        <div className="flex items-center gap-3">
+   384→          <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#D4A843]/10 border border-[#D4A843]/20">
+   385→            <div className="h-2 w-2 rounded-full bg-[#D4A843] animate-pulse" />
+   386→            <span className="text-sm font-semibold text-[#D4A843]">{getConnectedCount()}</span>
+   387→            <span className="text-xs text-muted-foreground">/ {PLATFORMS.length} Connected</span>
+   388→          </div>
+   389→        </div>
+   390→      </div>
+   391→
+   392→      {/* Status Banner */}
+   393→      <AnimatePresence>
+   394→        {getConnectedCount() > 0 && (
+   395→          <motion.div
+   396→            initial={{ opacity: 0, y: -10 }}
+   397→            animate={{ opacity: 1, y: 0 }}
+   398→            exit={{ opacity: 0, y: -10 }}
+   399→            className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-[#D4A843]/10 via-[#D4A843]/5 to-transparent border border-[#D4A843]/20"
+   400→          >
+   401→            <CheckCircle2 className="h-5 w-5 text-[#D4A843] shrink-0" />
+   402→            <p className="text-sm text-foreground/90">
+   403→              <span className="font-semibold text-[#D4A843]">{getConnectedCount()} account{getConnectedCount() > 1 ? 's' : ''}</span> connected
+   404→              — Live data is being pulled from your connected platforms. Data refreshes automatically.
+   405→            </p>
+   406→          </motion.div>
+   407→        )}
+   408→      </AnimatePresence>
+   409→
+   410→      {/* How It Works */}
+   411→      <Card className="border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden">
+   412→        <CardHeader className="pb-3">
+   413→          <CardTitle className="text-base font-semibold flex items-center gap-2">
+   414→            <Zap className="h-4 w-4 text-[#D4A843]" />
+   415→            How Real Account Linking Works
+   416→          </CardTitle>
+   417→        </CardHeader>
+   418→        <CardContent className="pb-4">
+   419→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   420→            {[
+   421→              { step: '1', title: 'Choose Platform', desc: 'Select the marketing platform you want to connect', icon: Globe },
+   422→              { step: '2', title: 'Enter Credentials', desc: 'Add API key or authorize via OAuth', icon: Key },
+   423→              { step: '3', title: 'Test Connection', desc: 'Verify credentials and check data access', icon: Shield },
+   424→              { step: '4', title: 'Live Data', desc: 'Dashboard auto-syncs data from all accounts', icon: RefreshCw },
+   425→            ].map(({ step, title, desc, icon: Icon }) => (
+   426→              <div key={step} className="flex items-start gap-3">
+   427→                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#D4A843]/10 text-[#D4A843] text-sm font-bold">
+   428→                  {step}
+   429→                </div>
+   430→                <div>
+   431→                  <p className="text-sm font-semibold text-foreground">{title}</p>
+   432→                  <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+   433→                </div>
+   434→              </div>
+   435→            ))}
+   436→          </div>
+   437→        </CardContent>
+   438→      </Card>
+   439→
+   440→      {/* Category Filter */}
+   441→      <div className="flex items-center gap-2 flex-wrap">
+   442→        {categories.map(cat => (
+   443→          <button
+   444→            key={cat}
+   445→            onClick={() => setFilter(cat)}
+   446→            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+   447→              filter === cat
+   448→                ? 'bg-[#D4A843]/15 text-[#D4A843] border border-[#D4A843]/30'
+   449→                : 'text-muted-foreground hover:text-foreground hover:bg-white/5 border border-transparent'
+   450→            }`}
+   451→          >
+   452→            {cat === 'all' ? 'All Platforms' : cat}
+   453→          </button>
+   454→        ))}
+   455→      </div>
+   456→
+   457→      {/* Platform Cards Grid */}
+   458→      {loading ? (
+   459→        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+   460→          {[...Array(6)].map((_, i) => (
+   461→            <div key={i} className="h-56 rounded-xl bg-card/50 animate-pulse" />
+   462→          ))}
+   463→        </div>
+   464→      ) : (
+   465→        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+   466→          {filteredPlatforms.map((platform, idx) => {
+   467→            const integration = getIntegration(platform.id);
+   468→            const isConnected = integration?.status === 'connected';
+   469→            const isTesting = testing === platform.id;
+   470→            const isSyncing = syncing === platform.id;
+   471→            const test = testResult[platform.id];
+   472→
+   473→            return (
+   474→              <motion.div
+   475→                key={platform.id}
+   476→                initial={{ opacity: 0, y: 20 }}
+   477→                animate={{ opacity: 1, y: 0 }}
+   478→                transition={{ delay: idx * 0.05, duration: 0.3 }}
+   479→              >
+   480→                <Card className={`relative overflow-hidden border transition-all duration-300 hover:shadow-lg group ${
+   481→                  isConnected
+   482→                    ? 'border-[#D4A843]/30 bg-card/80'
+   483→                    : 'border-border/50 bg-card/30 hover:border-border'
+   484→                }`}>
+   485→                  {/* Top color bar */}
+   486→                  <div
+   487→                    className="absolute top-0 left-0 right-0 h-0.5 opacity-60"
+   488→                    style={{ background: `linear-gradient(90deg, ${platform.color}, transparent)` }}
+   489→                  />
+   490→
+   491→                  <CardContent className="p-5">
+   492→                    {/* Platform Header */}
+   493→                    <div className="flex items-start justify-between mb-4">
+   494→                      <div className="flex items-center gap-3">
+   495→                        <div
+   496→                          className="flex h-11 w-11 items-center justify-center rounded-xl text-xs font-bold text-white shrink-0 shadow-md"
+   497→                          style={{ background: platform.color }}
+   498→                        >
+   499→                          {platform.icon}
+   500→                        </div>
+   501→                        <div>
+   502→                          <div className="flex items-center gap-2">
+   503→                            <h3 className="font-semibold text-foreground text-sm">{platform.name}</h3>
+   504→                            {isConnected && (
+   505→                              <Badge className="h-5 px-1.5 text-[9px] bg-green-500/15 text-green-400 border-green-500/20 hover:bg-green-500/20">
+   506→                                <CheckCircle2 className="h-3 w-3 mr-0.5" /> Live
+   507→                              </Badge>
+   508→                            )}
+   509→                          </div>
+   510→                          <p className="text-[11px] text-muted-foreground mt-0.5">{platform.category}</p>
+   511→                        </div>
+   512→                      </div>
+   513→                      <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-border/50 text-muted-foreground">
+   514→                        {platform.authType === 'oauth' ? 'OAuth' : platform.authType === 'both' ? 'OAuth / Key' : 'API Key'}
+   515→                      </Badge>
+   516→                    </div>
+   517→
+   518→                    <p className="text-xs text-muted-foreground leading-relaxed mb-4 line-clamp-2">
+   519→                      {platform.description}
+   520→                    </p>
+   521→
+   522→                    {/* Capabilities */}
+   523→                    <div className="flex flex-wrap gap-1.5 mb-4">
+   524→                      {platform.capabilities.map(cap => (
+   525→                        <span key={cap} className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-white/5 text-muted-foreground/80">
+   526→                          {cap}
+   527→                        </span>
+   528→                      ))}
+   529→                    </div>
+   530→
+   531→                    {/* Connected Account Info */}
+   532→                    {isConnected && integration && (
+   533→                      <div className="mb-4 p-3 rounded-lg bg-[#D4A843]/5 border border-[#D4A843]/10">
+   534→                        <div className="flex items-center justify-between">
+   535→                          <div className="flex items-center gap-2">
+   536→                            <div className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
+   537→                            <span className="text-xs font-medium text-foreground">
+   538→                              {integration.accountName || `${platform.name} Account`}
+   539→                            </span>
+   540→                          </div>
+   541→                          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+   542→                            <Clock className="h-3 w-3" />
+   543→                            {formatTimeAgo(integration.lastSyncAt)}
+   544→                          </div>
+   545→                        </div>
+   546→                        {test && (
+   547→                          <AnimatePresence>
+   548→                            <motion.div
+   549→                              initial={{ opacity: 0, height: 0 }}
+   550→                              animate={{ opacity: 1, height: 'auto' }}
+   551→                              className={`mt-2 text-[10px] flex items-center gap-1.5 ${test.ok ? 'text-green-400' : 'text-red-400'}`}
+   552→                            >
+   553→                              {test.ok ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+   554→                              {test.ok ? `Connected (${test.latency}ms)` : test.message}
+   555→                            </motion.div>
+   556→                          </AnimatePresence>
+   557→                        )}
+   558→                      </div>
+   559→                    )}
+   560→
+   561→                    <Separator className="mb-4 opacity-50" />
+   562→
+   563→                    {/* Actions */}
+   564→                    <div className="flex items-center gap-2">
+   565→                      {isConnected ? (
+   566→                        <>
+   567→                          <Button
+   568→                            variant="outline"
+   569→                            size="sm"
+   570→                            className="flex-1 h-8 text-xs border-border/50 hover:bg-white/5"
+   571→                            onClick={() => handleTest(platform.id)}
+   572→                            disabled={isTesting}
+   573→                          >
+   574→                            {isTesting ? (
+   575→                              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+   576→                            ) : (
+   577→                              <Shield className="h-3.5 w-3.5 mr-1.5" />
+   578→                            )}
+   579→                            Test
+   580→                          </Button>
+   581→                          <Button
+   582→                            variant="outline"
+   583→                            size="sm"
+   584→                            className="flex-1 h-8 text-xs border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/10"
+   585→                            onClick={() => handleSync(platform.id)}
+   586→                            disabled={isSyncing}
+   587→                          >
+   588→                            {isSyncing ? (
+   589→                              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+   590→                            ) : (
+   591→                              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+   592→                            )}
+   593→                            Sync Now
+   594→                          </Button>
+   595→                          <Button
+   596→                            variant="ghost"
+   597→                            size="sm"
+   598→                            className="h-8 w-8 p-0 text-muted-foreground hover:text-red-400 hover:bg-red-400/10"
+   599→                            onClick={() => handleDisconnect(platform.id)}
+   600→                          >
+   601→                            <Unplug className="h-3.5 w-3.5" />
+   602→                          </Button>
+   603→                        </>
+   604→                      ) : (
+   605→                        <>
+   606→                          <Button
+   607→                            size="sm"
+   608→                            className="flex-1 h-8 text-xs gold-gradient text-primary-foreground hover:opacity-90 shadow-md shadow-[#D4A843]/15"
+   609→                            onClick={() => handleConnect(platform)}
+   610→                          >
+   611→                            <Link2 className="h-3.5 w-3.5 mr-1.5" />
+   612→                            Connect Account
+   613→                          </Button>
+   614→                          <a
+   615→                            href={platform.docsUrl}
+   616→                            target="_blank"
+   617→                            rel="noopener noreferrer"
+   618→                            className="h-8 w-8 flex items-center justify-center rounded-md border border-border/50 text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+   619→                          >
+   620→                            <ExternalLink className="h-3.5 w-3.5" />
+   621→                          </a>
+   622→                        </>
+   623→                      )}
+   624→                    </div>
+   625→                  </CardContent>
+   626→                </Card>
+   627→              </motion.div>
+   628→            );
+   629→          })}
+   630→        </div>
+   631→      )}
+   632→
+   633→      {/* Security Notice */}
+   634→      <Card className="border-border/30 bg-card/30 overflow-hidden">
+   635→        <CardContent className="p-4 flex items-start gap-3">
+   636→          <Shield className="h-5 w-5 text-[#D4A843] shrink-0 mt-0.5" />
+   637→          <div>
+   638→            <p className="text-sm font-semibold text-foreground">Secure Credential Storage</p>
+   639→            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+   640→              All API keys and OAuth tokens are encrypted and stored securely in your database. Credentials are never exposed to the client.
+   641→              In production, we recommend using a secrets manager (AWS Secrets Manager, HashiCorp Vault) for additional security.
+   642→              Data is transmitted over HTTPS and refresh tokens are used for long-lived OAuth connections.
+   643→            </p>
+   644→          </div>
+   645→        </CardContent>
+   646→      </Card>
+   647→
+   648→      {/* Connect Dialog */}
+   649→      <Dialog open={!!connectDialog} onOpenChange={(open) => { if (!open) setConnectDialog(null); }}>
+   650→        <DialogContent className="sm:max-w-lg p-0 gap-0 bg-[#111] border-[#D4A843]/15 shadow-2xl shadow-black/60 rounded-xl overflow-hidden">
+   651→          {connectDialog && (
+   652→            <>
+   653→              {/* Dialog Header with color bar */}
+   654→              <div className="relative">
+   655→                <div className="h-1" style={{ background: `linear-gradient(90deg, ${connectDialog.color}, ${connectDialog.color}44, transparent)` }} />
+   656→                <div className="p-6 pb-4">
+   657→                  <DialogHeader>
+   658→                    <div className="flex items-center gap-3">
+   659→                      <div
+   660→                        className="flex h-10 w-10 items-center justify-center rounded-xl text-xs font-bold text-white shadow-md"
+   661→                        style={{ background: connectDialog.color }}
+   662→                      >
+   663→                        {connectDialog.icon}
+   664→                      </div>
+   665→                      <div>
+   666→                        <DialogTitle className="text-lg font-bold text-foreground">
+   667→                          Connect {connectDialog.name}
+   668→                        </DialogTitle>
+   669→                        <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+   670→                          {connectDialog.authType === 'oauth'
+   671→                            ? 'Enter your OAuth credentials to authorize access'
+   672→                            : connectDialog.authType === 'both'
+   673→                            ? 'Use OAuth or API key authentication'
+   674→                            : 'Enter your API credentials to establish connection'}
+   675→                        </DialogDescription>
+   676→                      </div>
+   677→                    </div>
+   678→                  </DialogHeader>
+   679→                </div>
+   680→              </div>
+   681→
+   682→              <div className="px-6 pb-2">
+   683→                <Separator className="opacity-30" />
+   684→              </div>
+   685→
+   686→              <div className="p-6 pt-4 space-y-4 max-h-[400px] overflow-y-auto">
+   687→                {/* OAuth notice for OAuth platforms */}
+   688→                {connectDialog.authType === 'oauth' && (
+   689→                  <div className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-500/10 border border-blue-500/15">
+   690→                    <AlertCircle className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+   691→                    <div>
+   692→                      <p className="text-xs font-medium text-blue-300">OAuth 2.0 Required</p>
+   693→                      <p className="text-[11px] text-blue-400/70 mt-0.5">
+   694→                        This platform uses OAuth for secure authorization. You&apos;ll need to create an app in the
+   695→                        platform&apos;s developer console and obtain the credentials below.
+   696→                      </p>
+   697→                    </div>
+   698→                  </div>
+   699→                )}
+   700→
+   701→                {/* Form Fields */}
+   702→                {connectDialog.fields.map(field => (
+   703→                  <div key={field.key} className="space-y-1.5">
+   704→                    <label className="text-xs font-medium text-foreground/80 flex items-center gap-1.5">
+   705→                      {field.label}
+   706→                      {field.required && <span className="text-red-400">*</span>}
+   707→                    </label>
+   708→                    <div className="relative">
+   709→                      <Input
+   710→                        type={showSecrets[field.key] ? 'text' : field.type}
+   711→                        placeholder={field.placeholder}
+   712→                        value={formData[field.key] || ''}
+   713→                        onChange={e => setFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
+   714→                        className="h-9 text-sm bg-white/5 border-border/50 focus:border-[#D4A843]/50 focus:ring-[#D4A843]/20 pr-10"
+   715→                      />
+   716→                      {field.type === 'password' && (
+   717→                        <button
+   718→                          type="button"
+   719→                          onClick={() => setShowSecrets(prev => ({ ...prev, [field.key]: !prev[field.key] }))}
+   720→                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+   721→                        >
+   722→                          {showSecrets[field.key] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+   723→                        </button>
+   724→                      )}
+   725→                    </div>
+   726→                  </div>
+   727→                ))}
+   728→
+   729→                {/* Account name (optional) */}
+   730→                <div className="space-y-1.5">
+   731→                  <label className="text-xs font-medium text-foreground/80">Account Label <span className="text-muted-foreground">(optional)</span></label>
+   732→                  <Input
+   733→                    type="text"
+   734→                    placeholder={`e.g., "Laxree ${connectDialog.name}"`}
+   735→                    value={formData.accountName || ''}
+   736→                    onChange={e => setFormData(prev => ({ ...prev, accountName: e.target.value }))}
+   737→                    className="h-9 text-sm bg-white/5 border-border/50 focus:border-[#D4A843]/50 focus:ring-[#D4A843]/20"
+   738→                  />
+   739→                </div>
+   740→
+   741→                {/* Sync Interval */}
+   742→                <div className="space-y-1.5">
+   743→                  <label className="text-xs font-medium text-foreground/80">Sync Interval</label>
+   744→                  <div className="flex gap-2">
+   745→                    {[
+   746→                      { label: '15 min', value: 900 },
+   747→                      { label: '1 hour', value: 3600 },
+   748→                      { label: '6 hours', value: 21600 },
+   749→                      { label: '24 hours', value: 86400 },
+   750→                    ].map(opt => (
+   751→                      <button
+   752→                        key={opt.value}
+   753→                        type="button"
+   754→                        onClick={() => setFormData(prev => ({ ...prev, syncInterval: String(opt.value) }))}
+   755→                        className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium transition-all border ${
+   756→                          (formData.syncInterval || '3600') === String(opt.value)
+   757→                            ? 'bg-[#D4A843]/15 text-[#D4A843] border-[#D4A843]/30'
+   758→                            : 'bg-white/3 text-muted-foreground border-border/30 hover:border-border/50 hover:text-foreground'
+   759→                        }`}
+   760→                      >
+   761→                        {opt.label}
+   762→                      </button>
+   763→                    ))}
+   764→                  </div>
+   765→                </div>
+   766→              </div>
+   767→
+   768→              {/* Footer */}
+   769→              <div className="p-6 pt-2 border-t border-border/30 bg-black/20">
+   770→                <div className="flex items-center justify-between">
+   771→                  <a
+   772→                    href={connectDialog.docsUrl}
+   773→                    target="_blank"
+   774→                    rel="noopener noreferrer"
+   775→                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-[#D4A843] transition-colors"
+   776→                  >
+   777→                    <ExternalLink className="h-3.5 w-3.5" />
+   778→                    View API Documentation
+   779→                    <ChevronRight className="h-3 w-3" />
+   780→                  </a>
+   781→                  <div className="flex items-center gap-2">
+   782→                    <Button
+   783→                      variant="ghost"
+   784→                      size="sm"
+   785→                      className="h-9 text-xs text-muted-foreground hover:text-foreground"
+   786→                      onClick={() => setConnectDialog(null)}
+   787→                    >
+   788→                      Cancel
+   789→                    </Button>
+   790→                    <Button
+   791→                      size="sm"
+   792→                      className="h-9 text-xs gold-gradient text-primary-foreground hover:opacity-90 shadow-md shadow-[#D4A843]/15 min-w-[100px]"
+   793→                      onClick={handleSave}
+   794→                      disabled={saving || connectDialog.fields.some(f => f.required && !formData[f.key])}
+   795→                    >
+   796→                      {saving ? (
+   797→                        <Loader2 className="h-4 w-4 animate-spin" />
+   798→                      ) : (
+   799→                        <>
+   800→                          <ArrowRight className="h-3.5 w-3.5 mr-1.5" />
+   801→                          Connect
+   802→                        </>
+   803→                      )}
+   804→                    </Button>
+   805→                  </div>
+   806→                </div>
+   807→              </div>
+   808→            </>
+   809→          )}
+   810→        </DialogContent>
+   811→      </Dialog>
+   812→    </div>
+   813→  );
+   814→}

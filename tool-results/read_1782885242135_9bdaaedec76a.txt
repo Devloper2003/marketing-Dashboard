@@ -1,0 +1,1062 @@
+     1→'use client';
+     2→
+     3→import { useState, useEffect, useCallback } from 'react';
+     4→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+     5→import { Badge } from '@/components/ui/badge';
+     6→import { Button } from '@/components/ui/button';
+     7→import { Input } from '@/components/ui/input';
+     8→import { Skeleton } from '@/components/ui/skeleton';
+     9→import {
+    10→  Dialog,
+    11→  DialogContent,
+    12→  DialogHeader,
+    13→  DialogTitle,
+    14→  DialogTrigger,
+    15→} from '@/components/ui/dialog';
+    16→import {
+    17→  Select,
+    18→  SelectContent,
+    19→  SelectItem,
+    20→  SelectTrigger,
+    21→  SelectValue,
+    22→} from '@/components/ui/select';
+    23→import {
+    24→  Table,
+    25→  TableBody,
+    26→  TableCell,
+    27→  TableHead,
+    28→  TableHeader,
+    29→  TableRow,
+    30→} from '@/components/ui/table';
+    31→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+    32→import { toast } from 'sonner';
+    33→import {
+    34→  BarChart,
+    35→  Bar,
+    36→  XAxis,
+    37→  YAxis,
+    38→  CartesianGrid,
+    39→  Tooltip as RechartsTooltip,
+    40→  ResponsiveContainer,
+    41→  Cell,
+    42→  RadarChart,
+    43→  PolarGrid,
+    44→  PolarAngleAxis,
+    45→  PolarRadiusAxis,
+    46→  Radar,
+    47→  Legend,
+    48→} from 'recharts';
+    49→import {
+    50→  Users,
+    51→  TrendingUp,
+    52→  Trophy,
+    53→  Target,
+    54→  ExternalLink,
+    55→  Globe,
+    56→  Search,
+    57→  Plus,
+    58→  Shield,
+    59→  Zap,
+    60→  ArrowUpRight,
+    61→  ArrowDownRight,
+    62→  AlertTriangle,
+    63→  Lightbulb,
+    64→  Swords,
+    65→  Crown,
+    66→  Eye,
+    67→  Wifi,
+    68→  BarChart3,
+    69→} from 'lucide-react';
+    70→
+    71→interface Competitor {
+    72→  id: string;
+    73→  name: string;
+    74→  website: string | null;
+    75→  category: string | null;
+    76→  marketShare: number;
+    77→  avgPriceRange: string | null;
+    78→  socialFollowers: number;
+    79→  monthlyTraffic: number;
+    80→  seoAuthority: number;
+    81→  strengths: string | null;
+    82→  weaknesses: string | null;
+    83→  notes: string | null;
+    84→}
+    85→
+    86→interface MarketShareItem {
+    87→  name: string;
+    88→  marketShare: number;
+    89→  isLaxree: boolean;
+    90→}
+    91→
+    92→interface RadarPoint {
+    93→  metric: string;
+    94→  Laxree: number;
+    95→  Tanishq: number;
+    96→  CaratLane: number;
+    97→  Kalyan: number;
+    98→}
+    99→
+   100→interface PricingPoint {
+   101→  brand: string;
+   102→  gold: number;
+   103→  diamond: number;
+   104→  platinum: number;
+   105→}
+   106→
+   107→interface SocialMediaData {
+   108→  [brand: string]: {
+   109→    instagram: number;
+   110→    facebook: number;
+   111→    youtube: number;
+   112→    twitter: number;
+   113→  };
+   114→}
+   115→
+   116→interface SwotData {
+   117→  strengths: string[];
+   118→  weaknesses: string[];
+   119→  opportunities: string[];
+   120→  threats: string[];
+   121→}
+   122→
+   123→interface CompetitorsResponse {
+   124→  competitors: Competitor[];
+   125→  laxree: {
+   126→    name: string;
+   127→    marketShare: number;
+   128→    avgPriceRange: string;
+   129→    socialFollowers: number;
+   130→    monthlyTraffic: number;
+   131→    seoAuthority: number;
+   132→    category: string;
+   133→  };
+   134→  marketShareChart: MarketShareItem[];
+   135→  radarData: RadarPoint[];
+   136→  socialMedia: SocialMediaData;
+   137→  pricingComparison: PricingPoint[];
+   138→  swotData: SwotData;
+   139→  summary: {
+   140→    totalCompetitors: number;
+   141→    avgMarketShare: number;
+   142→    laxreePosition: string;
+   143→    industryGrowthRate: number;
+   144→  };
+   145→}
+   146→
+   147→function formatNumber(n: number): string {
+   148→  if (n >= 10000000) return (n / 10000000).toFixed(1) + 'Cr';
+   149→  if (n >= 100000) return (n / 100000).toFixed(1) + 'L';
+   150→  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+   151→  return n.toString();
+   152→}
+   153→
+   154→function formatFollowers(n: number): string {
+   155→  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+   156→  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+   157→  return n.toString();
+   158→}
+   159→
+   160→const GOLD = '#D4A843';
+   161→const GOLD_LIGHT = '#E8C46A';
+   162→const MUTED_COLORS = ['#4a4030', '#3d3828', '#353025', '#2d2820', '#282318', '#23201a', '#1e1b16', '#1a1815'];
+   163→
+   164→export default function CompetitorTab() {
+   165→  const [data, setData] = useState<CompetitorsResponse | null>(null);
+   166→  const [loading, setLoading] = useState(true);
+   167→  const [addDialogOpen, setAddDialogOpen] = useState(false);
+   168→  const [newCompetitor, setNewCompetitor] = useState({
+   169→    name: '',
+   170→    website: '',
+   171→    category: '',
+   172→    marketShare: '',
+   173→    avgPriceRange: '',
+   174→    socialFollowers: '',
+   175→    monthlyTraffic: '',
+   176→    seoAuthority: '',
+   177→    strengths: '',
+   178→    weaknesses: '',
+   179→    notes: '',
+   180→  });
+   181→
+   182→  const fetchData = useCallback(async () => {
+   183→    try {
+   184→      const res = await fetch('/api/marketing/competitors');
+   185→      if (!res.ok) throw new Error('Failed to fetch');
+   186→      const json = await res.json();
+   187→      setData(json);
+   188→    } catch {
+   189→      toast.error('Failed to load competitor data');
+   190→    } finally {
+   191→      setLoading(false);
+   192→    }
+   193→  }, []);
+   194→
+   195→  useEffect(() => {
+   196→    fetchData();
+   197→  }, [fetchData]);
+   198→
+   199→  const handleAddCompetitor = async () => {
+   200→    if (!newCompetitor.name.trim()) {
+   201→      toast.error('Competitor name is required');
+   202→      return;
+   203→    }
+   204→    try {
+   205→      const res = await fetch('/api/marketing/competitors', {
+   206→        method: 'POST',
+   207→        headers: { 'Content-Type': 'application/json' },
+   208→        body: JSON.stringify({
+   209→          ...newCompetitor,
+   210→          marketShare: parseFloat(newCompetitor.marketShare) || 0,
+   211→          socialFollowers: parseInt(newCompetitor.socialFollowers) || 0,
+   212→          monthlyTraffic: parseInt(newCompetitor.monthlyTraffic) || 0,
+   213→          seoAuthority: parseInt(newCompetitor.seoAuthority) || 0,
+   214→        }),
+   215→      });
+   216→      if (!res.ok) throw new Error('Failed to create');
+   217→      toast.success('Competitor added successfully');
+   218→      setAddDialogOpen(false);
+   219→      setNewCompetitor({
+   220→        name: '', website: '', category: '', marketShare: '', avgPriceRange: '',
+   221→        socialFollowers: '', monthlyTraffic: '', seoAuthority: '',
+   222→        strengths: '', weaknesses: '', notes: '',
+   223→      });
+   224→      fetchData();
+   225→    } catch {
+   226→      toast.error('Failed to add competitor');
+   227→    }
+   228→  };
+   229→
+   230→  const getSocialColor = (value: number, max: number) => {
+   231→    const ratio = value / max;
+   232→    if (ratio > 0.6) return 'bg-green-500/10 text-green-400';
+   233→    if (ratio > 0.3) return 'bg-yellow-500/10 text-yellow-400';
+   234→    return 'bg-red-500/10 text-red-400';
+   235→  };
+   236→
+   237→  if (loading || !data) {
+   238→    return (
+   239→      <div className="space-y-6 p-1">
+   240→        <div className="flex items-center justify-between">
+   241→          <Skeleton className="h-8 w-48" />
+   242→          <Skeleton className="h-10 w-40" />
+   243→        </div>
+   244→        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   245→          {[...Array(4)].map((_, i) => (
+   246→            <Skeleton key={i} className="h-28 rounded-xl" />
+   247→          ))}
+   248→        </div>
+   249→        <Skeleton className="h-80 rounded-xl" />
+   250→        <Skeleton className="h-96 rounded-xl" />
+   251→      </div>
+   252→    );
+   253→  }
+   254→
+   255→  const maxInsta = Math.max(...Object.values(data.socialMedia).map((s) => s.instagram));
+   256→
+   257→  return (
+   258→    <div className="space-y-6 p-1">
+   259→      {/* Header */}
+   260→      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+   261→        <div>
+   262→          <h1 className="text-xl font-bold text-foreground">Competitor Analysis</h1>
+   263→          <p className="text-sm text-muted-foreground mt-0.5">Track market position, pricing, and digital presence</p>
+   264→        </div>
+   265→        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+   266→          <DialogTrigger asChild>
+   267→            <Button className="gold-gradient text-primary-foreground hover:opacity-90 gap-2">
+   268→              <Plus className="h-4 w-4" />
+   269→              Add Competitor
+   270→            </Button>
+   271→          </DialogTrigger>
+   272→          <DialogContent className="bg-[#111] border-border max-w-lg max-h-[85vh] overflow-y-auto">
+   273→            <DialogHeader>
+   274→              <DialogTitle className="gold-gradient-text text-lg">Add New Competitor</DialogTitle>
+   275→            </DialogHeader>
+   276→            <div className="grid gap-4 py-4">
+   277→              <div className="grid gap-2">
+   278→                <label className="text-xs font-medium text-muted-foreground">Name *</label>
+   279→                <Input
+   280→                  value={newCompetitor.name}
+   281→                  onChange={(e) => setNewCompetitor({ ...newCompetitor, name: e.target.value })}
+   282→                  placeholder="e.g. Joyalukkas"
+   283→                  className="bg-[#1a1a1a] border-border focus-gold"
+   284→                />
+   285→              </div>
+   286→              <div className="grid grid-cols-2 gap-4">
+   287→                <div className="grid gap-2">
+   288→                  <label className="text-xs font-medium text-muted-foreground">Website</label>
+   289→                  <Input
+   290→                    value={newCompetitor.website}
+   291→                    onChange={(e) => setNewCompetitor({ ...newCompetitor, website: e.target.value })}
+   292→                    placeholder="example.com"
+   293→                    className="bg-[#1a1a1a] border-border focus-gold"
+   294→                  />
+   295→                </div>
+   296→                <div className="grid gap-2">
+   297→                  <label className="text-xs font-medium text-muted-foreground">Category</label>
+   298→                  <Select
+   299→                    value={newCompetitor.category}
+   300→                    onValueChange={(v) => setNewCompetitor({ ...newCompetitor, category: v })}
+   301→                  >
+   302→                    <SelectTrigger className="bg-[#1a1a1a] border-border focus-gold">
+   303→                      <SelectValue placeholder="Select" />
+   304→                    </SelectTrigger>
+   305→                    <SelectContent className="bg-[#111] border-border">
+   306→                      <SelectItem value="Organised Retail Chain">Retail Chain</SelectItem>
+   307→                      <SelectItem value="D2C Online">D2C Online</SelectItem>
+   308→                      <SelectItem value="Luxury D2C">Luxury D2C</SelectItem>
+   309→                      <SelectItem value="Fashion / Artificial">Fashion</SelectItem>
+   310→                      <SelectItem value="Regional Player">Regional</SelectItem>
+   311→                    </SelectContent>
+   312→                  </Select>
+   313→                </div>
+   314→              </div>
+   315→              <div className="grid grid-cols-2 gap-4">
+   316→                <div className="grid gap-2">
+   317→                  <label className="text-xs font-medium text-muted-foreground">Market Share (%)</label>
+   318→                  <Input
+   319→                    type="number"
+   320→                    step="0.1"
+   321→                    value={newCompetitor.marketShare}
+   322→                    onChange={(e) => setNewCompetitor({ ...newCompetitor, marketShare: e.target.value })}
+   323→                    placeholder="0.0"
+   324→                    className="bg-[#1a1a1a] border-border focus-gold"
+   325→                  />
+   326→                </div>
+   327→                <div className="grid gap-2">
+   328→                  <label className="text-xs font-medium text-muted-foreground">SEO Authority</label>
+   329→                  <Input
+   330→                    type="number"
+   331→                    value={newCompetitor.seoAuthority}
+   332→                    onChange={(e) => setNewCompetitor({ ...newCompetitor, seoAuthority: e.target.value })}
+   333→                    placeholder="0-100"
+   334→                    className="bg-[#1a1a1a] border-border focus-gold"
+   335→                  />
+   336→                </div>
+   337→              </div>
+   338→              <div className="grid gap-2">
+   339→                <label className="text-xs font-medium text-muted-foreground">Avg Price Range</label>
+   340→                <Input
+   341→                  value={newCompetitor.avgPriceRange}
+   342→                  onChange={(e) => setNewCompetitor({ ...newCompetitor, avgPriceRange: e.target.value })}
+   343→                  placeholder="₹10,000 - ₹1,00,000"
+   344→                  className="bg-[#1a1a1a] border-border focus-gold"
+   345→                />
+   346→              </div>
+   347→              <div className="grid grid-cols-2 gap-4">
+   348→                <div className="grid gap-2">
+   349→                  <label className="text-xs font-medium text-muted-foreground">Social Followers</label>
+   350→                  <Input
+   351→                    type="number"
+   352→                    value={newCompetitor.socialFollowers}
+   353→                    onChange={(e) => setNewCompetitor({ ...newCompetitor, socialFollowers: e.target.value })}
+   354→                    placeholder="0"
+   355→                    className="bg-[#1a1a1a] border-border focus-gold"
+   356→                  />
+   357→                </div>
+   358→                <div className="grid gap-2">
+   359→                  <label className="text-xs font-medium text-muted-foreground">Monthly Traffic</label>
+   360→                  <Input
+   361→                    type="number"
+   362→                    value={newCompetitor.monthlyTraffic}
+   363→                    onChange={(e) => setNewCompetitor({ ...newCompetitor, monthlyTraffic: e.target.value })}
+   364→                    placeholder="0"
+   365→                    className="bg-[#1a1a1a] border-border focus-gold"
+   366→                  />
+   367→                </div>
+   368→              </div>
+   369→              <div className="grid gap-2">
+   370→                <label className="text-xs font-medium text-muted-foreground">Strengths (comma-separated)</label>
+   371→                <Input
+   372→                  value={newCompetitor.strengths}
+   373→                  onChange={(e) => setNewCompetitor({ ...newCompetitor, strengths: e.target.value })}
+   374→                  placeholder="Strong brand, Good designs"
+   375→                  className="bg-[#1a1a1a] border-border focus-gold"
+   376→                />
+   377→              </div>
+   378→              <div className="grid gap-2">
+   379→                <label className="text-xs font-medium text-muted-foreground">Weaknesses (comma-separated)</label>
+   380→                <Input
+   381→                  value={newCompetitor.weaknesses}
+   382→                  onChange={(e) => setNewCompetitor({ ...newCompetitor, weaknesses: e.target.value })}
+   383→                  placeholder="Limited online, High pricing"
+   384→                  className="bg-[#1a1a1a] border-border focus-gold"
+   385→                />
+   386→              </div>
+   387→              <div className="grid gap-2">
+   388→                <label className="text-xs font-medium text-muted-foreground">Notes</label>
+   389→                <Input
+   390→                  value={newCompetitor.notes}
+   391→                  onChange={(e) => setNewCompetitor({ ...newCompetitor, notes: e.target.value })}
+   392→                  placeholder="Additional notes..."
+   393→                  className="bg-[#1a1a1a] border-border focus-gold"
+   394→                />
+   395→              </div>
+   396→              <Button onClick={handleAddCompetitor} className="gold-gradient text-primary-foreground hover:opacity-90 w-full mt-2">
+   397→                Add Competitor
+   398→              </Button>
+   399→            </div>
+   400→          </DialogContent>
+   401→        </Dialog>
+   402→      </div>
+   403→
+   404→      {/* A. Summary Cards */}
+   405→      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 stagger-children">
+   406→        <Card className="gold-card-hover rounded-xl p-4 relative">
+   407→          <div className="flex items-center justify-between">
+   408→            <div>
+   409→              <p className="text-xs font-medium text-muted-foreground">Total Competitors</p>
+   410→              <p className="text-2xl font-bold text-foreground mt-1 gold-glow">{data.summary.totalCompetitors}</p>
+   411→              <p className="text-[11px] text-muted-foreground mt-1">Brands tracked</p>
+   412→            </div>
+   413→            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#D4A843]/10">
+   414→              <Users className="h-5 w-5 text-[#D4A843]" />
+   415→            </div>
+   416→          </div>
+   417→        </Card>
+   418→        <Card className="gold-card-hover rounded-xl p-4 relative">
+   419→          <div className="flex items-center justify-between">
+   420→            <div>
+   421→              <p className="text-xs font-medium text-muted-foreground">Avg Market Share</p>
+   422→              <p className="text-2xl font-bold text-foreground mt-1 gold-glow">{data.summary.avgMarketShare}%</p>
+   423→              <p className="text-[11px] text-muted-foreground mt-1">Across all brands</p>
+   424→            </div>
+   425→            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#D4A843]/10">
+   426→              <BarChart3 className="h-5 w-5 text-[#D4A843]" />
+   427→            </div>
+   428→          </div>
+   429→        </Card>
+   430→        <Card className="gold-card-hover rounded-xl p-4 relative">
+   431→          <div className="flex items-center justify-between">
+   432→            <div>
+   433→              <p className="text-xs font-medium text-muted-foreground">Laxree&apos;s Position</p>
+   434→              <p className="text-2xl font-bold text-foreground mt-1 gold-glow">{data.summary.laxreePosition}</p>
+   435→              <p className="text-[11px] text-muted-foreground mt-1">By market share</p>
+   436→            </div>
+   437→            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#D4A843]/10">
+   438→              <Trophy className="h-5 w-5 text-[#D4A843]" />
+   439→            </div>
+   440→          </div>
+   441→        </Card>
+   442→        <Card className="gold-card-hover rounded-xl p-4 relative">
+   443→          <div className="flex items-center justify-between">
+   444→            <div>
+   445→              <p className="text-xs font-medium text-muted-foreground">Industry Growth</p>
+   446→              <p className="text-2xl font-bold text-green-400 mt-1 gold-glow">
+   447→                {data.summary.industryGrowthRate}%
+   448→                <ArrowUpRight className="inline h-4 w-4 ml-1" />
+   449→              </p>
+   450→              <p className="text-[11px] text-green-400/70 mt-1">Year-over-year CAGR</p>
+   451→            </div>
+   452→            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
+   453→              <TrendingUp className="h-5 w-5 text-green-400" />
+   454→            </div>
+   455→          </div>
+   456→        </Card>
+   457→      </div>
+   458→
+   459→      <Tabs defaultValue="overview" className="space-y-6">
+   460→        <TabsList className="bg-[#111] border border-border/50 rounded-lg p-1 h-auto">
+   461→          <TabsTrigger value="overview" className="data-[state=active]:bg-[#D4A843]/15 data-[state=active]:text-[#D4A843] text-muted-foreground rounded-md px-4 py-2 text-xs font-medium">
+   462→            Market Overview
+   463→          </TabsTrigger>
+   464→          <TabsTrigger value="pricing" className="data-[state=active]:bg-[#D4A843]/15 data-[state=active]:text-[#D4A843] text-muted-foreground rounded-md px-4 py-2 text-xs font-medium">
+   465→            Pricing
+   466→          </TabsTrigger>
+   467→          <TabsTrigger value="social" className="data-[state=active]:bg-[#D4A843]/15 data-[state=active]:text-[#D4A843] text-muted-foreground rounded-md px-4 py-2 text-xs font-medium">
+   468→            Social Media
+   469→          </TabsTrigger>
+   470→          <TabsTrigger value="swot" className="data-[state=active]:bg-[#D4A843]/15 data-[state=active]:text-[#D4A843] text-muted-foreground rounded-md px-4 py-2 text-xs font-medium">
+   471→            SWOT Analysis
+   472→          </TabsTrigger>
+   473→        </TabsList>
+   474→
+   475→        {/* ──── Market Overview Tab ──── */}
+   476→        <TabsContent value="overview" className="space-y-6">
+   477→          {/* B. Market Share Horizontal Bar Chart */}
+   478→          <Card className="gold-card-hover rounded-xl overflow-hidden">
+   479→            <CardHeader className="pb-2">
+   480→              <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+   481→                <Target className="h-4 w-4 text-[#D4A843]" />
+   482→                Market Share Comparison
+   483→              </CardTitle>
+   484→            </CardHeader>
+   485→            <CardContent className="pt-0">
+   486→              <div className="h-[340px] w-full">
+   487→                <ResponsiveContainer width="100%" height="100%">
+   488→                  <BarChart
+   489→                    data={data.marketShareChart}
+   490→                    layout="vertical"
+   491→                    margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+   492→                  >
+   493→                    <CartesianGrid strokeDasharray="3 3" stroke="#2a2520" horizontal={false} />
+   494→                    <XAxis
+   495→                      type="number"
+   496→                      tick={{ fill: '#9a9080', fontSize: 11 }}
+   497→                      axisLine={{ stroke: '#2a2520' }}
+   498→                      tickFormatter={(v: number) => `${v}%`}
+   499→                    />
+   500→                    <YAxis
+   501→                      type="category"
+   502→                      dataKey="name"
+   503→                      width={110}
+   504→                      tick={{ fill: '#9a9080', fontSize: 12 }}
+   505→                      axisLine={{ stroke: '#2a2520' }}
+   506→                    />
+   507→                    <RechartsTooltip
+   508→                      contentStyle={{
+   509→                        background: '#1a1a1a',
+   510→                        border: '1px solid rgba(212,168,67,0.25)',
+   511→                        borderRadius: '8px',
+   512→                        color: '#f5f0e8',
+   513→                        fontSize: '12px',
+   514→                      }}
+   515→                      formatter={(value: number) => [`${value}%`, 'Market Share']}
+   516→                    />
+   517→                    <Bar dataKey="marketShare" radius={[0, 6, 6, 0]} barSize={20}>
+   518→                      {data.marketShareChart.map((entry, index) => (
+   519→                        <Cell
+   520→                          key={`cell-${index}`}
+   521→                          fill={entry.isLaxree ? GOLD : MUTED_COLORS[index % MUTED_COLORS.length]}
+   522→                        />
+   523→                      ))}
+   524→                    </Bar>
+   525→                  </BarChart>
+   526→                </ResponsiveContainer>
+   527→              </div>
+   528→            </CardContent>
+   529→          </Card>
+   530→
+   531→          {/* Radar Chart + Laxree Stats */}
+   532→          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+   533→            <Card className="lg:col-span-2 gold-card-hover rounded-xl overflow-hidden">
+   534→              <CardHeader className="pb-2">
+   535→                <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+   536→                  <Swords className="h-4 w-4 text-[#D4A843]" />
+   537→                  Competitive Radar — Laxree vs Top Players
+   538→                </CardTitle>
+   539→              </CardHeader>
+   540→              <CardContent className="pt-0">
+   541→                <div className="h-[340px] w-full">
+   542→                  <ResponsiveContainer width="100%" height="100%">
+   543→                    <RadarChart data={data.radarData} outerRadius="70%">
+   544→                      <PolarGrid stroke="#2a2520" />
+   545→                      <PolarAngleAxis dataKey="metric" tick={{ fill: '#9a9080', fontSize: 11 }} />
+   546→                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+   547→                      <Radar name="Laxree" dataKey="Laxree" stroke={GOLD} fill={GOLD} fillOpacity={0.15} strokeWidth={2} />
+   548→                      <Radar name="Tanishq" dataKey="Tanishq" stroke="#ef4444" fill="#ef4444" fillOpacity={0.05} strokeWidth={1.5} />
+   549→                      <Radar name="CaratLane" dataKey="CaratLane" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.05} strokeWidth={1.5} />
+   550→                      <Radar name="Kalyan" dataKey="Kalyan" stroke="#22c55e" fill="#22c55e" fillOpacity={0.05} strokeWidth={1.5} />
+   551→                      <Legend
+   552→                        wrapperStyle={{ fontSize: '11px', color: '#9a9080' }}
+   553→                      />
+   554→                      <RechartsTooltip
+   555→                        contentStyle={{
+   556→                          background: '#1a1a1a',
+   557→                          border: '1px solid rgba(212,168,67,0.25)',
+   558→                          borderRadius: '8px',
+   559→                          color: '#f5f0e8',
+   560→                          fontSize: '12px',
+   561→                        }}
+   562→                      />
+   563→                    </RadarChart>
+   564→                  </ResponsiveContainer>
+   565→                </div>
+   566→              </CardContent>
+   567→            </Card>
+   568→
+   569→            {/* Laxree Quick Stats */}
+   570→            <Card className="glass-gold rounded-xl p-5">
+   571→              <div className="flex items-center gap-3 mb-5">
+   572→                <div className="flex h-10 w-10 items-center justify-center rounded-lg gold-gradient">
+   573→                  <Crown className="h-5 w-5 text-primary-foreground" />
+   574→                </div>
+   575→                <div>
+   576→                  <h3 className="text-base font-bold gold-gradient-text">Laxree</h3>
+   577→                  <p className="text-[11px] text-muted-foreground">{data.laxree.category}</p>
+   578→                </div>
+   579→              </div>
+   580→              <div className="space-y-4">
+   581→                <div>
+   582→                  <div className="flex justify-between text-xs mb-1.5">
+   583→                    <span className="text-muted-foreground">Market Share</span>
+   584→                    <span className="text-foreground font-semibold">{data.laxree.marketShare}%</span>
+   585→                  </div>
+   586→                  <div className="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+   587→                    <div className="h-full gold-progress rounded-full" style={{ width: `${(data.laxree.marketShare / 20) * 100}%` }} />
+   588→                  </div>
+   589→                </div>
+   590→                <div>
+   591→                  <div className="flex justify-between text-xs mb-1.5">
+   592→                    <span className="text-muted-foreground">SEO Authority</span>
+   593→                    <span className="text-foreground font-semibold">{data.laxree.seoAuthority}/100</span>
+   594→                  </div>
+   595→                  <div className="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+   596→                    <div className="h-full bg-[#D4A843]/70 rounded-full" style={{ width: `${data.laxree.seoAuthority}%` }} />
+   597→                  </div>
+   598→                </div>
+   599→                <div className="pt-2 border-t border-border/50 space-y-3">
+   600→                  <div className="flex items-center justify-between">
+   601→                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+   602→                      <Users className="h-3.5 w-3.5" /> Social Followers
+   603→                    </span>
+   604→                    <span className="text-sm font-semibold text-foreground">{formatFollowers(data.laxree.socialFollowers)}</span>
+   605→                  </div>
+   606→                  <div className="flex items-center justify-between">
+   607→                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+   608→                      <Globe className="h-3.5 w-3.5" /> Monthly Traffic
+   609→                    </span>
+   610→                    <span className="text-sm font-semibold text-foreground">{formatNumber(data.laxree.monthlyTraffic)}</span>
+   611→                  </div>
+   612→                  <div className="flex items-center justify-between">
+   613→                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+   614→                      <Eye className="h-3.5 w-3.5" /> Avg Price Range
+   615→                    </span>
+   616→                    <span className="text-sm font-semibold text-foreground">{data.laxree.avgPriceRange}</span>
+   617→                  </div>
+   618→                </div>
+   619→              </div>
+   620→            </Card>
+   621→          </div>
+   622→
+   623→          {/* C. Competitor Cards Grid */}
+   624→          <div>
+   625→            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+   626→              <Search className="h-4 w-4 text-[#D4A843]" />
+   627→              Competitor Profiles
+   628→            </h3>
+   629→            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 stagger-children">
+   630→              {data.competitors.map((c) => (
+   631→                <Card key={c.id} className="gold-card-hover rounded-xl overflow-hidden group">
+   632→                  <div className="p-5">
+   633→                    {/* Header */}
+   634→                    <div className="flex items-start justify-between mb-3">
+   635→                      <div>
+   636→                        <h4 className="text-sm font-bold text-foreground group-hover:text-[#D4A843] transition-colors">{c.name}</h4>
+   637→                        <p className="text-[11px] text-muted-foreground mt-0.5">{c.category}</p>
+   638→                      </div>
+   639→                      {c.website && (
+   640→                        <a
+   641→                          href={`https://${c.website}`}
+   642→                          target="_blank"
+   643→                          rel="noopener noreferrer"
+   644→                          className="text-muted-foreground hover:text-[#D4A843] transition-colors"
+   645→                        >
+   646→                          <ExternalLink className="h-3.5 w-3.5" />
+   647→                        </a>
+   648→                      )}
+   649→                    </div>
+   650→
+   651→                    {/* Price Range */}
+   652→                    {c.avgPriceRange && (
+   653→                      <p className="text-xs text-[#D4A843] font-medium mb-3">{c.avgPriceRange}</p>
+   654→                    )}
+   655→
+   656→                    {/* Stats Row */}
+   657→                    <div className="grid grid-cols-3 gap-2 mb-3">
+   658→                      <div className="bg-[#1a1a1a] rounded-lg p-2 text-center">
+   659→                        <p className="text-[10px] text-muted-foreground">Followers</p>
+   660→                        <p className="text-xs font-bold text-foreground mt-0.5">{formatFollowers(c.socialFollowers)}</p>
+   661→                      </div>
+   662→                      <div className="bg-[#1a1a1a] rounded-lg p-2 text-center">
+   663→                        <p className="text-[10px] text-muted-foreground">Traffic</p>
+   664→                        <p className="text-xs font-bold text-foreground mt-0.5">{formatNumber(c.monthlyTraffic)}</p>
+   665→                      </div>
+   666→                      <div className="bg-[#1a1a1a] rounded-lg p-2 text-center">
+   667→                        <p className="text-[10px] text-muted-foreground">SEO</p>
+   668→                        <p className="text-xs font-bold text-foreground mt-0.5">{c.seoAuthority}</p>
+   669→                      </div>
+   670→                    </div>
+   671→
+   672→                    {/* Market Share Bar */}
+   673→                    <div className="mb-3">
+   674→                      <div className="flex justify-between text-[11px] mb-1">
+   675→                        <span className="text-muted-foreground">Market Share</span>
+   676→                        <span className="text-foreground font-semibold">{c.marketShare}%</span>
+   677→                      </div>
+   678→                      <div className="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+   679→                        <div
+   680→                          className="h-full rounded-full transition-all duration-700"
+   681→                          style={{
+   682→                            width: `${(c.marketShare / 20) * 100}%`,
+   683→                            background: `linear-gradient(90deg, ${GOLD}, ${GOLD_LIGHT})`,
+   684→                          }}
+   685→                        />
+   686→                      </div>
+   687→                    </div>
+   688→
+   689→                    {/* Strengths */}
+   690→                    {c.strengths && (
+   691→                      <div className="mb-2">
+   692→                        <p className="text-[10px] font-semibold text-green-400 uppercase tracking-wider mb-1.5">Strengths</p>
+   693→                        <div className="flex flex-wrap gap-1">
+   694→                          {c.strengths.split(',').slice(0, 3).map((s, i) => (
+   695→                            <Badge key={i} className="badge-green text-[10px] px-2 py-0 rounded-full border-0 font-normal">
+   696→                              {s.trim()}
+   697→                            </Badge>
+   698→                          ))}
+   699→                        </div>
+   700→                      </div>
+   701→                    )}
+   702→
+   703→                    {/* Weaknesses */}
+   704→                    {c.weaknesses && (
+   705→                      <div>
+   706→                        <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-1.5">Weaknesses</p>
+   707→                        <div className="flex flex-wrap gap-1">
+   708→                          {c.weaknesses.split(',').slice(0, 3).map((w, i) => (
+   709→                            <Badge key={i} className="badge-red text-[10px] px-2 py-0 rounded-full border-0 font-normal">
+   710→                              {w.trim()}
+   711→                            </Badge>
+   712→                          ))}
+   713→                        </div>
+   714→                      </div>
+   715→                    )}
+   716→                  </div>
+   717→                </Card>
+   718→              ))}
+   719→            </div>
+   720→          </div>
+   721→        </TabsContent>
+   722→
+   723→        {/* ──── Pricing Tab ──── */}
+   724→        <TabsContent value="pricing" className="space-y-6">
+   725→          {/* D. Pricing Comparison Bar Chart */}
+   726→          <Card className="gold-card-hover rounded-xl overflow-hidden">
+   727→            <CardHeader className="pb-2">
+   728→              <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+   729→                <BarChart3 className="h-4 w-4 text-[#D4A843]" />
+   730→                Average Pricing by Category
+   731→              </CardTitle>
+   732→              <p className="text-xs text-muted-foreground mt-1">Gold, Diamond &amp; Platinum average prices across brands (₹)</p>
+   733→            </CardHeader>
+   734→            <CardContent className="pt-0">
+   735→              <div className="h-[420px] w-full">
+   736→                <ResponsiveContainer width="100%" height="100%">
+   737→                  <BarChart data={data.pricingComparison} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+   738→                    <CartesianGrid strokeDasharray="3 3" stroke="#2a2520" />
+   739→                    <XAxis
+   740→                      dataKey="brand"
+   741→                      tick={{ fill: '#9a9080', fontSize: 10 }}
+   742→                      axisLine={{ stroke: '#2a2520' }}
+   743→                      interval={0}
+   744→                      angle={-30}
+   745→                      textAnchor="end"
+   746→                      height={60}
+   747→                    />
+   748→                    <YAxis
+   749→                      tick={{ fill: '#9a9080', fontSize: 11 }}
+   750→                      axisLine={{ stroke: '#2a2520' }}
+   751→                      tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}K`}
+   752→                    />
+   753→                    <RechartsTooltip
+   754→                      contentStyle={{
+   755→                        background: '#1a1a1a',
+   756→                        border: '1px solid rgba(212,168,67,0.25)',
+   757→                        borderRadius: '8px',
+   758→                        color: '#f5f0e8',
+   759→                        fontSize: '12px',
+   760→                      }}
+   761→                      formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, '']}
+   762→                    />
+   763→                    <Legend wrapperStyle={{ fontSize: '11px' }} />
+   764→                    <Bar dataKey="gold" name="Gold" fill={GOLD} radius={[4, 4, 0, 0]} barSize={12} />
+   765→                    <Bar dataKey="diamond" name="Diamond" fill="#E8C46A" radius={[4, 4, 0, 0]} barSize={12} />
+   766→                    <Bar dataKey="platinum" name="Platinum" fill="#B8922F" radius={[4, 4, 0, 0]} barSize={12} />
+   767→                  </BarChart>
+   768→                </ResponsiveContainer>
+   769→              </div>
+   770→            </CardContent>
+   771→          </Card>
+   772→
+   773→          {/* Pricing Table */}
+   774→          <Card className="gold-card-hover rounded-xl overflow-hidden">
+   775→            <CardHeader className="pb-2">
+   776→              <CardTitle className="text-sm font-semibold text-foreground">Pricing Summary Table</CardTitle>
+   777→            </CardHeader>
+   778→            <CardContent className="pt-0">
+   779→              <div className="max-h-96 overflow-y-auto">
+   780→                <Table>
+   781→                  <TableHeader>
+   782→                    <TableRow className="gold-table-header">
+   783→                      <TableHead className="text-xs font-semibold text-[#D4A843]">Brand</TableHead>
+   784→                      <TableHead className="text-xs font-semibold text-[#D4A843] text-right">Gold Avg</TableHead>
+   785→                      <TableHead className="text-xs font-semibold text-[#D4A843] text-right">Diamond Avg</TableHead>
+   786→                      <TableHead className="text-xs font-semibold text-[#D4A843] text-right">Platinum Avg</TableHead>
+   787→                    </TableRow>
+   788→                  </TableHeader>
+   789→                  <TableBody>
+   790→                    {data.pricingComparison.map((p) => (
+   791→                      <TableRow key={p.brand} className={`table-row-hover ${p.brand === 'Laxree' ? 'bg-[#D4A843]/5' : ''}`}>
+   792→                        <TableCell className="text-xs font-medium">
+   793→                          {p.brand === 'Laxree' && (
+   794→                            <span className="inline-flex items-center gap-1">
+   795→                              <Crown className="h-3 w-3 text-[#D4A843]" />
+   796→                              <span className="gold-gradient-text font-bold">{p.brand}</span>
+   797→                            </span>
+   798→                          )}
+   799→                          {p.brand !== 'Laxree' && <span className="text-foreground">{p.brand}</span>}
+   800→                        </TableCell>
+   801→                        <TableCell className="text-xs text-right text-muted-foreground">
+   802→                          ₹{p.gold.toLocaleString('en-IN')}
+   803→                        </TableCell>
+   804→                        <TableCell className="text-xs text-right text-muted-foreground">
+   805→                          ₹{p.diamond.toLocaleString('en-IN')}
+   806→                        </TableCell>
+   807→                        <TableCell className="text-xs text-right text-muted-foreground">
+   808→                          ₹{p.platinum.toLocaleString('en-IN')}
+   809→                        </TableCell>
+   810→                      </TableRow>
+   811→                    ))}
+   812→                  </TableBody>
+   813→                </Table>
+   814→              </div>
+   815→            </CardContent>
+   816→          </Card>
+   817→        </TabsContent>
+   818→
+   819→        {/* ──── Social Media Tab ──── */}
+   820→        <TabsContent value="social" className="space-y-6">
+   821→          {/* E. Social Media Comparison Table */}
+   822→          <Card className="gold-card-hover rounded-xl overflow-hidden">
+   823→            <CardHeader className="pb-2">
+   824→              <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+   825→                <Wifi className="h-4 w-4 text-[#D4A843]" />
+   826→                Social Media Follower Comparison
+   827→              </CardTitle>
+   828→              <p className="text-xs text-muted-foreground mt-1">Cross-platform follower counts with color-coded performance</p>
+   829→            </CardHeader>
+   830→            <CardContent className="pt-0">
+   831→              <div className="max-h-[500px] overflow-y-auto">
+   832→                <Table>
+   833→                  <TableHeader>
+   834→                    <TableRow className="gold-table-header">
+   835→                      <TableHead className="text-xs font-semibold text-[#D4A843]">Brand</TableHead>
+   836→                      <TableHead className="text-xs font-semibold text-[#D4A843] text-right">Instagram</TableHead>
+   837→                      <TableHead className="text-xs font-semibold text-[#D4A843] text-right">Facebook</TableHead>
+   838→                      <TableHead className="text-xs font-semibold text-[#D4A843] text-right">YouTube</TableHead>
+   839→                      <TableHead className="text-xs font-semibold text-[#D4A843] text-right">Twitter</TableHead>
+   840→                      <TableHead className="text-xs font-semibold text-[#D4A843] text-right">Total</TableHead>
+   841→                    </TableRow>
+   842→                  </TableHeader>
+   843→                  <TableBody>
+   844→                    {Object.entries(data.socialMedia)
+   845→                      .sort(([, a], [, b]) => {
+   846→                        const totalA = a.instagram + a.facebook + a.youtube + a.twitter;
+   847→                        const totalB = b.instagram + b.facebook + b.youtube + b.twitter;
+   848→                        return totalB - totalA;
+   849→                      })
+   850→                      .map(([brand, social]) => {
+   851→                        const total = social.instagram + social.facebook + social.youtube + social.twitter;
+   852→                        const isLaxree = brand === 'Laxree';
+   853→                        return (
+   854→                          <TableRow
+   855→                            key={brand}
+   856→                            className={`table-row-hover ${isLaxree ? 'bg-[#D4A843]/5' : ''}`}
+   857→                          >
+   858→                            <TableCell className="text-xs font-medium">
+   859→                              {isLaxree ? (
+   860→                                <span className="inline-flex items-center gap-1">
+   861→                                  <Crown className="h-3 w-3 text-[#D4A843]" />
+   862→                                  <span className="gold-gradient-text font-bold">{brand}</span>
+   863→                                </span>
+   864→                              ) : (
+   865→                                <span className="text-foreground">{brand}</span>
+   866→                              )}
+   867→                            </TableCell>
+   868→                            <TableCell className="text-right">
+   869→                              <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-md ${getSocialColor(social.instagram, maxInsta)}`}>
+   870→                                {formatFollowers(social.instagram)}
+   871→                              </span>
+   872→                            </TableCell>
+   873→                            <TableCell className="text-right">
+   874→                              <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-md ${getSocialColor(social.facebook, 1500000)}`}>
+   875→                                {formatFollowers(social.facebook)}
+   876→                              </span>
+   877→                            </TableCell>
+   878→                            <TableCell className="text-right">
+   879→                              <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-md ${getSocialColor(social.youtube, 380000)}`}>
+   880→                                {formatFollowers(social.youtube)}
+   881→                              </span>
+   882→                            </TableCell>
+   883→                            <TableCell className="text-right">
+   884→                              <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-md ${getSocialColor(social.twitter, 120000)}`}>
+   885→                                {formatFollowers(social.twitter)}
+   886→                              </span>
+   887→                            </TableCell>
+   888→                            <TableCell className="text-right">
+   889→                              <span className="text-xs font-bold text-foreground">{formatFollowers(total)}</span>
+   890→                            </TableCell>
+   891→                          </TableRow>
+   892→                        );
+   893→                      })}
+   894→                  </TableBody>
+   895→                </Table>
+   896→              </div>
+   897→            </CardContent>
+   898→          </Card>
+   899→
+   900→          {/* Social Media Bar Chart */}
+   901→          <Card className="gold-card-hover rounded-xl overflow-hidden">
+   902→            <CardHeader className="pb-2">
+   903→              <CardTitle className="text-sm font-semibold text-foreground">Instagram Followers — Visual Comparison</CardTitle>
+   904→            </CardHeader>
+   905→            <CardContent className="pt-0">
+   906→              <div className="h-[300px] w-full">
+   907→                <ResponsiveContainer width="100%" height="100%">
+   908→                  <BarChart data={Object.entries(data.socialMedia)
+   909→                    .map(([brand, social]) => ({ brand, instagram: social.instagram }))
+   910→                    .sort((a, b) => b.instagram - a.instagram)}
+   911→                    margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
+   912→                  >
+   913→                    <CartesianGrid strokeDasharray="3 3" stroke="#2a2520" />
+   914→                    <XAxis
+   915→                      dataKey="brand"
+   916→                      tick={{ fill: '#9a9080', fontSize: 10 }}
+   917→                      axisLine={{ stroke: '#2a2520' }}
+   918→                      interval={0}
+   919→                      angle={-30}
+   920→                      textAnchor="end"
+   921→                      height={60}
+   922→                    />
+   923→                    <YAxis
+   924→                      tick={{ fill: '#9a9080', fontSize: 11 }}
+   925→                      axisLine={{ stroke: '#2a2520' }}
+   926→                      tickFormatter={(v: number) => formatFollowers(v)}
+   927→                    />
+   928→                    <RechartsTooltip
+   929→                      contentStyle={{
+   930→                        background: '#1a1a1a',
+   931→                        border: '1px solid rgba(212,168,67,0.25)',
+   932→                        borderRadius: '8px',
+   933→                        color: '#f5f0e8',
+   934→                        fontSize: '12px',
+   935→                      }}
+   936→                      formatter={(value: number) => [formatFollowers(value), 'Instagram Followers']}
+   937→                    />
+   938→                    <Bar dataKey="instagram" radius={[6, 6, 0, 0]} barSize={24}>
+   939→                      {Object.entries(data.socialMedia)
+   940→                        .map(([brand, social]) => ({ brand, instagram: social.instagram }))
+   941→                        .sort((a, b) => b.instagram - a.instagram)
+   942→                        .map((entry, index) => (
+   943→                          <Cell
+   944→                            key={`insta-${index}`}
+   945→                            fill={entry.brand === 'Laxree' ? GOLD : MUTED_COLORS[index % MUTED_COLORS.length]}
+   946→                          />
+   947→                        ))}
+   948→                    </Bar>
+   949→                  </BarChart>
+   950→                </ResponsiveContainer>
+   951→              </div>
+   952→            </CardContent>
+   953→          </Card>
+   954→        </TabsContent>
+   955→
+   956→        {/* ──── SWOT Analysis Tab ──── */}
+   957→        <TabsContent value="swot" className="space-y-6">
+   958→          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger-children">
+   959→            {/* Strengths */}
+   960→            <Card className="glass-gold rounded-xl overflow-hidden">
+   961→              <CardHeader className="pb-3 border-b border-green-500/20">
+   962→                <CardTitle className="text-sm font-bold text-green-400 flex items-center gap-2">
+   963→                  <Shield className="h-4 w-4" />
+   964→                  Strengths
+   965→                </CardTitle>
+   966→              </CardHeader>
+   967→              <CardContent className="pt-4">
+   968→                <ul className="space-y-2.5">
+   969→                  {data.swotData.strengths.map((s, i) => (
+   970→                    <li key={i} className="flex items-start gap-2.5">
+   971→                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-green-400 shrink-0" />
+   972→                      <span className="text-xs text-muted-foreground leading-relaxed">{s}</span>
+   973→                    </li>
+   974→                  ))}
+   975→                </ul>
+   976→              </CardContent>
+   977→            </Card>
+   978→
+   979→            {/* Weaknesses */}
+   980→            <Card className="glass-gold rounded-xl overflow-hidden">
+   981→              <CardHeader className="pb-3 border-b border-red-500/20">
+   982→                <CardTitle className="text-sm font-bold text-red-400 flex items-center gap-2">
+   983→                  <AlertTriangle className="h-4 w-4" />
+   984→                  Weaknesses
+   985→                </CardTitle>
+   986→              </CardHeader>
+   987→              <CardContent className="pt-4">
+   988→                <ul className="space-y-2.5">
+   989→                  {data.swotData.weaknesses.map((w, i) => (
+   990→                    <li key={i} className="flex items-start gap-2.5">
+   991→                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-red-400 shrink-0" />
+   992→                      <span className="text-xs text-muted-foreground leading-relaxed">{w}</span>
+   993→                    </li>
+   994→                  ))}
+   995→                </ul>
+   996→              </CardContent>
+   997→            </Card>
+   998→
+   999→            {/* Opportunities */}
+  1000→            <Card className="glass-gold rounded-xl overflow-hidden">
+  1001→              <CardHeader className="pb-3 border-b border-blue-500/20">
+  1002→                <CardTitle className="text-sm font-bold text-blue-400 flex items-center gap-2">
+  1003→                  <Lightbulb className="h-4 w-4" />
+  1004→                  Opportunities
+  1005→                </CardTitle>
+  1006→              </CardHeader>
+  1007→              <CardContent className="pt-4">
+  1008→                <ul className="space-y-2.5">
+  1009→                  {data.swotData.opportunities.map((o, i) => (
+  1010→                    <li key={i} className="flex items-start gap-2.5">
+  1011→                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-blue-400 shrink-0" />
+  1012→                      <span className="text-xs text-muted-foreground leading-relaxed">{o}</span>
+  1013→                    </li>
+  1014→                  ))}
+  1015→                </ul>
+  1016→              </CardContent>
+  1017→            </Card>
+  1018→
+  1019→            {/* Threats */}
+  1020→            <Card className="glass-gold rounded-xl overflow-hidden">
+  1021→              <CardHeader className="pb-3 border-b border-yellow-500/20">
+  1022→                <CardTitle className="text-sm font-bold text-yellow-400 flex items-center gap-2">
+  1023→                  <Zap className="h-4 w-4" />
+  1024→                  Threats
+  1025→                </CardTitle>
+  1026→              </CardHeader>
+  1027→              <CardContent className="pt-4">
+  1028→                <ul className="space-y-2.5">
+  1029→                  {data.swotData.threats.map((t, i) => (
+  1030→                    <li key={i} className="flex items-start gap-2.5">
+  1031→                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-yellow-400 shrink-0" />
+  1032→                      <span className="text-xs text-muted-foreground leading-relaxed">{t}</span>
+  1033→                    </li>
+  1034→                  ))}
+  1035→                </ul>
+  1036→              </CardContent>
+  1037→            </Card>
+  1038→          </div>
+  1039→
+  1040→          {/* Key Insight */}
+  1041→          <Card className="glass-gold rounded-xl p-5">
+  1042→            <div className="flex items-start gap-3">
+  1043→              <div className="flex h-8 w-8 items-center justify-center rounded-lg gold-gradient shrink-0 mt-0.5">
+  1044→                <Crown className="h-4 w-4 text-primary-foreground" />
+  1045→              </div>
+  1046→              <div>
+  1047→                <h4 className="text-sm font-bold text-foreground">Strategic Insight</h4>
+  1048→                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+  1049→                  Laxree occupies a unique position between mass-market D2C brands (CaratLane, BlueStone) and traditional retail chains (Tanishq, Kalyan).
+  1050→                  The primary growth lever is <span className="text-[#D4A843] font-medium">digital presence amplification</span> — closing the gap in social followers
+  1051→                  (135K vs 2-3M+ leaders) and web traffic (45K vs 5-18M) would significantly improve market positioning. The luxury D2C segment
+  1052→                  is growing at <span className="text-green-400 font-medium">12.5% CAGR</span>, presenting a window for Laxree to capture market share
+  1053→                  through influencer marketing, SEO investment, and AR-enabled try-on features.
+  1054→                </p>
+  1055→              </div>
+  1056→            </div>
+  1057→          </Card>
+  1058→        </TabsContent>
+  1059→      </Tabs>
+  1060→    </div>
+  1061→  );
+  1062→}

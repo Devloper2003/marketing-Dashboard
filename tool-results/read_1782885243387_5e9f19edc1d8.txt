@@ -1,0 +1,893 @@
+     1→'use client';
+     2→
+     3→import { useState, useEffect, useCallback } from 'react';
+     4→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+     5→import { Badge } from '@/components/ui/badge';
+     6→import { Button } from '@/components/ui/button';
+     7→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+     8→import { ScrollArea } from '@/components/ui/scroll-area';
+     9→import { Separator } from '@/components/ui/separator';
+    10→import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+    11→import { Skeleton } from '@/components/ui/skeleton';
+    12→import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+    13→import { toast } from 'sonner';
+    14→import {
+    15→  Share2,
+    16→  Plus,
+    17→  TrendingUp,
+    18→  TrendingDown,
+    19→  Users,
+    20→  BarChart3,
+    21→  Activity,
+    22→  Eye,
+    23→  Clock,
+    24→  Link2,
+    25→  Unlink,
+    26→  Settings,
+    27→  ArrowUpRight,
+    28→  MessageSquare,
+    29→  Repeat2,
+    30→  Heart,
+    31→  Play,
+    32→  Camera,
+    33→  Megaphone,
+    34→  Award,
+    35→  Zap,
+    36→  Globe,
+    37→  ExternalLink,
+    38→  RefreshCw,
+    39→} from 'lucide-react';
+    40→import {
+    41→  AreaChart,
+    42→  Area,
+    43→  XAxis,
+    44→  YAxis,
+    45→  CartesianGrid,
+    46→  Tooltip as RechartsTooltip,
+    47→  ResponsiveContainer,
+    48→  PieChart,
+    49→  Pie,
+    50→  Cell,
+    51→  Legend,
+    52→} from 'recharts';
+    53→import { motion } from 'framer-motion';
+    54→
+    55→/* ──────────── Types ──────────── */
+    56→interface SocialAccount {
+    57→  id: string;
+    58→  platform: string;
+    59→  handle: string;
+    60→  avatar: string | null;
+    61→  followers: number;
+    62→  following?: number;
+    63→  posts?: number;
+    64→  engagementRate: number;
+    65→  reach?: number;
+    66→  impressions?: number;
+    67→  profileViews?: number;
+    68→  websiteClicks?: number;
+    69→  monthlyGrowth: number;
+    70→  topHashtag?: string;
+    71→  connected: boolean;
+    72→  connectedAt: string | null;
+    73→  lastSync: string | null;
+    74→  category?: string;
+    75→  bio?: string;
+    76→  subscribers?: number;
+    77→  videos?: number;
+    78→  views?: number;
+    79→  watchHours?: number;
+    80→  topVideo?: string;
+    81→  pageLikes?: number;
+    82→  tweets?: number;
+    83→  adAccounts?: number;
+    84→  activeCampaigns?: number;
+    85→  totalSpend?: number;
+    86→}
+    87→
+    88→interface GrowthDataPoint {
+    89→  month: string;
+    90→  Instagram: number;
+    91→  YouTube: number;
+    92→  Facebook: number;
+    93→  Twitter: number;
+    94→  LinkedIn: number;
+    95→}
+    96→
+    97→interface ActivityItem {
+    98→  platform: string;
+    99→  type: string;
+   100→  content: string;
+   101→  time: string;
+   102→  metric: string;
+   103→  change: string;
+   104→}
+   105→
+   106→interface TopContentItem {
+   107→  platform: string;
+   108→  type: string;
+   109→  caption: string;
+   110→  likes: number;
+   111→  comments: number;
+   112→  shares: number;
+   113→  date: string;
+   114→  image: string | null;
+   115→}
+   116→
+   117→interface SocialAccountsData {
+   118→  accounts: SocialAccount[];
+   119→  growthData: GrowthDataPoint[];
+   120→  recentActivity: ActivityItem[];
+   121→  topContent: TopContentItem[];
+   122→}
+   123→
+   124→/* ──────────── Helpers ──────────── */
+   125→function formatINR(num: number): string {
+   126→  if (num >= 10000000) return (num / 10000000).toFixed(2) + ' Cr';
+   127→  if (num >= 100000) return (num / 100000).toFixed(2) + ' L';
+   128→  if (num >= 1000) return num.toLocaleString('en-IN');
+   129→  return num.toString();
+   130→}
+   131→
+   132→function formatNumber(num: number): string {
+   133→  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+   134→  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+   135→  return num.toString();
+   136→}
+   137→
+   138→/* Platform config */
+   139→const platformConfig: Record<string, { color: string; bg: string; border: string; icon: React.ComponentType<{ className?: string }>; gradient: string }> = {
+   140→  Instagram: { color: '#E1306C', bg: 'bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF]', border: 'border-[#DD2A7B]/30', icon: Camera, gradient: 'from-[#F58529] via-[#DD2A7B] to-[#8134AF]' },
+   141→  YouTube: { color: '#FF0000', bg: 'bg-red-600', border: 'border-red-500/30', icon: Play, gradient: 'from-red-500 to-red-700' },
+   142→  Facebook: { color: '#1877F2', bg: 'bg-blue-600', border: 'border-blue-500/30', icon: Globe, gradient: 'from-blue-500 to-blue-700' },
+   143→  'Meta Business': { color: '#0668E1', bg: 'bg-[#0668E1]', border: 'border-[#0668E1]/30', icon: Megaphone, gradient: 'from-[#1877F2] to-[#0054D6]' },
+   144→  Twitter: { color: '#1DA1F2', bg: 'bg-sky-500', border: 'border-sky-400/30', icon: MessageSquare, gradient: 'from-sky-400 to-sky-600' },
+   145→  LinkedIn: { color: '#0A66C2', bg: 'bg-[#0A66C2]', border: 'border-[#0A66C2]/30', icon: Users, gradient: 'from-[#0A66C2] to-[#004182]' },
+   146→};
+   147→
+   148→const activityTypeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+   149→  post: Camera,
+   150→  video: Play,
+   151→  campaign: Megaphone,
+   152→  tweet: MessageSquare,
+   153→  story: Eye,
+   154→  ad: Zap,
+   155→  milestone: Award,
+   156→};
+   157→
+   158→const typeColors: Record<string, string> = {
+   159→  Reel: 'bg-pink-500/15 text-pink-400 border-pink-500/30',
+   160→  Post: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+   161→  Video: 'bg-red-500/15 text-red-400 border-red-500/30',
+   162→  Tweet: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
+   163→};
+   164→
+   165→const growthChartColors: Record<string, string> = {
+   166→  Instagram: '#E1306C',
+   167→  YouTube: '#FF4444',
+   168→  Facebook: '#4A90D9',
+   169→  Twitter: '#38BDF8',
+   170→  LinkedIn: '#6B9FD4',
+   171→};
+   172→
+   173→/* ──────────── Skeleton ──────────── */
+   174→function TabSkeleton() {
+   175→  return (
+   176→    <div className="space-y-6 p-1">
+   177→      <div className="flex items-center justify-between">
+   178→        <Skeleton className="h-8 w-56" />
+   179→        <Skeleton className="h-10 w-36" />
+   180→      </div>
+   181→      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+   182→        {[...Array(6)].map((_, i) => (
+   183→          <Skeleton key={i} className="h-64 rounded-xl" />
+   184→        ))}
+   185→      </div>
+   186→      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   187→        {[...Array(4)].map((_, i) => (
+   188→          <Skeleton key={i} className="h-28 rounded-xl" />
+   189→        ))}
+   190→      </div>
+   191→    </div>
+   192→  );
+   193→}
+   194→
+   195→/* ──────────── Main Component ──────────── */
+   196→export default function SocialAccountsTab() {
+   197→  const [data, setData] = useState<SocialAccountsData | null>(null);
+   198→  const [loading, setLoading] = useState(true);
+   199→  const [manageAccount, setManageAccount] = useState<SocialAccount | null>(null);
+   200→  const [connectDialogOpen, setConnectDialogOpen] = useState(false);
+   201→
+   202→  const fetchData = useCallback(async () => {
+   203→    try {
+   204→      const res = await fetch('/api/marketing/social-accounts');
+   205→      const json = await res.json();
+   206→      setData(json);
+   207→    } catch {
+   208→      toast.error('Failed to load social accounts data');
+   209→    } finally {
+   210→      setLoading(false);
+   211→    }
+   212→  }, []);
+   213→
+   214→  useEffect(() => {
+   215→    fetchData();
+   216→  }, [fetchData]);
+   217→
+   218→  const handleDisconnect = async (accountId: string, platform: string) => {
+   219→    try {
+   220→      const res = await fetch('/api/marketing/social-accounts', {
+   221→        method: 'POST',
+   222→        headers: { 'Content-Type': 'application/json' },
+   223→        body: JSON.stringify({ action: 'disconnect', accountId }),
+   224→      });
+   225→      const json = await res.json();
+   226→      if (json.success) {
+   227→        toast.success(`${platform} disconnected successfully`);
+   228→        setManageAccount(null);
+   229→        fetchData();
+   230→      }
+   231→    } catch {
+   232→      toast.error('Failed to disconnect account');
+   233→    }
+   234→  };
+   235→
+   236→  const handleConnect = async () => {
+   237→    try {
+   238→      const res = await fetch('/api/marketing/social-accounts', {
+   239→        method: 'POST',
+   240→        headers: { 'Content-Type': 'application/json' },
+   241→        body: JSON.stringify({ action: 'connect' }),
+   242→      });
+   243→      const json = await res.json();
+   244→      if (json.success) {
+   245→        toast.success('Account connected successfully');
+   246→        setConnectDialogOpen(false);
+   247→        fetchData();
+   248→      }
+   249→    } catch {
+   250→      toast.error('Failed to connect account');
+   251→    }
+   252→  };
+   253→
+   254→  const totalFollowers = data ? data.accounts.reduce((sum, a) => sum + a.followers, 0) : 0;
+   255→  const connectedCount = data ? data.accounts.filter(a => a.connected).length : 0;
+   256→  const avgEngagement = data
+   257→    ? data.accounts.filter(a => a.connected && a.engagementRate > 0).reduce((sum, a) => sum + a.engagementRate, 0) / Math.max(1, data.accounts.filter(a => a.connected && a.engagementRate > 0).length)
+   258→    : 0;
+   259→  const avgGrowth = data
+   260→    ? data.accounts.filter(a => a.connected && a.monthlyGrowth > 0).reduce((sum, a) => sum + a.monthlyGrowth, 0) / Math.max(1, data.accounts.filter(a => a.connected && a.monthlyGrowth > 0).length)
+   261→    : 0;
+   262→
+   263→  if (loading) return <TabSkeleton />;
+   264→  if (!data) return <div className="p-8 text-center text-muted-foreground">Failed to load data</div>;
+   265→
+   266→  /* ──────────── Account Card ──────────── */
+   267→  const AccountCard = ({ account }: { account: SocialAccount }) => {
+   268→    const config = platformConfig[account.platform] || { color: '#D4A843', bg: 'bg-[#D4A843]', border: 'border-[#D4A843]/30', icon: Globe, gradient: 'from-[#D4A843] to-[#B8912E]' };
+   269→    const PlatformIcon = config.icon;
+   270→    const isMeta = account.platform === 'Meta Business';
+   271→
+   272→    return (
+   273→      <motion.div
+   274→        initial={{ opacity: 0, y: 20 }}
+   275→        animate={{ opacity: 1, y: 0 }}
+   276→        transition={{ duration: 0.4, delay: parseInt(account.id) * 0.08 }}
+   277→        className="premium-card hover-sweep group relative overflow-hidden"
+   278→      >
+   279→        {/* Top accent line */}
+   280→        <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${config.gradient}`} />
+   281→
+   282→        <CardContent className="p-5 pt-6">
+   283→          {/* Header row */}
+   284→          <div className="flex items-start justify-between mb-4">
+   285→            <div className="flex items-center gap-3">
+   286→              <Avatar className="h-12 w-12 ring-2 ring-offset-2 ring-offset-background" style={{ ringColor: config.color }}>
+   287→                <AvatarFallback className={`bg-gradient-to-br ${config.gradient} text-white font-bold text-lg`}>
+   288→                  {account.platform.charAt(0)}
+   289→                </AvatarFallback>
+   290→              </Avatar>
+   291→              <div>
+   292→                <div className="flex items-center gap-2">
+   293→                  <PlatformIcon className="h-4 w-4" style={{ color: config.color }} />
+   294→                  <h3 className="font-semibold text-foreground text-sm">{account.platform}</h3>
+   295→                </div>
+   296→                <p className="text-xs text-muted-foreground mt-0.5">{account.handle}</p>
+   297→              </div>
+   298→            </div>
+   299→            <div className="flex items-center gap-1.5">
+   300→              {account.connected ? (
+   301→                <Badge className="badge-dot-green text-[10px] px-2 py-0.5">Connected</Badge>
+   302→              ) : (
+   303→                <Badge className="badge-dot-yellow text-[10px] px-2 py-0.5">Disconnected</Badge>
+   304→              )}
+   305→            </div>
+   306→          </div>
+   307→
+   308→          {/* Sync info */}
+   309→          {account.lastSync && (
+   310→            <div className="flex items-center gap-1.5 mb-4 text-[11px] text-muted-foreground/70">
+   311→              <RefreshCw className="h-3 w-3" />
+   312→              <span>Last synced: {account.lastSync}</span>
+   313→            </div>
+   314→          )}
+   315→
+   316→          <Separator className="mb-4 opacity-30" />
+   317→
+   318→          {/* Metrics */}
+   319→          {isMeta ? (
+   320→            <div className="space-y-3">
+   321→              <div className="flex items-center justify-between">
+   322→                <span className="text-xs text-muted-foreground">Ad Accounts</span>
+   323→                <span className="text-sm font-semibold text-foreground">{account.adAccounts}</span>
+   324→              </div>
+   325→              <div className="flex items-center justify-between">
+   326→                <span className="text-xs text-muted-foreground">Active Campaigns</span>
+   327→                <span className="text-sm font-semibold text-foreground">{account.activeCampaigns}</span>
+   328→              </div>
+   329→              <div className="flex items-center justify-between">
+   330→                <span className="text-xs text-muted-foreground">Total Spend</span>
+   331→                <span className="text-sm font-semibold gold-gradient-text">₹{formatINR(account.totalSpend || 0)}</span>
+   332→              </div>
+   333→              <div className="flex items-center justify-between">
+   334→                <span className="text-xs text-muted-foreground">Category</span>
+   335→                <Badge variant="outline" className="text-[10px] border-[#D4A843]/30 text-[#D4A843]">{account.category}</Badge>
+   336→              </div>
+   337→            </div>
+   338→          ) : (
+   339→            <div className="space-y-3">
+   340→              <div className="flex items-center justify-between">
+   341→                <span className="text-xs text-muted-foreground">{account.platform === 'YouTube' ? 'Subscribers' : 'Followers'}</span>
+   342→                <span className="text-sm font-semibold text-foreground">{formatNumber(account.followers || account.subscribers || 0)}</span>
+   343→              </div>
+   344→              <div className="flex items-center justify-between">
+   345→                <span className="text-xs text-muted-foreground">Engagement</span>
+   346→                <div className="flex items-center gap-1">
+   347→                  <Activity className="h-3 w-3 text-[#D4A843]" />
+   348→                  <span className="text-sm font-semibold text-[#D4A843]">{account.engagementRate}%</span>
+   349→                </div>
+   350→              </div>
+   351→              <div className="flex items-center justify-between">
+   352→                <span className="text-xs text-muted-foreground">Monthly Growth</span>
+   353→                <div className="flex items-center gap-1">
+   354→                  {account.monthlyGrowth > 0 ? (
+   355→                    <TrendingUp className="h-3 w-3 text-emerald-400" />
+   356→                  ) : (
+   357→                    <TrendingDown className="h-3 w-3 text-red-400" />
+   358→                  )}
+   359→                  <span className={`text-sm font-semibold ${account.monthlyGrowth > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+   360→                    {account.monthlyGrowth > 0 ? '+' : ''}{account.monthlyGrowth}%
+   361→                  </span>
+   362→                </div>
+   363→              </div>
+   364→              {account.topHashtag && (
+   365→                <div className="flex items-center justify-between">
+   366→                  <span className="text-xs text-muted-foreground">Top Hashtag</span>
+   367→                  <span className="text-xs font-medium text-[#D4A843]/80">{account.topHashtag}</span>
+   368→                </div>
+   369→              )}
+   370→              {account.topVideo && (
+   371→                <div className="flex items-center justify-between">
+   372→                  <span className="text-xs text-muted-foreground">Top Video</span>
+   373→                  <span className="text-xs font-medium text-foreground/80 truncate max-w-[140px]">{account.topVideo}</span>
+   374→                </div>
+   375→              )}
+   376→              {account.views && (
+   377→                <div className="flex items-center justify-between">
+   378→                  <span className="text-xs text-muted-foreground">Total Views</span>
+   379→                  <span className="text-sm font-semibold text-foreground">{formatNumber(account.views)}</span>
+   380→                </div>
+   381→              )}
+   382→            </div>
+   383→          )}
+   384→
+   385→          <Separator className="my-4 opacity-30" />
+   386→
+   387→          {/* Actions */}
+   388→          <div className="flex gap-2">
+   389→            <Button
+   390→              variant="outline"
+   391→              size="sm"
+   392→              className="flex-1 text-xs h-8 border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/10 focus-gold"
+   393→              onClick={() => setManageAccount(account)}
+   394→            >
+   395→              <Settings className="h-3 w-3 mr-1" />
+   396→              Manage
+   397→            </Button>
+   398→            {account.connected && (
+   399→              <Button
+   400→                variant="outline"
+   401→                size="sm"
+   402→                className="text-xs h-8 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+   403→                onClick={() => handleDisconnect(account.id, account.platform)}
+   404→              >
+   405→                <Unlink className="h-3 w-3 mr-1" />
+   406→                Disconnect
+   407→              </Button>
+   408→            )}
+   409→          </div>
+   410→        </CardContent>
+   411→      </motion.div>
+   412→    );
+   413→  };
+   414→
+   415→  /* ──────────── Activity Feed ──────────── */
+   416→  const ActivityFeed = () => (
+   417→    <Card className="premium-card">
+   418→      <CardHeader className="pb-3">
+   419→        <CardTitle className="section-heading text-sm flex items-center gap-2">
+   420→          <Activity className="h-4 w-4 text-[#D4A843]" />
+   421→          Recent Activity
+   422→        </CardTitle>
+   423→      </CardHeader>
+   424→      <CardContent>
+   425→        <div className="space-y-0">
+   426→          {data.recentActivity.map((item, idx) => {
+   427→            const config = platformConfig[item.platform];
+   428→            const TypeIcon = activityTypeIcons[item.type] || Activity;
+   429→            return (
+   430→              <motion.div
+   431→                key={idx}
+   432→                initial={{ opacity: 0, x: -12 }}
+   433→                animate={{ opacity: 1, x: 0 }}
+   434→                transition={{ duration: 0.3, delay: idx * 0.06 }}
+   435→                className="relative flex gap-3 py-3 group"
+   436→              >
+   437→                {/* Timeline line */}
+   438→                {idx < data.recentActivity.length - 1 && (
+   439→                  <div className="absolute left-[15px] top-[32px] bottom-0 w-px bg-border/40" />
+   440→                )}
+   441→                {/* Dot + Icon */}
+   442→                <div className="relative z-10 flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${config?.color || '#D4A843'}20`, border: `1.5px solid ${config?.color || '#D4A843'}40` }}>
+   443→                  <TypeIcon className="h-3.5 w-3.5" style={{ color: config?.color || '#D4A843' }} />
+   444→                </div>
+   445→                {/* Content */}
+   446→                <div className="flex-1 min-w-0">
+   447→                  <p className="text-xs text-foreground/90 leading-relaxed line-clamp-2">{item.content}</p>
+   448→                  <div className="flex items-center gap-3 mt-1.5">
+   449→                    <span className="text-[11px] font-medium" style={{ color: config?.color }}>{item.platform}</span>
+   450→                    <span className="text-[11px] text-muted-foreground">{item.metric}</span>
+   451→                    {item.change && (
+   452→                      <span className={`text-[11px] font-medium ${item.change.startsWith('+') ? 'text-emerald-400' : ''}`}>
+   453→                        {item.change}
+   454→                      </span>
+   455→                    )}
+   456→                    <span className="text-[10px] text-muted-foreground/60 ml-auto">{item.time}</span>
+   457→                  </div>
+   458→                </div>
+   459→              </motion.div>
+   460→            );
+   461→          })}
+   462→        </div>
+   463→      </CardContent>
+   464→    </Card>
+   465→  );
+   466→
+   467→  /* ──────────── Overview Stats ──────────── */
+   468→  const OverviewStats = () => [
+   469→    { label: 'Total Followers', value: formatNumber(totalFollowers), icon: Users, color: 'text-[#D4A843]' },
+   470→    { label: 'Avg Engagement Rate', value: `${avgEngagement.toFixed(1)}%`, icon: Activity, color: 'text-[#D4A843]' },
+   471→    { label: 'Avg Monthly Growth', value: `+${avgGrowth.toFixed(1)}%`, icon: TrendingUp, color: 'text-emerald-400' },
+   472→    { label: 'Accounts Connected', value: `${connectedCount}/${data.accounts.length}`, icon: Link2, color: 'text-sky-400' },
+   473→  ].map((stat, i) => (
+   474→    <motion.div
+   475→      key={i}
+   476→      initial={{ opacity: 0, y: 16 }}
+   477→      animate={{ opacity: 1, y: 0 }}
+   478→      transition={{ duration: 0.35, delay: 0.4 + i * 0.08 }}
+   479→    >
+   480→      <Card className="premium-card card-hover-border">
+   481→        <CardContent className="p-4 flex items-center gap-4">
+   482→          <div className="h-10 w-10 rounded-lg bg-[#D4A843]/10 flex items-center justify-center shrink-0">
+   483→            <stat.icon className={`h-5 w-5 ${stat.color}`} />
+   484→          </div>
+   485→          <div>
+   486→            <p className="text-xs text-muted-foreground">{stat.label}</p>
+   487→            <p className="text-lg font-bold text-foreground">{stat.value}</p>
+   488→          </div>
+   489→        </CardContent>
+   490→      </Card>
+   491→    </motion.div>
+   492→  ));
+   493→
+   494→  /* ──────────── Content Performance ──────────── */
+   495→  const contentBreakdown = [
+   496→    { name: 'Reels', value: 35, color: '#E1306C' },
+   497→    { name: 'Posts', value: 25, color: '#4A90D9' },
+   498→    { name: 'Videos', value: 20, color: '#FF4444' },
+   499→    { name: 'Tweets', value: 12, color: '#38BDF8' },
+   500→    { name: 'Stories', value: 8, color: '#D4A843' },
+   501→  ];
+   502→
+   503→  const ContentPerformance = () => (
+   504→    <div className="space-y-6">
+   505→      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+   506→        {/* Top content cards */}
+   507→        <div className="lg:col-span-2 space-y-3">
+   508→          {data.topContent.map((item, idx) => {
+   509→            const config = platformConfig[item.platform];
+   510→            return (
+   511→              <motion.div
+   512→                key={idx}
+   513→                initial={{ opacity: 0, y: 16 }}
+   514→                animate={{ opacity: 1, y: 0 }}
+   515→                transition={{ duration: 0.35, delay: idx * 0.08 }}
+   516→              >
+   517→                <Card className="premium-card card-hover-border group">
+   518→                  <CardContent className="p-4">
+   519→                    <div className="flex items-start justify-between mb-2">
+   520→                      <div className="flex items-center gap-2">
+   521→                        <Badge className={`text-[10px] px-2 py-0 ${typeColors[item.type] || 'bg-muted text-muted-foreground'}`}>
+   522→                          {item.type}
+   523→                        </Badge>
+   524→                        <Badge variant="outline" className="text-[10px] px-2 py-0 border-border/50 text-muted-foreground">
+   525→                          {item.platform}
+   526→                        </Badge>
+   527→                      </div>
+   528→                      <span className="text-[10px] text-muted-foreground/60">{item.date}</span>
+   529→                    </div>
+   530→                    <p className="text-sm text-foreground/85 leading-relaxed line-clamp-2 mb-3">{item.caption}</p>
+   531→                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+   532→                      <span className="flex items-center gap-1">
+   533→                        <Heart className="h-3 w-3 text-pink-400" />
+   534→                        {formatNumber(item.likes)}
+   535→                      </span>
+   536→                      <span className="flex items-center gap-1">
+   537→                        <MessageSquare className="h-3 w-3 text-sky-400" />
+   538→                        {formatNumber(item.comments)}
+   539→                      </span>
+   540→                      <span className="flex items-center gap-1">
+   541→                        <Repeat2 className="h-3 w-3 text-emerald-400" />
+   542→                        {formatNumber(item.shares)}
+   543→                      </span>
+   544→                      <span className="ml-auto font-medium" style={{ color: config?.color || '#D4A843' }}>
+   545→                        {formatNumber(item.likes + item.comments + item.shares)} total
+   546→                      </span>
+   547→                    </div>
+   548→                  </CardContent>
+   549→                </Card>
+   550→              </motion.div>
+   551→            );
+   552→          })}
+   553→        </div>
+   554→
+   555→        {/* Pie chart */}
+   556→        <div>
+   557→          <Card className="premium-card">
+   558→            <CardHeader className="pb-2">
+   559→              <CardTitle className="section-heading text-sm">Content Type Breakdown</CardTitle>
+   560→            </CardHeader>
+   561→            <CardContent>
+   562→              <div className="chart-container h-[220px]">
+   563→                <ResponsiveContainer width="100%" height="100%">
+   564→                  <PieChart>
+   565→                    <Pie
+   566→                      data={contentBreakdown}
+   567→                      cx="50%"
+   568→                      cy="50%"
+   569→                      innerRadius={55}
+   570→                      outerRadius={85}
+   571→                      paddingAngle={3}
+   572→                      dataKey="value"
+   573→                      stroke="none"
+   574→                    >
+   575→                      {contentBreakdown.map((entry, idx) => (
+   576→                        <Cell key={idx} fill={entry.color} opacity={0.85} />
+   577→                      ))}
+   578→                    </Pie>
+   579→                    <RechartsTooltip
+   580→                      contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(212,168,67,0.2)', borderRadius: '8px', fontSize: '12px' }}
+   581→                      itemStyle={{ color: '#e5e5e5' }}
+   582→                      formatter={(value: number) => [`${value}%`, '']}
+   583→                    />
+   584→                  </PieChart>
+   585→                </ResponsiveContainer>
+   586→              </div>
+   587→              <div className="mt-3 space-y-2">
+   588→                {contentBreakdown.map((item, idx) => (
+   589→                  <div key={idx} className="flex items-center justify-between text-xs">
+   590→                    <div className="flex items-center gap-2">
+   591→                      <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+   592→                      <span className="text-muted-foreground">{item.name}</span>
+   593→                    </div>
+   594→                    <span className="font-medium text-foreground">{item.value}%</span>
+   595→                  </div>
+   596→                ))}
+   597→              </div>
+   598→            </CardContent>
+   599→          </Card>
+   600→        </div>
+   601→      </div>
+   602→    </div>
+   603→  );
+   604→
+   605→  /* ──────────── Growth Analytics ──────────── */
+   606→  const GrowthAnalytics = () => {
+   607→    const platforms = ['Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn'];
+   608→    return (
+   609→      <div className="space-y-6">
+   610→        {/* Multi-platform area chart */}
+   611→        <Card className="premium-card">
+   612→          <CardHeader className="pb-2">
+   613→            <CardTitle className="section-heading text-sm flex items-center gap-2">
+   614→              <TrendingUp className="h-4 w-4 text-[#D4A843]" />
+   615→              Follower Growth — 6 Month Trend
+   616→            </CardTitle>
+   617→          </CardHeader>
+   618→          <CardContent>
+   619→            <div className="chart-container h-[340px]">
+   620→              <ResponsiveContainer width="100%" height="100%">
+   621→                <AreaChart data={data.growthData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+   622→                  <defs>
+   623→                    {platforms.map((p) => (
+   624→                      <linearGradient key={p} id={`grad-${p}`} x1="0" y1="0" x2="0" y2="1">
+   625→                        <stop offset="5%" stopColor={growthChartColors[p]} stopOpacity={0.3} />
+   626→                        <stop offset="95%" stopColor={growthChartColors[p]} stopOpacity={0.02} />
+   627→                      </linearGradient>
+   628→                    ))}
+   629→                  </defs>
+   630→                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+   631→                  <XAxis dataKey="month" stroke="rgba(255,255,255,0.3)" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} />
+   632→                  <YAxis stroke="rgba(255,255,255,0.3)" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} tickFormatter={(v) => formatNumber(v)} />
+   633→                  <RechartsTooltip
+   634→                    contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(212,168,67,0.2)', borderRadius: '8px', fontSize: '12px' }}
+   635→                    itemStyle={{ color: '#e5e5e5' }}
+   636→                    formatter={(value: number, name: string) => [formatNumber(value), name]}
+   637→                    labelStyle={{ color: '#D4A843' }}
+   638→                  />
+   639→                  {platforms.map((p) => (
+   640→                    <Area
+   641→                      key={p}
+   642→                      type="monotone"
+   643→                      dataKey={p}
+   644→                      stroke={growthChartColors[p]}
+   645→                      strokeWidth={2}
+   646→                      fill={`url(#grad-${p})`}
+   647→                      dot={{ r: 3, fill: growthChartColors[p], strokeWidth: 0 }}
+   648→                      activeDot={{ r: 5, fill: growthChartColors[p], strokeWidth: 2, stroke: '#0a0a0a' }}
+   649→                    />
+   650→                  ))}
+   651→                </AreaChart>
+   652→              </ResponsiveContainer>
+   653→            </div>
+   654→            {/* Legend */}
+   655→            <div className="flex flex-wrap items-center justify-center gap-4 mt-4 pt-4 border-t border-border/20">
+   656→              {platforms.map((p) => (
+   657→                <div key={p} className="flex items-center gap-1.5">
+   658→                  <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: growthChartColors[p] }} />
+   659→                  <span className="text-xs text-muted-foreground">{p}</span>
+   660→                </div>
+   661→              ))}
+   662→            </div>
+   663→          </CardContent>
+   664→        </Card>
+   665→
+   666→        {/* Comparison table */}
+   667→        <Card className="premium-card">
+   668→          <CardHeader className="pb-3">
+   669→            <CardTitle className="section-heading text-sm flex items-center gap-2">
+   670→              <BarChart3 className="h-4 w-4 text-[#D4A843]" />
+   671→              Platform Comparison
+   672→            </CardTitle>
+   673→          </CardHeader>
+   674→          <CardContent>
+   675→            <ScrollArea className="max-h-[320px]">
+   676→              <div className="min-w-[600px]">
+   677→                {/* Table header */}
+   678→                <div className="grid grid-cols-5 gap-4 px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider border-b border-border/30">
+   679→                  <span>Platform</span>
+   680→                  <span className="text-right">Followers</span>
+   681→                  <span className="text-right">Growth Rate</span>
+   682→                  <span className="text-right">Engagement</span>
+   683→                  <span className="text-right">Best Content</span>
+   684→                </div>
+   685→                {/* Table rows */}
+   686→                {data.accounts.filter(a => a.platform !== 'Meta Business').map((account, idx) => {
+   687→                  const config = platformConfig[account.platform];
+   688→                  return (
+   689→                    <motion.div
+   690→                      key={account.id}
+   691→                      initial={{ opacity: 0, y: 8 }}
+   692→                      animate={{ opacity: 1, y: 0 }}
+   693→                      transition={{ duration: 0.25, delay: idx * 0.06 }}
+   694→                      className="grid grid-cols-5 gap-4 px-4 py-3 text-sm table-row-hover rounded-lg"
+   695→                    >
+   696→                      <div className="flex items-center gap-2.5">
+   697→                        <div className="h-7 w-7 rounded-md flex items-center justify-center" style={{ backgroundColor: `${config?.color}15` }}>
+   698→                          <config.icon className="h-3.5 w-3.5" style={{ color: config?.color }} />
+   699→                        </div>
+   700→                        <div>
+   701→                          <p className="font-medium text-foreground text-xs">{account.platform}</p>
+   702→                          <p className="text-[10px] text-muted-foreground">{account.handle}</p>
+   703→                        </div>
+   704→                      </div>
+   705→                      <div className="text-right self-center">
+   706→                        <span className="font-semibold text-foreground text-xs">{formatNumber(account.followers)}</span>
+   707→                      </div>
+   708→                      <div className="text-right self-center">
+   709→                        <span className={`text-xs font-medium ${account.monthlyGrowth >= 3 ? 'text-emerald-400' : account.monthlyGrowth >= 2 ? 'text-yellow-400' : 'text-orange-400'}`}>
+   710→                          +{account.monthlyGrowth}%
+   711→                        </span>
+   712→                      </div>
+   713→                      <div className="text-right self-center">
+   714→                        <span className="text-xs font-medium text-[#D4A843]">{account.engagementRate}%</span>
+   715→                      </div>
+   716→                      <div className="text-right self-center">
+   717→                        <Badge variant="outline" className="text-[10px] border-border/40 text-muted-foreground">
+   718→                          {account.platform === 'YouTube' ? 'Videos' : account.platform === 'Twitter' ? 'Tweets' : 'Reels'}
+   719→                        </Badge>
+   720→                      </div>
+   721→                    </motion.div>
+   722→                  );
+   723→                })}
+   724→              </div>
+   725→            </ScrollArea>
+   726→          </CardContent>
+   727→        </Card>
+   728→      </div>
+   729→    );
+   730→  };
+   731→
+   732→  /* ──────────── Render ──────────── */
+   733→  return (
+   734→    <div className="space-y-6 animate-fade-in-up">
+   735→      {/* Header */}
+   736→      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+   737→        <div className="flex items-center gap-3">
+   738→          <div className="h-10 w-10 rounded-xl gold-gradient flex items-center justify-center shadow-lg shadow-[#D4A843]/15">
+   739→            <Share2 className="h-5 w-5 text-primary-foreground" />
+   740→          </div>
+   741→          <div>
+   742→            <h2 className="text-xl font-bold text-foreground">Social Media Hub</h2>
+   743→            <p className="text-xs text-muted-foreground mt-0.5">
+   744→              {formatNumber(totalFollowers)} total followers across {data.accounts.length} platforms
+   745→            </p>
+   746→          </div>
+   747→        </div>
+   748→        <Button className="btn-gold h-9 text-sm" onClick={() => setConnectDialogOpen(true)}>
+   749→          <Plus className="h-4 w-4 mr-1.5" />
+   750→          Connect Account
+   751→        </Button>
+   752→      </div>
+   753→
+   754→      {/* Main Tabs */}
+   755→      <Tabs defaultValue="accounts" className="space-y-6">
+   756→        <TabsList className="bg-background/50 border border-border/30 p-1 h-10">
+   757→          <TabsTrigger value="accounts" className="text-xs h-8 px-4 data-[state=active]:bg-[#D4A843]/15 data-[state=active]:text-[#D4A843]">
+   758→            Connected Accounts
+   759→          </TabsTrigger>
+   760→          <TabsTrigger value="content" className="text-xs h-8 px-4 data-[state=active]:bg-[#D4A843]/15 data-[state=active]:text-[#D4A843]">
+   761→            Content Performance
+   762→          </TabsTrigger>
+   763→          <TabsTrigger value="growth" className="text-xs h-8 px-4 data-[state=active]:bg-[#D4A843]/15 data-[state=active]:text-[#D4A843]">
+   764→            Growth Analytics
+   765→          </TabsTrigger>
+   766→        </TabsList>
+   767→
+   768→        {/* A. Connected Accounts */}
+   769→        <TabsContent value="accounts" className="space-y-6 mt-4">
+   770→          {/* Account cards grid */}
+   771→          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+   772→            {data.accounts.map((account) => (
+   773→              <AccountCard key={account.id} account={account} />
+   774→            ))}
+   775→          </div>
+   776→
+   777→          {/* Overview Stats */}
+   778→          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   779→            <OverviewStats />
+   780→          </div>
+   781→
+   782→          {/* Activity Feed */}
+   783→          <ActivityFeed />
+   784→        </TabsContent>
+   785→
+   786→        {/* C. Content Performance */}
+   787→        <TabsContent value="content" className="mt-4">
+   788→          <ContentPerformance />
+   789→        </TabsContent>
+   790→
+   791→        {/* D. Growth Analytics */}
+   792→        <TabsContent value="growth" className="mt-4">
+   793→          <GrowthAnalytics />
+   794→        </TabsContent>
+   795→      </Tabs>
+   796→
+   797→      {/* Manage Account Dialog */}
+   798→      <Dialog open={!!manageAccount} onOpenChange={() => setManageAccount(null)}>
+   799→        <DialogContent className="max-w-md glass-premium border-[#D4A843]/20">
+   800→          <DialogHeader>
+   801→            <DialogTitle className="section-heading text-base flex items-center gap-2">
+   802→              <Settings className="h-4 w-4 text-[#D4A843]" />
+   803→              Manage {manageAccount?.platform}
+   804→            </DialogTitle>
+   805→          </DialogHeader>
+   806→          {manageAccount && (
+   807→            <div className="space-y-4">
+   808→              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+   809→                <Avatar className="h-10 w-10">
+   810→                  <AvatarFallback className={`bg-gradient-to-br ${(platformConfig[manageAccount.platform]?.gradient || 'from-[#D4A843] to-[#B8912E]')} text-white font-bold`}>
+   811→                    {manageAccount.platform.charAt(0)}
+   812→                  </AvatarFallback>
+   813→                </Avatar>
+   814→                <div>
+   815→                  <p className="font-semibold text-sm text-foreground">{manageAccount.platform}</p>
+   816→                  <p className="text-xs text-muted-foreground">{manageAccount.handle}</p>
+   817→                </div>
+   818→                {manageAccount.connected ? (
+   819→                  <Badge className="badge-dot-green text-[10px] ml-auto">Connected</Badge>
+   820→                ) : (
+   821→                  <Badge className="badge-dot-yellow text-[10px] ml-auto">Disconnected</Badge>
+   822→                )}
+   823→              </div>
+   824→
+   825→              {manageAccount.bio && (
+   826→                <div>
+   827→                  <p className="text-xs text-muted-foreground mb-1">Bio</p>
+   828→                  <p className="text-sm text-foreground/80 leading-relaxed">{manageAccount.bio}</p>
+   829→                </div>
+   830→              )}
+   831→
+   832→              <div className="grid grid-cols-2 gap-3">
+   833→                <div className="p-3 rounded-lg bg-muted/20">
+   834→                  <p className="text-[11px] text-muted-foreground">Connected Since</p>
+   835→                  <p className="text-sm font-medium text-foreground mt-0.5">{manageAccount.connectedAt || '—'}</p>
+   836→                </div>
+   837→                <div className="p-3 rounded-lg bg-muted/20">
+   838→                  <p className="text-[11px] text-muted-foreground">Category</p>
+   839→                  <p className="text-sm font-medium text-foreground mt-0.5">{manageAccount.category || '—'}</p>
+   840→                </div>
+   841→              </div>
+   842→
+   843→              <div className="flex gap-2 pt-2">
+   844→                <Button className="flex-1 btn-gold h-9 text-xs">
+   845→                  <RefreshCw className="h-3 w-3 mr-1" />
+   846→                  Sync Now
+   847→                </Button>
+   848→                {manageAccount.connected && (
+   849→                  <Button
+   850→                    variant="outline"
+   851→                    className="flex-1 h-9 text-xs border-red-500/20 text-red-400 hover:bg-red-500/10"
+   852→                    onClick={() => handleDisconnect(manageAccount.id, manageAccount.platform)}
+   853→                  >
+   854→                    <Unlink className="h-3 w-3 mr-1" />
+   855→                    Disconnect
+   856→                  </Button>
+   857→                )}
+   858→              </div>
+   859→            </div>
+   860→          )}
+   861→        </DialogContent>
+   862→      </Dialog>
+   863→
+   864→      {/* Connect Account Dialog */}
+   865→      <Dialog open={connectDialogOpen} onOpenChange={setConnectDialogOpen}>
+   866→        <DialogContent className="max-w-md glass-premium border-[#D4A843]/20">
+   867→          <DialogHeader>
+   868→            <DialogTitle className="section-heading text-base flex items-center gap-2">
+   869→              <Plus className="h-4 w-4 text-[#D4A843]" />
+   870→              Connect Social Account
+   871→            </DialogTitle>
+   872→          </DialogHeader>
+   873→          <div className="space-y-3">
+   874→            <p className="text-sm text-muted-foreground">Choose a platform to connect to your Laxree marketing dashboard.</p>
+   875→            <div className="space-y-2">
+   876→              {['Pinterest', 'TikTok', 'Snapchat'].map((platform) => (
+   877→                <Button
+   878→                  key={platform}
+   879→                  variant="outline"
+   880→                  className="w-full justify-start h-10 border-border/30 hover:border-[#D4A843]/30 hover:bg-[#D4A843]/5 text-sm"
+   881→                  onClick={handleConnect}
+   882→                >
+   883→                  <ExternalLink className="h-4 w-4 mr-2 text-muted-foreground" />
+   884→                  {platform}
+   885→                </Button>
+   886→              ))}
+   887→            </div>
+   888→          </div>
+   889→        </DialogContent>
+   890→      </Dialog>
+   891→    </div>
+   892→  );
+   893→}

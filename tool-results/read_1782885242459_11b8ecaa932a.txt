@@ -1,0 +1,1237 @@
+     1→'use client';
+     2→
+     3→import { useState, useEffect, useCallback } from 'react';
+     4→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+     5→import { Badge } from '@/components/ui/badge';
+     6→import { Button } from '@/components/ui/button';
+     7→import { Input } from '@/components/ui/input';
+     8→import { Label } from '@/components/ui/label';
+     9→import { Skeleton } from '@/components/ui/skeleton';
+    10→import { Separator } from '@/components/ui/separator';
+    11→import { Progress } from '@/components/ui/progress';
+    12→import { Textarea } from '@/components/ui/textarea';
+    13→import { ScrollArea } from '@/components/ui/scroll-area';
+    14→import {
+    15→  Select,
+    16→  SelectContent,
+    17→  SelectItem,
+    18→  SelectTrigger,
+    19→  SelectValue,
+    20→} from '@/components/ui/select';
+    21→import {
+    22→  Table,
+    23→  TableBody,
+    24→  TableCell,
+    25→  TableHead,
+    26→  TableHeader,
+    27→  TableRow,
+    28→} from '@/components/ui/table';
+    29→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+    30→import { toast } from 'sonner';
+    31→import { motion, AnimatePresence } from 'framer-motion';
+    32→import {
+    33→  ClipboardList,
+    34→  FileBarChart2,
+    35→  FileText,
+    36→  FileSpreadsheet,
+    37→  Download,
+    38→  Share2,
+    39→  Trash2,
+    40→  Plus,
+    41→  Sparkles,
+    42→  Zap,
+    43→  Eye,
+    44→  Search,
+    45→  Shield,
+    46→  CheckCircle,
+    47→  AlertTriangle,
+    48→  AlertCircle,
+    49→  RefreshCw,
+    50→  Settings,
+    51→  ImageIcon,
+    52→  BookOpen,
+    53→  BarChart3,
+    54→  Target,
+    55→  Users,
+    56→  TrendingUp,
+    57→  Check,
+    58→  X,
+    59→  ChevronRight,
+    60→  Loader2,
+    61→  Clock,
+    62→  HardDrive,
+    63→  File,
+    64→  ArrowRight,
+    65→  Palette,
+    66→  Type,
+    67→  Stamp,
+    68→  Printer,
+    69→  Lock,
+    70→  Globe2,
+    71→  CalendarDays,
+    72→} from 'lucide-react';
+    73→
+    74→// ─── Types ───────────────────────────────────────────────────
+    75→
+    76→interface ReportTemplate {
+    77→  id: string;
+    78→  name: string;
+    79→  description: string;
+    80→  sections: string[];
+    81→  pages: number;
+    82→  type: string;
+    83→}
+    84→
+    85→interface RecentReport {
+    86→  id: string;
+    87→  name: string;
+    88→  template: string;
+    89→  generatedAt: string;
+    90→  dateRange: string;
+    91→  pages: number;
+    92→  format: string;
+    93→  size: string;
+    94→  status: string;
+    95→}
+    96→
+    97→interface AuditCategory {
+    98→  name: string;
+    99→  score: number;
+   100→  icon: string;
+   101→  issues: number;
+   102→  color: string;
+   103→}
+   104→
+   105→interface AuditIssue {
+   106→  title: string;
+   107→  category: string;
+   108→  severity: string;
+   109→  impact: string;
+   110→  recommendation: string;
+   111→}
+   112→
+   113→interface PassedCheck {
+   114→  title: string;
+   115→  category: string;
+   116→}
+   117→
+   118→interface AuditData {
+   119→  overallScore: number;
+   120→  categories: AuditCategory[];
+   121→  criticalIssues: AuditIssue[];
+   122→  warnings: AuditIssue[];
+   123→  passedChecks: PassedCheck[];
+   124→}
+   125→
+   126→interface ApiResponse {
+   127→  reportTemplates: ReportTemplate[];
+   128→  recentReports: RecentReport[];
+   129→  auditData: AuditData;
+   130→}
+   131→
+   132→// ─── Template icon map ───────────────────────────────────────
+   133→
+   134→const templateIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+   135→  executive: TrendingUp,
+   136→  monthly: BarChart3,
+   137→  campaign: Target,
+   138→  seo: Search,
+   139→  social: Users,
+   140→  competitor: Globe2,
+   141→};
+   142→
+   143→const templateTypeLabels: Record<string, string> = {
+   144→  executive: 'Executive',
+   145→  monthly: 'Monthly',
+   146→  campaign: 'Campaign',
+   147→  seo: 'SEO',
+   148→  social: 'Social',
+   149→  competitor: 'Competitor',
+   150→};
+   151→
+   152→const categoryIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+   153→  Zap,
+   154→  Eye,
+   155→  Search,
+   156→  Shield,
+   157→  CheckCircle,
+   158→};
+   159→
+   160→// ─── Circular Gauge Component ────────────────────────────────
+   161→
+   162→function AuditGauge({ score }: { score: number }) {
+   163→  const radius = 80;
+   164→  const strokeWidth = 10;
+   165→  const circumference = 2 * Math.PI * radius;
+   166→  const offset = circumference - (score / 100) * circumference;
+   167→
+   168→  const getScoreColor = (s: number) => {
+   169→    if (s >= 80) return '#22c55e';
+   170→    if (s >= 60) return '#D4A843';
+   171→    if (s >= 40) return '#eab308';
+   172→    return '#ef4444';
+   173→  };
+   174→
+   175→  const color = getScoreColor(score);
+   176→
+   177→  return (
+   178→    <div className="relative inline-flex items-center justify-center">
+   179→      <svg width="200" height="200" viewBox="0 0 200 200" className="transform -rotate-90">
+   180→        {/* Background ring */}
+   181→        <circle
+   182→          cx="100"
+   183→          cy="100"
+   184→          r={radius}
+   185→          fill="none"
+   186→          stroke="currentColor"
+   187→          strokeWidth={strokeWidth}
+   188→          className="text-border/30"
+   189→        />
+   190→        {/* Glow filter */}
+   191→        <defs>
+   192→          <filter id="gauge-glow">
+   193→            <feGaussianBlur stdDeviation="4" result="blur" />
+   194→            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+   195→          </filter>
+   196→          <linearGradient id="gauge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+   197→            <stop offset="0%" stopColor="#D4A843" />
+   198→            <stop offset="50%" stopColor={color} />
+   199→            <stop offset="100%" stopColor="#D4A843" />
+   200→          </linearGradient>
+   201→        </defs>
+   202→        {/* Progress ring */}
+   203→        <motion.circle
+   204→          cx="100"
+   205→          cy="100"
+   206→          r={radius}
+   207→          fill="none"
+   208→          stroke="url(#gauge-gradient)"
+   209→          strokeWidth={strokeWidth}
+   210→          strokeLinecap="round"
+   211→          strokeDasharray={circumference}
+   212→          initial={{ strokeDashoffset: circumference }}
+   213→          animate={{ strokeDashoffset: offset }}
+   214→          transition={{ duration: 1.5, ease: 'easeOut' }}
+   215→          filter="url(#gauge-glow)"
+   216→        />
+   217→        {/* Tick marks */}
+   218→        {Array.from({ length: 20 }).map((_, i) => {
+   219→          const angle = (i / 20) * 360 - 90;
+   220→          const rad = (angle * Math.PI) / 180;
+   221→          const x1 = 100 + (radius + 15) * Math.cos(rad);
+   222→          const y1 = 100 + (radius + 15) * Math.sin(rad);
+   223→          const x2 = 100 + (radius + 20) * Math.cos(rad);
+   224→          const y2 = 100 + (radius + 20) * Math.sin(rad);
+   225→          return (
+   226→            <line
+   227→              key={i}
+   228→              x1={x1}
+   229→              y1={y1}
+   230→              x2={x2}
+   231→              y2={y2}
+   232→              stroke={i % 5 === 0 ? '#D4A843' : 'currentColor'}
+   233→              strokeWidth={i % 5 === 0 ? 2 : 1}
+   234→              className="text-border/40"
+   235→            />
+   236→          );
+   237→        })}
+   238→      </svg>
+   239→      {/* Center content */}
+   240→      <div className="absolute inset-0 flex flex-col items-center justify-center">
+   241→        <motion.span
+   242→          className="text-5xl font-bold tracking-tight"
+   243→          style={{ color }}
+   244→          initial={{ opacity: 0, scale: 0.5 }}
+   245→          animate={{ opacity: 1, scale: 1 }}
+   246→          transition={{ duration: 0.8, delay: 0.5 }}
+   247→        >
+   248→          {score}
+   249→        </motion.span>
+   250→        <span className="text-xs text-muted-foreground mt-1 uppercase tracking-widest">
+   251→          out of 100
+   252→        </span>
+   253→      </div>
+   254→    </div>
+   255→  );
+   256→}
+   257→
+   258→// ─── Report Cover Preview ────────────────────────────────────
+   259→
+   260→function ReportPreview({
+   261→  reportName,
+   262→  dateRange,
+   263→  pages,
+   264→  companyName,
+   265→  tagline,
+   266→  accentColor,
+   267→  includeLogo,
+   268→}: {
+   269→  reportName: string;
+   270→  dateRange: string;
+   271→  pages: number;
+   272→  companyName: string;
+   273→  tagline: string;
+   274→  accentColor: string;
+   275→  includeLogo: boolean;
+   276→}) {
+   277→  const today = new Date().toLocaleDateString('en-US', {
+   278→    year: 'numeric',
+   279→    month: 'long',
+   280→    day: 'numeric',
+   281→  });
+   282→
+   283→  return (
+   284→    <div className="premium-card overflow-hidden max-w-sm mx-auto">
+   285→      {/* Page frame */}
+   286→      <div className="bg-[#fafaf8] rounded-lg shadow-2xl aspect-[8.5/11] relative overflow-hidden flex flex-col">
+   287→        {/* Gold gradient header bar */}
+   288→        <div
+   289→          className="h-3 w-full"
+   290→          style={{
+   291→            background: `linear-gradient(90deg, ${accentColor}, ${accentColor}88, ${accentColor})`,
+   292→          }}
+   293→        />
+   294→        {/* Confidential watermark */}
+   295→        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[-30deg] pointer-events-none select-none">
+   296→          <span className="text-7xl font-bold text-black/[0.03] tracking-[0.3em] uppercase">Confidential</span>
+   297→        </div>
+   298→        {/* Content */}
+   299→        <div className="flex-1 flex flex-col items-center justify-center px-8 relative z-10">
+   300→          {/* Logo area */}
+   301→          {includeLogo && (
+   302→            <div className="mb-6">
+   303→              <div
+   304→                className="h-16 w-16 rounded-xl flex items-center justify-center shadow-lg"
+   305→                style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)` }}
+   306→              >
+   307→                <span className="text-white font-bold text-2xl tracking-wider">L</span>
+   308→              </div>
+   309→            </div>
+   310→          )}
+   311→          {/* Company name */}
+   312→          <p className="text-lg font-semibold tracking-[0.3em] uppercase" style={{ color: accentColor }}>
+   313→            {companyName}
+   314→          </p>
+   315→          {/* Tagline */}
+   316→          <p className="text-[10px] text-gray-500 tracking-wider mt-1">{tagline}</p>
+   317→          {/* Divider */}
+   318→          <div className="w-16 h-px my-6" style={{ backgroundColor: accentColor }} />
+   319→          {/* Report title */}
+   320→          <h3 className="text-xl font-bold text-gray-900 text-center leading-tight">{reportName || 'Untitled Report'}</h3>
+   321→          {/* Date range */}
+   322→          <p className="text-sm text-gray-500 mt-3">{dateRange || 'Select a date range'}</p>
+   323→          {/* Meta info */}
+   324→          <div className="flex items-center gap-4 mt-6 text-[10px] text-gray-400">
+   325→            <span className="flex items-center gap-1">
+   326→              <File className="h-3 w-3" /> {pages} pages
+   327→            </span>
+   328→            <span className="flex items-center gap-1">
+   329→              <Clock className="h-3 w-3" /> {today}
+   330→            </span>
+   331→          </div>
+   332→        </div>
+   333→        {/* Bottom bar */}
+   334→        <div className="px-6 pb-5 flex items-center justify-between">
+   335→          <div className="h-1 w-12 rounded-full" style={{ backgroundColor: accentColor }} />
+   336→          <span className="text-[8px] text-gray-300 tracking-wider uppercase">Generated by Laxree Marketing Suite</span>
+   337→          <div className="h-1 w-12 rounded-full" style={{ backgroundColor: accentColor }} />
+   338→        </div>
+   339→        {/* Side accent */}
+   340→        <div
+   341→          className="absolute left-0 top-0 bottom-0 w-1"
+   342→          style={{ background: `linear-gradient(180deg, ${accentColor}, transparent, ${accentColor})` }}
+   343→        />
+   344→      </div>
+   345→    </div>
+   346→  );
+   347→}
+   348→
+   349→// ─── Main Component ──────────────────────────────────────────
+   350→
+   351→export default function ReportBuilderTab() {
+   352→  const [data, setData] = useState<ApiResponse | null>(null);
+   353→  const [loading, setLoading] = useState(true);
+   354→  const [generating, setGenerating] = useState(false);
+   355→
+   356→  // Builder state
+   357→  const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate | null>(null);
+   358→  const [reportName, setReportName] = useState('');
+   359→  const [dateRange, setDateRange] = useState('this-month');
+   360→  const [customFrom, setCustomFrom] = useState('');
+   361→  const [customTo, setCustomTo] = useState('');
+   362→  const [format, setFormat] = useState('pdf');
+   363→  const [brandingOn, setBrandingOn] = useState(true);
+   364→  const [companyName, setCompanyName] = useState('Laxree Jewellery');
+   365→  const [tagline, setTagline] = useState('Timeless Elegance, Crafted with Passion');
+   366→  const [accentColor, setAccentColor] = useState('#D4A843');
+   367→  const [includeLogo, setIncludeLogo] = useState(true);
+   368→  const [includeFooter, setIncludeFooter] = useState(true);
+   369→
+   370→  // Audit state
+   371→  const [auditing, setAuditing] = useState(false);
+   372→
+   373→  const fetchData = useCallback(async () => {
+   374→    try {
+   375→      const res = await fetch('/api/marketing/report-builder');
+   376→      const json = await res.json();
+   377→      setData(json);
+   378→    } catch {
+   379→      toast.error('Failed to load report builder data');
+   380→    } finally {
+   381→      setLoading(false);
+   382→    }
+   383→  }, []);
+   384→
+   385→  useEffect(() => {
+   386→    fetchData();
+   387→  }, [fetchData]);
+   388→
+   389→  const handleGenerateReport = async () => {
+   390→    if (!selectedTemplate) {
+   391→      toast.error('Please select a template first');
+   392→      return;
+   393→    }
+   394→    setGenerating(true);
+   395→    try {
+   396→      const res = await fetch('/api/marketing/report-builder', {
+   397→        method: 'POST',
+   398→        headers: { 'Content-Type': 'application/json' },
+   399→        body: JSON.stringify({
+   400→          templateId: selectedTemplate.id,
+   401→          dateRange:
+   402→            dateRange === 'custom'
+   403→              ? `${customFrom} to ${customTo}`
+   404→              : dateRange,
+   405→          format,
+   406→          brandSettings: brandingOn
+   407→            ? { companyName, tagline, accentColor, includeLogo, includeFooter }
+   408→            : undefined,
+   409→        }),
+   410→      });
+   411→      const json = await res.json();
+   412→      if (json.success) {
+   413→        toast.success(json.message);
+   414→        // Add to recent reports locally
+   415→        if (data) {
+   416→          setData({
+   417→            ...data,
+   418→            recentReports: [json.report, ...data.recentReports],
+   419→          });
+   420→        }
+   421→      }
+   422→    } catch {
+   423→      toast.error('Failed to generate report');
+   424→    } finally {
+   425→      setGenerating(false);
+   426→    }
+   427→  };
+   428→
+   429→  const handleDownload = (report: RecentReport) => {
+   430→    toast.success(`Report downloaded: ${report.name}.${report.format}`);
+   431→  };
+   432→
+   433→  const handleShare = (report: RecentReport) => {
+   434→    toast.success(`Share link copied for: ${report.name}`);
+   435→  };
+   436→
+   437→  const handleDelete = (report: RecentReport) => {
+   438→    if (data) {
+   439→      setData({
+   440→        ...data,
+   441→        recentReports: data.recentReports.filter((r) => r.id !== report.id),
+   442→      });
+   443→      toast.success(`Report deleted: ${report.name}`);
+   444→    }
+   445→  };
+   446→
+   447→  const handleRunAudit = () => {
+   448→    setAuditing(true);
+   449→    setTimeout(() => {
+   450→      setAuditing(false);
+   451→      toast.success('Full audit completed successfully');
+   452→    }, 3000);
+   453→  };
+   454→
+   455→  const getDateRangeLabel = (value: string) => {
+   456→    const map: Record<string, string> = {
+   457→      custom: 'Custom',
+   458→      'last-7': 'Last 7 Days',
+   459→      'last-30': 'Last 30 Days',
+   460→      'last-90': 'Last 90 Days',
+   461→      'this-month': 'This Month',
+   462→      'last-month': 'Last Month',
+   463→      'this-quarter': 'This Quarter',
+   464→      'this-year': 'This Year',
+   465→    };
+   466→    return map[value] || value;
+   467→  };
+   468→
+   469→  // ─── Loading ──────────────────────────────────────────────
+   470→
+   471→  if (loading || !data) {
+   472→    return (
+   473→      <div className="space-y-6 p-1">
+   474→        <div className="flex items-center justify-between">
+   475→          <Skeleton className="h-8 w-56" />
+   476→          <Skeleton className="h-10 w-40" />
+   477→        </div>
+   478→        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+   479→          {[...Array(6)].map((_, i) => (
+   480→            <Skeleton key={i} className="h-48 rounded-xl" />
+   481→          ))}
+   482→        </div>
+   483→        <Skeleton className="h-96 rounded-xl" />
+   484→      </div>
+   485→    );
+   486→  }
+   487→
+   488→  const templateList = data.reportTemplates;
+   489→  const recentList = data.recentReports;
+   490→  const audit = data.auditData;
+   491→
+   492→  return (
+   493→    <div className="space-y-6 animate-fade-in-up">
+   494→      {/* Header */}
+   495→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+   496→        <div className="flex items-center gap-3">
+   497→          <div className="h-10 w-10 rounded-xl gold-gradient flex items-center justify-center shadow-lg shadow-[#D4A843]/20">
+   498→            <ClipboardList className="h-5 w-5 text-primary-foreground" />
+   499→          </div>
+   500→          <div>
+   501→            <h1 className="text-2xl font-bold text-foreground">Report Builder & Audit</h1>
+   502→            <p className="text-sm text-muted-foreground">Create reports & audit your website</p>
+   503→          </div>
+   504→        </div>
+   505→        <Button
+   506→          onClick={handleGenerateReport}
+   507→          disabled={generating || !selectedTemplate}
+   508→          className="btn-gold hover-scale-sm"
+   509→        >
+   510→          {generating ? (
+   511→            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+   512→          ) : (
+   513→            <Plus className="h-4 w-4 mr-2" />
+   514→          )}
+   515→          Generate New Report
+   516→        </Button>
+   517→      </div>
+   518→
+   519→      {/* Sub-tabs */}
+   520→      <Tabs defaultValue="builder" className="space-y-6">
+   521→        <TabsList className="bg-[#111] border border-border/50 p-1 h-auto">
+   522→          <TabsTrigger value="builder" className="data-[state=active]:bg-[#D4A843]/15 data-[state=active]:text-[#D4A843] text-muted-foreground px-4 py-2 text-sm gap-2 transition-all">
+   523→            <FileBarChart2 className="h-4 w-4" />
+   524→            <span className="hidden sm:inline">Report Builder</span>
+   525→          </TabsTrigger>
+   526→          <TabsTrigger value="audit" className="data-[state=active]:bg-[#D4A843]/15 data-[state=active]:text-[#D4A843] text-muted-foreground px-4 py-2 text-sm gap-2 transition-all">
+   527→            <Shield className="h-4 w-4" />
+   528→            <span className="hidden sm:inline">Website Audit</span>
+   529→          </TabsTrigger>
+   530→          <TabsTrigger value="generated" className="data-[state=active]:bg-[#D4A843]/15 data-[state=active]:text-[#D4A843] text-muted-foreground px-4 py-2 text-sm gap-2 transition-all">
+   531→            <FileText className="h-4 w-4" />
+   532→            <span className="hidden sm:inline">Generated Reports</span>
+   533→          </TabsTrigger>
+   534→        </TabsList>
+   535→
+   536→        {/* ─── REPORT BUILDER SUB-TAB ──────────────────────── */}
+   537→        <TabsContent value="builder" className="space-y-8 animate-fade-in-up">
+   538→          {/* Template Selection */}
+   539→          <div>
+   540→            <div className="flex items-center gap-2 mb-4">
+   541→              <Sparkles className="h-4 w-4 text-[#D4A843]" />
+   542→              <h2 className="text-lg font-semibold text-foreground section-heading">Choose a Template</h2>
+   543→            </div>
+   544→            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+   545→              {templateList.map((tmpl) => {
+   546→                const Icon = templateIcons[tmpl.type] || FileText;
+   547→                const isSelected = selectedTemplate?.id === tmpl.id;
+   548→                return (
+   549→                  <motion.div
+   550→                    key={tmpl.id}
+   551→                    whileHover={{ y: -2 }}
+   552→                    transition={{ duration: 0.2 }}
+   553→                  >
+   554→                    <Card
+   555→                      className={`card-hover-border relative cursor-pointer transition-all duration-300 ${
+   556→                        isSelected ? 'border-[#D4A843]/60 bg-[#D4A843]/5 shadow-lg shadow-[#D4A843]/10' : ''
+   557→                      }`}
+   558→                      onClick={() => {
+   559→                        setSelectedTemplate(tmpl);
+   560→                        setReportName(`${tmpl.name} - ${getDateRangeLabel(dateRange)}`);
+   561→                      }}
+   562→                    >
+   563→                      {isSelected && (
+   564→                        <div className="absolute top-3 right-3">
+   565→                          <div className="h-5 w-5 rounded-full gold-gradient flex items-center justify-center">
+   566→                            <Check className="h-3 w-3 text-primary-foreground" />
+   567→                          </div>
+   568→                        </div>
+   569→                      )}
+   570→                      <CardContent className="p-5">
+   571→                        <div className="flex items-start gap-3">
+   572→                          <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? 'gold-gradient' : 'bg-[#D4A843]/10'}`}>
+   573→                            <Icon className={`h-5 w-5 ${isSelected ? 'text-primary-foreground' : 'text-[#D4A843]'}`} />
+   574→                          </div>
+   575→                          <div className="min-w-0">
+   576→                            <h3 className="font-semibold text-foreground text-sm">{tmpl.name}</h3>
+   577→                            <p className="text-xs text-muted-foreground mt-0.5 truncate">{tmpl.description}</p>
+   578→                          </div>
+   579→                        </div>
+   580→                        {/* Section badges */}
+   581→                        <div className="flex flex-wrap gap-1.5 mt-3">
+   582→                          {tmpl.sections.slice(0, 3).map((s) => (
+   583→                            <Badge key={s} variant="outline" className="text-[10px] px-2 py-0 border-border/50 text-muted-foreground">
+   584→                              {s}
+   585→                            </Badge>
+   586→                          ))}
+   587→                          {tmpl.sections.length > 3 && (
+   588→                            <Badge variant="outline" className="text-[10px] px-2 py-0 border-[#D4A843]/30 text-[#D4A843]">
+   589→                              +{tmpl.sections.length - 3}
+   590→                            </Badge>
+   591→                          )}
+   592→                        </div>
+   593→                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
+   594→                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+   595→                            <File className="h-3 w-3" /> {tmpl.pages} pages
+   596→                          </span>
+   597→                          <Badge className={`text-[10px] ${isSelected ? 'badge-gold' : 'bg-[#1a1a1a] text-muted-foreground border border-border/50'}`}>
+   598→                            {templateTypeLabels[tmpl.type] || tmpl.type}
+   599→                          </Badge>
+   600→                        </div>
+   601→                      </CardContent>
+   602→                    </Card>
+   603→                  </motion.div>
+   604→                );
+   605→              })}
+   606→            </div>
+   607→          </div>
+   608→
+   609→          {/* Customize Panel */}
+   610→          {selectedTemplate && (
+   611→            <motion.div
+   612→              initial={{ opacity: 0, y: 20 }}
+   613→              animate={{ opacity: 1, y: 0 }}
+   614→              transition={{ duration: 0.4 }}
+   615→              className="glass-premium rounded-2xl border border-border/50 overflow-hidden"
+   616→            >
+   617→              <div className="p-6 space-y-6">
+   618→                <div className="flex items-center gap-2">
+   619→                  <Settings className="h-4 w-4 text-[#D4A843]" />
+   620→                  <h2 className="text-lg font-semibold text-foreground">Customize Report</h2>
+   621→                </div>
+   622→
+   623→                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+   624→                  {/* Left: Form */}
+   625→                  <div className="space-y-5">
+   626→                    {/* Report Name */}
+   627→                    <div className="space-y-2">
+   628→                      <Label className="text-sm text-muted-foreground">Report Name</Label>
+   629→                      <Input
+   630→                        value={reportName}
+   631→                        onChange={(e) => setReportName(e.target.value)}
+   632→                        placeholder="Enter report name"
+   633→                        className="bg-[#111] border-border/50 focus-gold"
+   634→                      />
+   635→                    </div>
+   636→
+   637→                    {/* Date Range */}
+   638→                    <div className="space-y-2">
+   639→                      <Label className="text-sm text-muted-foreground">Date Range</Label>
+   640→                      <Select value={dateRange} onValueChange={setDateRange}>
+   641→                        <SelectTrigger className="bg-[#111] border-border/50 focus-gold">
+   642→                          <SelectValue />
+   643→                        </SelectTrigger>
+   644→                        <SelectContent>
+   645→                          <SelectItem value="custom">Custom</SelectItem>
+   646→                          <SelectItem value="last-7">Last 7 Days</SelectItem>
+   647→                          <SelectItem value="last-30">Last 30 Days</SelectItem>
+   648→                          <SelectItem value="last-90">Last 90 Days</SelectItem>
+   649→                          <SelectItem value="this-month">This Month</SelectItem>
+   650→                          <SelectItem value="last-month">Last Month</SelectItem>
+   651→                          <SelectItem value="this-quarter">This Quarter</SelectItem>
+   652→                          <SelectItem value="this-year">This Year</SelectItem>
+   653→                        </SelectContent>
+   654→                      </Select>
+   655→                    </div>
+   656→
+   657→                    {/* Custom date inputs */}
+   658→                    {dateRange === 'custom' && (
+   659→                      <motion.div
+   660→                        initial={{ opacity: 0, height: 0 }}
+   661→                        animate={{ opacity: 1, height: 'auto' }}
+   662→                        exit={{ opacity: 0, height: 0 }}
+   663→                        className="grid grid-cols-2 gap-3"
+   664→                      >
+   665→                        <div className="space-y-2">
+   666→                          <Label className="text-xs text-muted-foreground">From</Label>
+   667→                          <Input
+   668→                            type="date"
+   669→                            value={customFrom}
+   670→                            onChange={(e) => setCustomFrom(e.target.value)}
+   671→                            className="bg-[#111] border-border/50 focus-gold text-sm"
+   672→                          />
+   673→                        </div>
+   674→                        <div className="space-y-2">
+   675→                          <Label className="text-xs text-muted-foreground">To</Label>
+   676→                          <Input
+   677→                            type="date"
+   678→                            value={customTo}
+   679→                            onChange={(e) => setCustomTo(e.target.value)}
+   680→                            className="bg-[#111] border-border/50 focus-gold text-sm"
+   681→                          />
+   682→                        </div>
+   683→                      </motion.div>
+   684→                    )}
+   685→
+   686→                    {/* Format */}
+   687→                    <div className="space-y-2">
+   688→                      <Label className="text-sm text-muted-foreground">Format</Label>
+   689→                      <Select value={format} onValueChange={setFormat}>
+   690→                        <SelectTrigger className="bg-[#111] border-border/50 focus-gold">
+   691→                          <SelectValue />
+   692→                        </SelectTrigger>
+   693→                        <SelectContent>
+   694→                          <SelectItem value="pdf">PDF</SelectItem>
+   695→                          <SelectItem value="excel">Excel</SelectItem>
+   696→                          <SelectItem value="both">Both (PDF + Excel)</SelectItem>
+   697→                        </SelectContent>
+   698→                      </Select>
+   699→                    </div>
+   700→
+   701→                    {/* Branding Toggle */}
+   702→                    <div className="flex items-center justify-between p-3 rounded-lg bg-[#111] border border-border/30">
+   703→                      <div className="flex items-center gap-2">
+   704→                        <Palette className="h-4 w-4 text-[#D4A843]" />
+   705→                        <Label className="text-sm text-foreground">Include Laxree branding</Label>
+   706→                      </div>
+   707→                      <button
+   708→                        onClick={() => setBrandingOn(!brandingOn)}
+   709→                        className={`relative h-6 w-11 rounded-full transition-colors duration-300 ${brandingOn ? 'bg-[#D4A843]' : 'bg-border'}`}
+   710→                      >
+   711→                        <motion.div
+   712→                          className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-md"
+   713→                          animate={{ left: brandingOn ? '22px' : '2px' }}
+   714→                          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+   715→                        />
+   716→                      </button>
+   717→                    </div>
+   718→
+   719→                    {/* Brand Settings */}
+   720→                    <AnimatePresence>
+   721→                      {brandingOn && (
+   722→                        <motion.div
+   723→                          initial={{ opacity: 0, height: 0 }}
+   724→                          animate={{ opacity: 1, height: 'auto' }}
+   725→                          exit={{ opacity: 0, height: 0 }}
+   726→                          className="space-y-4 overflow-hidden"
+   727→                        >
+   728→                          <Separator className="bg-border/30" />
+   729→                          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Brand Settings</p>
+   730→
+   731→                          <div className="space-y-2">
+   732→                            <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+   733→                              <Type className="h-3 w-3" /> Company Name
+   734→                            </Label>
+   735→                            <Input
+   736→                              value={companyName}
+   737→                              onChange={(e) => setCompanyName(e.target.value)}
+   738→                              className="bg-[#111] border-border/50 focus-gold text-sm"
+   739→                            />
+   740→                          </div>
+   741→
+   742→                          <div className="space-y-2">
+   743→                            <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+   744→                              <Stamp className="h-3 w-3" /> Tagline
+   745→                            </Label>
+   746→                            <Input
+   747→                              value={tagline}
+   748→                              onChange={(e) => setTagline(e.target.value)}
+   749→                              className="bg-[#111] border-border/50 focus-gold text-sm"
+   750→                            />
+   751→                          </div>
+   752→
+   753→                          <div className="space-y-2">
+   754→                            <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+   755→                              <Palette className="h-3 w-3" /> Accent Color
+   756→                            </Label>
+   757→                            <div className="flex items-center gap-3">
+   758→                              <div className="relative">
+   759→                                <input
+   760→                                  type="color"
+   761→                                  value={accentColor}
+   762→                                  onChange={(e) => setAccentColor(e.target.value)}
+   763→                                  className="h-9 w-14 cursor-pointer rounded-lg border border-border/50 bg-transparent"
+   764→                                />
+   765→                              </div>
+   766→                              <Input
+   767→                                value={accentColor}
+   768→                                onChange={(e) => setAccentColor(e.target.value)}
+   769→                                className="bg-[#111] border-border/50 focus-gold text-sm font-mono max-w-[140px]"
+   770→                              />
+   771→                            </div>
+   772→                          </div>
+   773→
+   774→                          <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#0a0a0a] border border-border/20">
+   775→                            <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+   776→                              <ImageIcon className="h-3 w-3" /> Include Logo
+   777→                            </Label>
+   778→                            <button
+   779→                              onClick={() => setIncludeLogo(!includeLogo)}
+   780→                              className={`relative h-5 w-9 rounded-full transition-colors duration-300 ${includeLogo ? 'bg-[#D4A843]' : 'bg-border'}`}
+   781→                            >
+   782→                              <motion.div
+   783→                                className="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm"
+   784→                                animate={{ left: includeLogo ? '18px' : '2px' }}
+   785→                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+   786→                              />
+   787→                            </button>
+   788→                          </div>
+   789→
+   790→                          <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#0a0a0a] border border-border/20">
+   791→                            <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+   792→                              <Printer className="h-3 w-3" /> Include Footer
+   793→                            </Label>
+   794→                            <button
+   795→                              onClick={() => setIncludeFooter(!includeFooter)}
+   796→                              className={`relative h-5 w-9 rounded-full transition-colors duration-300 ${includeFooter ? 'bg-[#D4A843]' : 'bg-border'}`}
+   797→                            >
+   798→                              <motion.div
+   799→                                className="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm"
+   800→                                animate={{ left: includeFooter ? '18px' : '2px' }}
+   801→                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+   802→                              />
+   803→                            </button>
+   804→                          </div>
+   805→                        </motion.div>
+   806→                      )}
+   807→                    </AnimatePresence>
+   808→
+   809→                    {/* Generate Button */}
+   810→                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+   811→                      <Button
+   812→                        onClick={handleGenerateReport}
+   813→                        disabled={generating}
+   814→                        className="w-full gold-gradient text-primary-foreground font-semibold py-5 text-sm hover:shadow-lg hover:shadow-[#D4A843]/25 transition-shadow duration-300"
+   815→                      >
+   816→                        {generating ? (
+   817→                          <>
+   818→                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+   819→                            Generating Report...
+   820→                          </>
+   821→                        ) : (
+   822→                          <>
+   823→                            <Sparkles className="h-4 w-4 mr-2" />
+   824→                            Generate Report
+   825→                            <ArrowRight className="h-4 w-4 ml-2" />
+   826→                          </>
+   827→                        )}
+   828→                      </Button>
+   829→                    </motion.div>
+   830→                  </div>
+   831→
+   832→                  {/* Right: Preview */}
+   833→                  <div className="space-y-3">
+   834→                    <div className="flex items-center gap-2">
+   835→                      <Eye className="h-4 w-4 text-[#D4A843]" />
+   836→                      <h3 className="text-sm font-medium text-muted-foreground">Cover Page Preview</h3>
+   837→                    </div>
+   838→                    <ReportPreview
+   839→                      reportName={reportName}
+   840→                      dateRange={dateRange === 'custom' ? `${customFrom || '...'} to ${customTo || '...'}` : getDateRangeLabel(dateRange)}
+   841→                      pages={selectedTemplate.pages}
+   842→                      companyName={brandingOn ? companyName : 'Custom Brand'}
+   843→                      tagline={brandingOn ? tagline : ''}
+   844→                      accentColor={brandingOn ? accentColor : '#888888'}
+   845→                      includeLogo={brandingOn && includeLogo}
+   846→                    />
+   847→                  </div>
+   848→                </div>
+   849→              </div>
+   850→            </motion.div>
+   851→          )}
+   852→        </TabsContent>
+   853→
+   854→        {/* ─── WEBSITE AUDIT SUB-TAB ───────────────────────── */}
+   855→        <TabsContent value="audit" className="space-y-8 animate-fade-in-up">
+   856→          {/* Overall Score */}
+   857→          <Card className="glass-premium border-border/50 overflow-hidden">
+   858→            <CardContent className="p-8 flex flex-col lg:flex-row items-center gap-8">
+   859→              <div className="flex flex-col items-center">
+   860→                <AuditGauge score={audit.overallScore} />
+   861→                <p className="text-sm text-muted-foreground mt-4 text-center">
+   862→                  Based on <span className="text-[#D4A843] font-semibold">45 checks</span> across{' '}
+   863→                  <span className="text-[#D4A843] font-semibold">5 categories</span>
+   864→                </p>
+   865→              </div>
+   866→              <div className="flex-1 w-full">
+   867→                <h3 className="text-lg font-semibold text-foreground mb-4">Category Breakdown</h3>
+   868→                <div className="space-y-4">
+   869→                  {audit.categories.map((cat) => {
+   870→                    const CatIcon = categoryIconMap[cat.icon] || Zap;
+   871→                    return (
+   872→                      <div key={cat.name} className="flex items-center gap-4">
+   873→                        <div className="flex items-center gap-2 w-32 shrink-0">
+   874→                          <CatIcon className="h-4 w-4" style={{ color: cat.color }} />
+   875→                          <span className="text-sm text-muted-foreground">{cat.name}</span>
+   876→                        </div>
+   877→                        <div className="flex-1">
+   878→                          <div className="h-2.5 rounded-full bg-border/30 overflow-hidden">
+   879→                            <motion.div
+   880→                              className="h-full rounded-full"
+   881→                              style={{ backgroundColor: cat.color }}
+   882→                              initial={{ width: 0 }}
+   883→                              animate={{ width: `${cat.score}%` }}
+   884→                              transition={{ duration: 1, delay: 0.3, ease: 'easeOut' }}
+   885→                            />
+   886→                          </div>
+   887→                        </div>
+   888→                        <span className="text-sm font-bold w-10 text-right" style={{ color: cat.color }}>
+   889→                          {cat.score}
+   890→                        </span>
+   891→                        <Badge variant="outline" className={`text-[10px] ${cat.issues > 3 ? 'border-red-500/30 text-red-400' : cat.issues > 1 ? 'border-[#D4A843]/30 text-[#D4A843]' : 'border-green-500/30 text-green-400'}`}>
+   892→                          {cat.issues} {cat.issues === 1 ? 'issue' : 'issues'}
+   893→                        </Badge>
+   894→                      </div>
+   895→                    );
+   896→                  })}
+   897→                </div>
+   898→              </div>
+   899→            </CardContent>
+   900→          </Card>
+   901→
+   902→          {/* Category Score Cards */}
+   903→          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 stagger-children">
+   904→            {audit.categories.map((cat) => {
+   905→              const CatIcon = categoryIconMap[cat.icon] || Zap;
+   906→              return (
+   907→                <Card key={cat.name} className="premium-card hover-scale-sm transition-all duration-300">
+   908→                  <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+   909→                    <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${cat.color}15` }}>
+   910→                      <CatIcon className="h-5 w-5" style={{ color: cat.color }} />
+   911→                    </div>
+   912→                    <span className="text-xs text-muted-foreground font-medium">{cat.name}</span>
+   913→                    <span className="text-2xl font-bold" style={{ color: cat.color }}>
+   914→                      {cat.score}
+   915→                    </span>
+   916→                    <div className="w-full h-1.5 rounded-full bg-border/30 overflow-hidden">
+   917→                      <motion.div
+   918→                        className="h-full rounded-full"
+   919→                        style={{ backgroundColor: cat.color }}
+   920→                        initial={{ width: 0 }}
+   921→                        animate={{ width: `${cat.score}%` }}
+   922→                        transition={{ duration: 1.2, delay: 0.5, ease: 'easeOut' }}
+   923→                      />
+   924→                    </div>
+   925→                    <Badge variant="outline" className="text-[10px] border-border/30 text-muted-foreground">
+   926→                      {cat.issues} issues
+   927→                    </Badge>
+   928→                  </CardContent>
+   929→                </Card>
+   930→              );
+   931→            })}
+   932→          </div>
+   933→
+   934→          {/* Critical Issues */}
+   935→          <div className="relative corner-accent rounded-2xl overflow-hidden">
+   936→            <Card className="border-red-500/20 bg-red-500/[0.03]">
+   937→              <CardHeader className="pb-3">
+   938→                <CardTitle className="flex items-center gap-2 text-red-400">
+   939→                  <AlertCircle className="h-5 w-5" />
+   940→                  Critical Issues
+   941→                  <Badge className="badge-red text-[10px] ml-2">{audit.criticalIssues.length}</Badge>
+   942→                </CardTitle>
+   943→              </CardHeader>
+   944→              <CardContent className="space-y-4">
+   945→                {audit.criticalIssues.map((issue, idx) => (
+   946→                  <motion.div
+   947→                    key={idx}
+   948→                    initial={{ opacity: 0, x: -20 }}
+   949→                    animate={{ opacity: 1, x: 0 }}
+   950→                    transition={{ delay: idx * 0.1 }}
+   951→                    className="p-4 rounded-xl bg-[#111] border border-red-500/10 hover:border-red-500/25 transition-colors"
+   952→                  >
+   953→                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+   954→                      <div className="flex-1 min-w-0">
+   955→                        <h4 className="font-semibold text-foreground text-sm">{issue.title}</h4>
+   956→                        <div className="flex flex-wrap items-center gap-2 mt-2">
+   957→                          <Badge variant="outline" className="badge-red text-[10px]">
+   958→                            {issue.category}
+   959→                          </Badge>
+   960→                          <span className="text-xs text-red-400/70">Impact: {issue.impact}</span>
+   961→                        </div>
+   962→                        <p className="text-xs text-muted-foreground mt-2 flex items-start gap-1.5">
+   963→                          <ArrowRight className="h-3 w-3 mt-0.5 text-[#D4A843] shrink-0" />
+   964→                          {issue.recommendation}
+   965→                        </p>
+   966→                      </div>
+   967→                      <Button
+   968→                        size="sm"
+   969→                        variant="outline"
+   970→                        className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 shrink-0 text-xs"
+   971→                      >
+   972→                        Fix Now
+   973→                      </Button>
+   974→                    </div>
+   975→                  </motion.div>
+   976→                ))}
+   977→              </CardContent>
+   978→            </Card>
+   979→          </div>
+   980→
+   981→          {/* Warnings */}
+   982→          <Card className="border-[#eab308]/20 bg-[#eab308]/[0.03]">
+   983→            <CardHeader className="pb-3">
+   984→              <CardTitle className="flex items-center gap-2 text-[#eab308]">
+   985→                <AlertTriangle className="h-5 w-5" />
+   986→                Warnings
+   987→                <Badge className="badge-yellow text-[10px] ml-2">{audit.warnings.length}</Badge>
+   988→              </CardTitle>
+   989→            </CardHeader>
+   990→            <CardContent className="space-y-4">
+   991→              {audit.warnings.map((issue, idx) => (
+   992→                <motion.div
+   993→                  key={idx}
+   994→                  initial={{ opacity: 0, x: -20 }}
+   995→                  animate={{ opacity: 1, x: 0 }}
+   996→                  transition={{ delay: idx * 0.1 + 0.3 }}
+   997→                  className="p-4 rounded-xl bg-[#111] border border-[#eab308]/10 hover:border-[#eab308]/25 transition-colors"
+   998→                >
+   999→                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+  1000→                    <div className="flex-1 min-w-0">
+  1001→                      <h4 className="font-semibold text-foreground text-sm">{issue.title}</h4>
+  1002→                      <div className="flex flex-wrap items-center gap-2 mt-2">
+  1003→                        <Badge variant="outline" className="badge-yellow text-[10px]">
+  1004→                          {issue.category}
+  1005→                        </Badge>
+  1006→                        <span className="text-xs text-[#eab308]/70">Impact: {issue.impact}</span>
+  1007→                      </div>
+  1008→                      <p className="text-xs text-muted-foreground mt-2 flex items-start gap-1.5">
+  1009→                        <ArrowRight className="h-3 w-3 mt-0.5 text-[#D4A843] shrink-0" />
+  1010→                        {issue.recommendation}
+  1011→                      </p>
+  1012→                    </div>
+  1013→                    <Button
+  1014→                      size="sm"
+  1015→                      variant="outline"
+  1016→                      className="border-[#eab308]/30 text-[#eab308] hover:bg-[#eab308]/10 shrink-0 text-xs"
+  1017→                    >
+  1018→                      Review
+  1019→                    </Button>
+  1020→                  </div>
+  1021→                </motion.div>
+  1022→              ))}
+  1023→            </CardContent>
+  1024→          </Card>
+  1025→
+  1026→          {/* Passed Checks */}
+  1027→          <Card className="border-green-500/20 bg-green-500/[0.03]">
+  1028→            <CardHeader className="pb-3">
+  1029→              <CardTitle className="flex items-center gap-2 text-green-400">
+  1030→                <CheckCircle className="h-5 w-5" />
+  1031→                Passed Checks
+  1032→                <Badge className="badge-green text-[10px] ml-2">{audit.passedChecks.length}</Badge>
+  1033→              </CardTitle>
+  1034→            </CardHeader>
+  1035→            <CardContent>
+  1036→              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  1037→                {audit.passedChecks.map((check, idx) => (
+  1038→                  <motion.div
+  1039→                    key={idx}
+  1040→                    initial={{ opacity: 0, scale: 0.95 }}
+  1041→                    animate={{ opacity: 1, scale: 1 }}
+  1042→                    transition={{ delay: idx * 0.1 + 0.5 }}
+  1043→                    className="flex items-center gap-3 p-3 rounded-xl bg-[#111] border border-green-500/10"
+  1044→                  >
+  1045→                    <div className="h-7 w-7 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+  1046→                      <Check className="h-4 w-4 text-green-400" />
+  1047→                    </div>
+  1048→                    <div>
+  1049→                      <p className="text-sm font-medium text-foreground">{check.title}</p>
+  1050→                      <p className="text-[10px] text-muted-foreground">{check.category}</p>
+  1051→                    </div>
+  1052→                  </motion.div>
+  1053→                ))}
+  1054→              </div>
+  1055→            </CardContent>
+  1056→          </Card>
+  1057→
+  1058→          {/* Run Full Audit */}
+  1059→          <div className="flex justify-center">
+  1060→            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+  1061→              <Button
+  1062→                onClick={handleRunAudit}
+  1063→                disabled={auditing}
+  1064→                className="btn-gold hover-scale-sm px-8 py-6 text-sm"
+  1065→              >
+  1066→                {auditing ? (
+  1067→                  <>
+  1068→                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+  1069→                    Running Full Audit...
+  1070→                  </>
+  1071→                ) : (
+  1072→                  <>
+  1073→                    <RefreshCw className="h-4 w-4 mr-2" />
+  1074→                    Run Full Audit
+  1075→                  </>
+  1076→                )}
+  1077→              </Button>
+  1078→            </motion.div>
+  1079→          </div>
+  1080→        </TabsContent>
+  1081→
+  1082→        {/* ─── GENERATED REPORTS SUB-TAB ───────────────────── */}
+  1083→        <TabsContent value="generated" className="space-y-6 animate-fade-in-up">
+  1084→          {/* Stats Row */}
+  1085→          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
+  1086→            <Card className="premium-card">
+  1087→              <CardContent className="p-4">
+  1088→                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+  1089→                  <FileText className="h-3 w-3" /> Total Reports
+  1090→                </p>
+  1091→                <p className="text-2xl font-bold text-foreground mt-1">{recentList.length}</p>
+  1092→              </CardContent>
+  1093→            </Card>
+  1094→            <Card className="premium-card">
+  1095→              <CardContent className="p-4">
+  1096→                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+  1097→                  <CalendarDays className="h-3 w-3" /> This Month
+  1098→                </p>
+  1099→                <p className="text-2xl font-bold text-[#D4A843] mt-1">
+  1100→                  {recentList.filter((r) => r.generatedAt.startsWith('2025-06')).length}
+  1101→                </p>
+  1102→              </CardContent>
+  1103→            </Card>
+  1104→            <Card className="premium-card">
+  1105→              <CardContent className="p-4">
+  1106→                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+  1107→                  <BookOpen className="h-3 w-3" /> Avg Pages
+  1108→                </p>
+  1109→                <p className="text-2xl font-bold text-foreground mt-1">
+  1110→                  {Math.round(recentList.reduce((a, r) => a + r.pages, 0) / recentList.length)}
+  1111→                </p>
+  1112→              </CardContent>
+  1113→            </Card>
+  1114→            <Card className="premium-card">
+  1115→              <CardContent className="p-4">
+  1116→                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+  1117→                  <HardDrive className="h-3 w-3" /> Storage Used
+  1118→                </p>
+  1119→                <p className="text-2xl font-bold text-foreground mt-1">
+  1120→                  {(recentList.reduce((a, r) => {
+  1121→                    const num = parseFloat(r.size);
+  1122→                    return a + (isNaN(num) ? 0 : num);
+  1123→                  }, 0)).toFixed(1)}{' '}
+  1124→                  <span className="text-sm font-normal text-muted-foreground">MB</span>
+  1125→                </p>
+  1126→              </CardContent>
+  1127→            </Card>
+  1128→          </div>
+  1129→
+  1130→          {/* Reports Table */}
+  1131→          <Card className="glass-premium border-border/50 overflow-hidden">
+  1132→            <CardHeader className="pb-3">
+  1133→              <CardTitle className="text-base flex items-center gap-2">
+  1134→                <FileText className="h-4 w-4 text-[#D4A843]" />
+  1135→                All Reports
+  1136→              </CardTitle>
+  1137→            </CardHeader>
+  1138→            <CardContent className="p-0">
+  1139→              <div className="overflow-x-auto">
+  1140→                <Table>
+  1141→                  <TableHeader>
+  1142→                    <TableRow className="border-border/30 hover:bg-transparent">
+  1143→                      <TableHead className="text-xs text-muted-foreground">Name</TableHead>
+  1144→                      <TableHead className="text-xs text-muted-foreground">Template</TableHead>
+  1145→                      <TableHead className="text-xs text-muted-foreground hidden sm:table-cell">Date Range</TableHead>
+  1146→                      <TableHead className="text-xs text-muted-foreground">Format</TableHead>
+  1147→                      <TableHead className="text-xs text-muted-foreground hidden md:table-cell">Size</TableHead>
+  1148→                      <TableHead className="text-xs text-muted-foreground hidden md:table-cell">Pages</TableHead>
+  1149→                      <TableHead className="text-xs text-muted-foreground">Status</TableHead>
+  1150→                      <TableHead className="text-xs text-muted-foreground hidden lg:table-cell">Generated</TableHead>
+  1151→                      <TableHead className="text-xs text-muted-foreground text-right">Actions</TableHead>
+  1152→                    </TableRow>
+  1153→                  </TableHeader>
+  1154→                  <TableBody>
+  1155→                    {recentList.map((report) => (
+  1156→                      <TableRow key={report.id} className="table-row-hover border-border/20">
+  1157→                        <TableCell className="font-medium text-sm text-foreground">
+  1158→                          <div className="flex items-center gap-2">
+  1159→                            {report.format === 'pdf' ? (
+  1160→                              <FileText className="h-4 w-4 text-red-400 shrink-0" />
+  1161→                            ) : (
+  1162→                              <FileSpreadsheet className="h-4 w-4 text-green-400 shrink-0" />
+  1163→                            )}
+  1164→                            <span className="truncate max-w-[180px]">{report.name}</span>
+  1165→                          </div>
+  1166→                        </TableCell>
+  1167→                        <TableCell>
+  1168→                          <Badge variant="outline" className="text-[10px] border-[#D4A843]/30 text-[#D4A843]">
+  1169→                            {templateTypeLabels[report.template] || report.template}
+  1170→                          </Badge>
+  1171→                        </TableCell>
+  1172→                        <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">
+  1173→                          {report.dateRange}
+  1174→                        </TableCell>
+  1175→                        <TableCell>
+  1176→                          <Badge
+  1177→                            className={`text-[10px] ${
+  1178→                              report.format === 'pdf'
+  1179→                                ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+  1180→                                : 'bg-green-500/10 text-green-400 border border-green-500/20'
+  1181→                            }`}
+  1182→                          >
+  1183→                            {report.format.toUpperCase()}
+  1184→                          </Badge>
+  1185→                        </TableCell>
+  1186→                        <TableCell className="text-xs text-muted-foreground hidden md:table-cell">
+  1187→                          {report.size}
+  1188→                        </TableCell>
+  1189→                        <TableCell className="text-xs text-muted-foreground hidden md:table-cell">
+  1190→                          {report.pages}
+  1191→                        </TableCell>
+  1192→                        <TableCell>
+  1193→                          <Badge className={`badge-dot-green text-[10px]`}>Ready</Badge>
+  1194→                        </TableCell>
+  1195→                        <TableCell className="text-xs text-muted-foreground hidden lg:table-cell">
+  1196→                          {report.generatedAt}
+  1197→                        </TableCell>
+  1198→                        <TableCell>
+  1199→                          <div className="flex items-center justify-end gap-1">
+  1200→                            <Button
+  1201→                              size="icon"
+  1202→                              variant="ghost"
+  1203→                              className="h-8 w-8 text-muted-foreground hover:text-[#D4A843] hover:bg-[#D4A843]/10"
+  1204→                              onClick={() => handleDownload(report)}
+  1205→                            >
+  1206→                              <Download className="h-3.5 w-3.5" />
+  1207→                            </Button>
+  1208→                            <Button
+  1209→                              size="icon"
+  1210→                              variant="ghost"
+  1211→                              className="h-8 w-8 text-muted-foreground hover:text-[#D4A843] hover:bg-[#D4A843]/10"
+  1212→                              onClick={() => handleShare(report)}
+  1213→                            >
+  1214→                              <Share2 className="h-3.5 w-3.5" />
+  1215→                            </Button>
+  1216→                            <Button
+  1217→                              size="icon"
+  1218→                              variant="ghost"
+  1219→                              className="h-8 w-8 text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
+  1220→                              onClick={() => handleDelete(report)}
+  1221→                            >
+  1222→                              <Trash2 className="h-3.5 w-3.5" />
+  1223→                            </Button>
+  1224→                          </div>
+  1225→                        </TableCell>
+  1226→                      </TableRow>
+  1227→                    ))}
+  1228→                  </TableBody>
+  1229→                </Table>
+  1230→              </div>
+  1231→            </CardContent>
+  1232→          </Card>
+  1233→        </TabsContent>
+  1234→      </Tabs>
+  1235→    </div>
+  1236→  );
+  1237→}
