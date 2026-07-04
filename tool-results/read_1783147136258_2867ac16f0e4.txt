@@ -1,0 +1,1746 @@
+     1→'use client';
+     2→
+     3→import { useState, useEffect, useCallback, useMemo } from 'react';
+     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→import {
+     6→  Shield,
+     7→  Building2,
+     8→  Users,
+     9→  Plus,
+    10→  Search,
+    11→  ChevronRight,
+    12→  ArrowLeft,
+    13→  Mail,
+    14→  UserPlus,
+    15→  Edit3,
+    16→  Trash2,
+    17→  Ban,
+    18→  Link2,
+    19→  Copy,
+    20→  Check,
+    21→  Loader2,
+    22→  Palette,
+    23→  Save,
+    24→  Eye,
+    25→  MoreHorizontal,
+    26→} from 'lucide-react';
+    27→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+    28→import { Button } from '@/components/ui/button';
+    29→import { Input } from '@/components/ui/input';
+    30→import { Label } from '@/components/ui/label';
+    31→import { Badge } from '@/components/ui/badge';
+    32→import { Skeleton } from '@/components/ui/skeleton';
+    33→import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+    34→import { Separator } from '@/components/ui/separator';
+    35→import {
+    36→  Dialog,
+    37→  DialogContent,
+    38→  DialogHeader,
+    39→  DialogTitle,
+    40→  DialogDescription,
+    41→  DialogFooter,
+    42→} from '@/components/ui/dialog';
+    43→import {
+    44→  Select,
+    45→  SelectContent,
+    46→  SelectItem,
+    47→  SelectTrigger,
+    48→  SelectValue,
+    49→} from '@/components/ui/select';
+    50→import {
+    51→  Table,
+    52→  TableBody,
+    53→  TableCell,
+    54→  TableHead,
+    55→  TableHeader,
+    56→  TableRow,
+    57→} from '@/components/ui/table';
+    58→import {
+    59→  DropdownMenu,
+    60→  DropdownMenuContent,
+    61→  DropdownMenuItem,
+    62→  DropdownMenuTrigger,
+    63→} from '@/components/ui/dropdown-menu';
+    64→
+    65→// ── Types ───────────────────────────────────────────────────────────
+    66→interface SessionUser {
+    67→  id?: string;
+    68→  email: string;
+    69→  name: string;
+    70→  role: string;
+    71→  designation?: string;
+    72→  avatar?: string;
+    73→}
+    74→
+    75→interface SessionTenant {
+    76→  id?: string;
+    77→  name?: string;
+    78→  slug?: string;
+    79→  logo?: string;
+    80→  primaryColor?: string;
+    81→}
+    82→
+    83→interface Brand {
+    84→  id: string;
+    85→  name: string;
+    86→  slug: string;
+    87→  logo: string | null;
+    88→  primaryColor: string;
+    89→  secondaryColor: string | null;
+    90→  bgAccent: string | null;
+    91→  isActive: boolean;
+    92→  plan: string;
+    93→  maxUsers: number;
+    94→  userCount: number;
+    95→  createdAt: string;
+    96→  users?: BrandUser[];
+    97→}
+    98→
+    99→interface BrandUser {
+   100→  id: string;
+   101→  email: string;
+   102→  name: string;
+   103→  role: string;
+   104→  designation: string | null;
+   105→  avatar: string | null;
+   106→  lastLoginAt: string | null;
+   107→  createdAt: string;
+   108→  isActive?: boolean;
+   109→}
+   110→
+   111→interface Invitation {
+   112→  id: string;
+   113→  email: string;
+   114→  role: string;
+   115→  designation: string | null;
+   116→  token: string;
+   117→  expiresAt: string;
+   118→  createdAt: string;
+   119→  tenantName?: string;
+   120→  tenantSlug?: string;
+   121→}
+   122→
+   123→interface AdminStats {
+   124→  totalBrands: number;
+   125→  totalUsers: number;
+   126→  activeBrands: number;
+   127→  inactiveBrands: number;
+   128→}
+   129→
+   130→// ── Helpers ─────────────────────────────────────────────────────────
+   131→function getSession(): { user: SessionUser; tenant: SessionTenant } | null {
+   132→  if (typeof window === 'undefined') return null;
+   133→  try {
+   134→    // Try dashboard_session first (new format), then growthive_session (legacy)
+   135→    const raw = sessionStorage.getItem('dashboard_session') || sessionStorage.getItem('growthive_session');
+   136→    if (!raw) return null;
+   137→    const parsed = JSON.parse(raw);
+   138→    // The session may store user/tenant nested or flat
+   139→    if (parsed?.user) {
+   140→      return { user: parsed.user, tenant: parsed.tenant || {} };
+   141→    }
+   142→    // Flat structure: { email, name, role, designation, avatar, tenant: { id, name, ... } }
+   143→    return {
+   144→      user: {
+   145→        email: parsed.email || '',
+   146→        name: parsed.name || '',
+   147→        role: parsed.role || '',
+   148→        designation: parsed.designation || undefined,
+   149→        avatar: parsed.avatar || undefined,
+   150→      },
+   151→      tenant: parsed.tenant
+   152→        ? { id: parsed.tenant.id, name: parsed.tenant.name, slug: parsed.tenant.slug, logo: parsed.tenant.logo, primaryColor: parsed.tenant.primaryColor }
+   153→        : {},
+   154→    };
+   155→  } catch {
+   156→    return null;
+   157→  }
+   158→}
+   159→
+   160→function isAdminRole(role: string): boolean {
+   161→  return ['platform_admin', 'owner', 'admin'].includes(role);
+   162→}
+   163→
+   164→function formatDate(dateStr: string | null): string {
+   165→  if (!dateStr) return 'Never';
+   166→  try {
+   167→    return new Date(dateStr).toLocaleDateString('en-US', {
+   168→      month: 'short',
+   169→      day: 'numeric',
+   170→      year: 'numeric',
+   171→      hour: '2-digit',
+   172→      minute: '2-digit',
+   173→    });
+   174→  } catch {
+   175→    return dateStr;
+   176→  }
+   177→}
+   178→
+   179→function roleBadgeVariant(role: string) {
+   180→  switch (role) {
+   181→    case 'platform_admin':
+   182→      return 'bg-purple-500/15 text-purple-400 border-purple-500/20';
+   183→    case 'owner':
+   184→      return 'bg-[#D4A843]/15 text-[#D4A843] border-[#D4A843]/20';
+   185→    case 'admin':
+   186→      return 'bg-blue-500/15 text-blue-400 border-blue-500/20';
+   187→    case 'manager':
+   188→      return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20';
+   189→    default:
+   190→      return 'bg-zinc-500/15 text-zinc-400 border-zinc-500/20';
+   191→  }
+   192→}
+   193→
+   194→function slugify(text: string): string {
+   195→  return text
+   196→    .toLowerCase()
+   197→    .replace(/[^a-z0-9]+/g, '-')
+   198→    .replace(/(^-|-$)/g, '');
+   199→}
+   200→
+   201→const ROLE_OPTIONS = [
+   202→  { value: 'owner', label: 'Owner' },
+   203→  { value: 'admin', label: 'Admin' },
+   204→  { value: 'manager', label: 'Manager' },
+   205→  { value: 'staff', label: 'Staff' },
+   206→];
+   207→
+   208→const PLAN_COLORS: Record<string, string> = {
+   209→  enterprise: 'bg-purple-500/15 text-purple-400',
+   210→  pro: 'bg-[#D4A843]/15 text-[#D4A843]',
+   211→  starter: 'bg-emerald-500/15 text-emerald-400',
+   212→  free: 'bg-zinc-500/15 text-zinc-400',
+   213→};
+   214→
+   215→// ── Stat Card ───────────────────────────────────────────────────────
+   216→function StatCard({
+   217→  icon: Icon,
+   218→  label,
+   219→  value,
+   220→  sub,
+   221→  delay = 0,
+   222→}: {
+   223→  icon: React.ComponentType<{ className?: string }>;
+   224→  label: string;
+   225→  value: string | number;
+   226→  sub?: string;
+   227→  delay?: number;
+   228→}) {
+   229→  return (
+   230→    <motion.div
+   231→      initial={{ opacity: 0, y: 12 }}
+   232→      animate={{ opacity: 1, y: 0 }}
+   233→      transition={{ duration: 0.35, delay }}
+   234→    >
+   235→      <Card className="bg-[#111] border-[#D4A843]/10 hover:border-[#D4A843]/25 transition-colors">
+   236→        <CardContent className="p-4">
+   237→          <div className="flex items-center gap-3">
+   238→            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#D4A843]/10">
+   239→              <Icon className="h-5 w-5 text-[#D4A843]" />
+   240→            </div>
+   241→            <div>
+   242→              <p className="text-2xl font-bold text-foreground">{value}</p>
+   243→              <p className="text-[11px] text-muted-foreground">{label}</p>
+   244→              {sub && <p className="text-[10px] text-muted-foreground/60">{sub}</p>}
+   245→            </div>
+   246→          </div>
+   247→        </CardContent>
+   248→      </Card>
+   249→    </motion.div>
+   250→  );
+   251→}
+   252→
+   253→// ── Platform Admin View ─────────────────────────────────────────────
+   254→function PlatformAdminView({ userId }: { userId: string }) {
+   255→  const [brands, setBrands] = useState<Brand[]>([]);
+   256→  const [loading, setLoading] = useState(true);
+   257→  const [error, setError] = useState<string | null>(null);
+   258→  const [search, setSearch] = useState('');
+   259→  const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
+   260→  const [brandDetail, setBrandDetail] = useState<Brand | null>(null);
+   261→  const [brandLoading, setBrandLoading] = useState(false);
+   262→  const [stats, setStats] = useState<AdminStats | null>(null);
+   263→  const [recentInvitations, setRecentInvitations] = useState<Invitation[]>([]);
+   264→
+   265→  // Dialog states
+   266→  const [addBrandOpen, setAddBrandOpen] = useState(false);
+   267→  const [inviteOpen, setInviteOpen] = useState(false);
+   268→  const [addUserOpen, setAddUserOpen] = useState(false);
+   269→  const [editUserOpen, setEditUserOpen] = useState(false);
+   270→  const [editBrandingOpen, setEditBrandingOpen] = useState(false);
+   271→
+   272→  // Form states
+   273→  const [addBrandForm, setAddBrandForm] = useState({
+   274→    name: '', slug: '', primaryColor: '#D4A843', logo: '',
+   275→    ownerName: '', ownerEmail: '', ownerPassword: '',
+   276→  });
+   277→  const [inviteForm, setInviteForm] = useState({ email: '', role: 'staff', designation: '' });
+   278→  const [addUserForm, setAddUserForm] = useState({ name: '', email: '', password: '', role: 'staff', designation: '' });
+   279→  const [editUserForm, setEditUserForm] = useState({ role: '', designation: '', userId: '', name: '' });
+   280→  const [editBrandingForm, setEditBrandingForm] = useState({ name: '', primaryColor: '#D4A843', logo: '' });
+   281→  const [submitting, setSubmitting] = useState(false);
+   282→  const [inviteLink, setInviteLink] = useState('');
+   283→  const [copied, setCopied] = useState(false);
+   284→
+   285→  const fetchBrands = useCallback(async () => {
+   286→    setLoading(true);
+   287→    setError(null);
+   288→    try {
+   289→      const res = await fetch(`/api/tenant/brands?userId=${userId}`);
+   290→      const data = await res.json();
+   291→      if (data.success) {
+   292→        setBrands(data.brands || []);
+   293→      } else {
+   294→        setError(data.error || 'Failed to load brands');
+   295→      }
+   296→    } catch {
+   297→      setError('Network error. Please try again.');
+   298→    } finally {
+   299→      setLoading(false);
+   300→    }
+   301→  }, [userId]);
+   302→
+   303→  const fetchStats = useCallback(async () => {
+   304→    try {
+   305→      const res = await fetch(`/api/tenant/admin/dashboard?userId=${userId}`);
+   306→      const data = await res.json();
+   307→      if (data.success) {
+   308→        setStats(data.stats);
+   309→        setRecentInvitations(data.recentInvitations || []);
+   310→      }
+   311→    } catch {
+   312→      // Silent fail for stats
+   313→    }
+   314→  }, [userId]);
+   315→
+   316→  const fetchBrandDetail = useCallback(async (brandId: string) => {
+   317→    setBrandLoading(true);
+   318→    try {
+   319→      const res = await fetch(`/api/tenant/brands/${brandId}`);
+   320→      const data = await res.json();
+   321→      if (data.success) {
+   322→        setBrandDetail(data.brand);
+   323→        setSelectedBrand(data.brand);
+   324→      }
+   325→    } catch {
+   326→      // silent
+   327→    } finally {
+   328→      setBrandLoading(false);
+   329→    }
+   330→  }, []);
+   331→
+   332→  useEffect(() => {
+   333→    fetchBrands();
+   334→    fetchStats();
+   335→  }, [fetchBrands, fetchStats]);
+   336→
+   337→  // Filter brands
+   338→  const filteredBrands = useMemo(() => {
+   339→    if (!search) return brands;
+   340→    const q = search.toLowerCase();
+   341→    return brands.filter(
+   342→      (b) =>
+   343→        b.name.toLowerCase().includes(q) ||
+   344→        b.slug.toLowerCase().includes(q) ||
+   345→        b.plan.toLowerCase().includes(q)
+   346→    );
+   347→  }, [brands, search]);
+   348→
+   349→  // ── Handlers ──
+   350→  const handleAddBrand = async () => {
+   351→    setSubmitting(true);
+   352→    try {
+   353→      const res = await fetch('/api/tenant/brands', {
+   354→        method: 'POST',
+   355→        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+   356→        body: JSON.stringify(addBrandForm),
+   357→      });
+   358→      const data = await res.json();
+   359→      if (data.success) {
+   360→        setAddBrandOpen(false);
+   361→        setAddBrandForm({ name: '', slug: '', primaryColor: '#D4A843', logo: '', ownerName: '', ownerEmail: '', ownerPassword: '' });
+   362→        fetchBrands();
+   363→        fetchStats();
+   364→      } else {
+   365→        alert(data.error || 'Failed to create brand');
+   366→      }
+   367→    } catch {
+   368→      alert('Network error');
+   369→    } finally {
+   370→      setSubmitting(false);
+   371→    }
+   372→  };
+   373→
+   374→  const handleInvite = async () => {
+   375→    if (!selectedBrand) return;
+   376→    setSubmitting(true);
+   377→    try {
+   378→      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}/invite`, {
+   379→        method: 'POST',
+   380→        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+   381→        body: JSON.stringify(inviteForm),
+   382→      });
+   383→      const data = await res.json();
+   384→      if (data.success) {
+   385→        const link = `${window.location.origin}/invite/${data.invitation.token}`;
+   386→        setInviteLink(link);
+   387→        fetchBrandDetail(selectedBrand.id);
+   388→      } else {
+   389→        alert(data.error || 'Failed to send invitation');
+   390→      }
+   391→    } catch {
+   392→      alert('Network error');
+   393→    } finally {
+   394→      setSubmitting(false);
+   395→    }
+   396→  };
+   397→
+   398→  const handleAddUser = async () => {
+   399→    if (!selectedBrand) return;
+   400→    setSubmitting(true);
+   401→    try {
+   402→      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}/users`, {
+   403→        method: 'POST',
+   404→        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+   405→        body: JSON.stringify(addUserForm),
+   406→      });
+   407→      const data = await res.json();
+   408→      if (data.success) {
+   409→        setAddUserOpen(false);
+   410→        setAddUserForm({ name: '', email: '', password: '', role: 'staff', designation: '' });
+   411→        fetchBrandDetail(selectedBrand.id);
+   412→        fetchStats();
+   413→      } else {
+   414→        alert(data.error || 'Failed to add user');
+   415→      }
+   416→    } catch {
+   417→      alert('Network error');
+   418→    } finally {
+   419→      setSubmitting(false);
+   420→    }
+   421→  };
+   422→
+   423→  const handleEditUser = async () => {
+   424→    if (!selectedBrand || !editUserForm.userId) return;
+   425→    setSubmitting(true);
+   426→    try {
+   427→      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}/users/${editUserForm.userId}`, {
+   428→        method: 'PATCH',
+   429→        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+   430→        body: JSON.stringify({ role: editUserForm.role, designation: editUserForm.designation }),
+   431→      });
+   432→      const data = await res.json();
+   433→      if (data.success) {
+   434→        setEditUserOpen(false);
+   435→        fetchBrandDetail(selectedBrand.id);
+   436→      } else {
+   437→        alert(data.error || 'Failed to update user');
+   438→      }
+   439→    } catch {
+   440→      alert('Network error');
+   441→    } finally {
+   442→      setSubmitting(false);
+   443→    }
+   444→  };
+   445→
+   446→  const handleDeactivateUser = async (targetUserId: string) => {
+   447→    if (!selectedBrand) return;
+   448→    try {
+   449→      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}/users/${targetUserId}`, {
+   450→        method: 'PATCH',
+   451→        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+   452→        body: JSON.stringify({ isActive: false }),
+   453→      });
+   454→      const data = await res.json();
+   455→      if (data.success) {
+   456→        fetchBrandDetail(selectedBrand.id);
+   457→        fetchStats();
+   458→      } else {
+   459→        alert(data.error || 'Failed to deactivate user');
+   460→      }
+   461→    } catch {
+   462→      alert('Network error');
+   463→    }
+   464→  };
+   465→
+   466→  const handleRemoveUser = async (targetUserId: string) => {
+   467→    if (!selectedBrand) return;
+   468→    if (!confirm('Remove this user from the brand? They can be re-invited later.')) return;
+   469→    try {
+   470→      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}/users/${targetUserId}`, {
+   471→        method: 'DELETE',
+   472→        headers: { 'x-user-id': userId },
+   473→      });
+   474→      const data = await res.json();
+   475→      if (data.success) {
+   476→        fetchBrandDetail(selectedBrand.id);
+   477→        fetchStats();
+   478→      } else {
+   479→        alert(data.error || 'Failed to remove user');
+   480→      }
+   481→    } catch {
+   482→      alert('Network error');
+   483→    }
+   484→  };
+   485→
+   486→  const handleEditBranding = async () => {
+   487→    if (!selectedBrand) return;
+   488→    setSubmitting(true);
+   489→    try {
+   490→      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}`, {
+   491→        method: 'PATCH',
+   492→        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+   493→        body: JSON.stringify(editBrandingForm),
+   494→      });
+   495→      const data = await res.json();
+   496→      if (data.success) {
+   497→        setEditBrandingOpen(false);
+   498→        fetchBrandDetail(selectedBrand.id);
+   499→        fetchBrands();
+   500→      } else {
+   501→        alert(data.error || 'Failed to update branding');
+   502→      }
+   503→    } catch {
+   504→      alert('Network error');
+   505→    } finally {
+   506→      setSubmitting(false);
+   507→    }
+   508→  };
+   509→
+   510→  const openEditUser = (user: BrandUser) => {
+   511→    setEditUserForm({ role: user.role, designation: user.designation || '', userId: user.id, name: user.name });
+   512→    setEditUserOpen(true);
+   513→  };
+   514→
+   515→  const openEditBranding = (brand: Brand) => {
+   516→    setEditBrandingForm({ name: brand.name, primaryColor: brand.primaryColor || '#D4A843', logo: brand.logo || '' });
+   517→    setEditBrandingOpen(true);
+   518→  };
+   519→
+   520→  const openInviteDialog = () => {
+   521→    setInviteForm({ email: '', role: 'staff', designation: '' });
+   522→    setInviteLink('');
+   523→    setInviteOpen(true);
+   524→  };
+   525→
+   526→  const copyInviteLink = () => {
+   527→    navigator.clipboard.writeText(inviteLink);
+   528→    setCopied(true);
+   529→    setTimeout(() => setCopied(false), 2000);
+   530→  };
+   531→
+   532→  // ── Brand Detail View ──
+   533→  if (brandDetail || brandLoading) {
+   534→    return (
+   535→      <div className="space-y-6">
+   536→        {/* Back button */}
+   537→        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+   538→          <Button
+   539→            variant="ghost"
+   540→            onClick={() => { setSelectedBrand(null); setBrandDetail(null); }}
+   541→            className="text-muted-foreground hover:text-[#D4A843] gap-2"
+   542→          >
+   543→            <ArrowLeft className="h-4 w-4" />
+   544→            Back to Brands
+   545→          </Button>
+   546→        </motion.div>
+   547→
+   548→        {brandLoading ? (
+   549→          <div className="space-y-4">
+   550→            <Skeleton className="h-32 rounded-xl" />
+   551→            <Skeleton className="h-64 rounded-xl" />
+   552→          </div>
+   553→        ) : brandDetail ? (
+   554→          <>
+   555→            {/* Brand Header */}
+   556→            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+   557→              <Card className="bg-[#111] border-[#D4A843]/10">
+   558→                <CardContent className="p-6">
+   559→                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+   560→                    <div className="flex items-center gap-4 flex-1">
+   561→                      <div
+   562→                        className="flex h-14 w-14 items-center justify-center rounded-xl text-lg font-bold text-white shrink-0"
+   563→                        style={{ backgroundColor: brandDetail.primaryColor || '#D4A843' }}
+   564→                      >
+   565→                        {brandDetail.logo ? (
+   566→                          <img src={brandDetail.logo} alt={brandDetail.name} className="h-10 w-10 rounded-lg object-cover" />
+   567→                        ) : (
+   568→                          brandDetail.name.slice(0, 2).toUpperCase()
+   569→                        )}
+   570→                      </div>
+   571→                      <div>
+   572→                        <h2 className="text-xl font-bold text-foreground">{brandDetail.name}</h2>
+   573→                        <div className="flex flex-wrap items-center gap-2 mt-1">
+   574→                          <span className="text-sm text-muted-foreground">@{brandDetail.slug}</span>
+   575→                          <span className={PLAN_COLORS[brandDetail.plan] || 'bg-zinc-500/15 text-zinc-400'}>
+   576→                            <Badge variant="outline" className={PLAN_COLORS[brandDetail.plan] || 'bg-zinc-500/15 text-zinc-400 border-transparent text-[10px] font-semibold uppercase tracking-wider'}>
+   577→                              {brandDetail.plan}
+   578→                            </Badge>
+   579→                          </span>
+   580→                          <Badge variant="outline" className={brandDetail.isActive ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-[10px] font-semibold' : 'bg-red-500/15 text-red-400 border-red-500/20 text-[10px] font-semibold'}>
+   581→                            {brandDetail.isActive ? 'Active' : 'Inactive'}
+   582→                          </Badge>
+   583→                          <span className="text-[11px] text-muted-foreground">{brandDetail.userCount}/{brandDetail.maxUsers} users</span>
+   584→                        </div>
+   585→                      </div>
+   586→                    </div>
+   587→                    <Button
+   588→                      onClick={() => openEditBranding(brandDetail)}
+   589→                      className="bg-[#D4A843]/10 text-[#D4A843] border border-[#D4A843]/20 hover:bg-[#D4A843]/20 gap-2 self-start sm:self-auto"
+   590→                    >
+   591→                      <Palette className="h-4 w-4" />
+   592→                      Edit Branding
+   593→                    </Button>
+   594→                  </div>
+   595→                </CardContent>
+   596→              </Card>
+   597→            </motion.div>
+   598→
+   599→            {/* Users Section */}
+   600→            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.1 }}>
+   601→              <Card className="bg-[#111] border-[#D4A843]/10">
+   602→                <CardHeader className="pb-3">
+   603→                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+   604→                    <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+   605→                      <Users className="h-4 w-4 text-[#D4A843]" />
+   606→                      Team Members ({brandDetail.users?.length || 0})
+   607→                    </CardTitle>
+   608→                    <div className="flex gap-2">
+   609→                      <Button
+   610→                        variant="outline"
+   611→                        size="sm"
+   612→                        onClick={openInviteDialog}
+   613→                        className="border-[#D4A843]/20 text-[#D4A843] hover:bg-[#D4A843]/10 gap-1.5 text-xs"
+   614→                      >
+   615→                        <Mail className="h-3.5 w-3.5" />
+   616→                        Invite
+   617→                      </Button>
+   618→                      <Button
+   619→                        size="sm"
+   620→                        onClick={() => { setAddUserForm({ name: '', email: '', password: '', role: 'staff', designation: '' }); setAddUserOpen(true); }}
+   621→                        className="bg-[#D4A843] text-black hover:bg-[#D4A843]/90 gap-1.5 text-xs font-semibold"
+   622→                      >
+   623→                        <UserPlus className="h-3.5 w-3.5" />
+   624→                        Add User
+   625→                      </Button>
+   626→                    </div>
+   627→                  </div>
+   628→                </CardHeader>
+   629→                <CardContent className="p-0">
+   630→                  {!brandDetail.users?.length ? (
+   631→                    <div className="py-12 text-center">
+   632→                      <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+   633→                      <p className="text-sm text-muted-foreground">No team members yet</p>
+   634→                    </div>
+   635→                  ) : (
+   636→                    <div className="overflow-x-auto">
+   637→                      <Table>
+   638→                        <TableHeader>
+   639→                          <TableRow className="border-border/30 hover:bg-transparent">
+   640→                            <TableHead className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">User</TableHead>
+   641→                            <TableHead className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider hidden md:table-cell">Email</TableHead>
+   642→                            <TableHead className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">Role</TableHead>
+   643→                            <TableHead className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider hidden lg:table-cell">Designation</TableHead>
+   644→                            <TableHead className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider hidden xl:table-cell">Last Login</TableHead>
+   645→                            <TableHead className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider text-right">Actions</TableHead>
+   646→                          </TableRow>
+   647→                        </TableHeader>
+   648→                        <TableBody>
+   649→                          {brandDetail.users.map((u) => (
+   650→                            <TableRow key={u.id} className="border-border/20 hover:bg-white/[0.02]">
+   651→                              <TableCell>
+   652→                                <div className="flex items-center gap-3">
+   653→                                  <Avatar className="h-8 w-8 border border-[#D4A843]/20">
+   654→                                    <AvatarFallback className="bg-[#D4A843]/15 text-[#D4A843] text-[11px] font-bold">
+   655→                                      {u.name?.split(' ').map((n) => n[0]).join('').slice(0, 2) || '??'}
+   656→                                    </AvatarFallback>
+   657→                                  </Avatar>
+   658→                                  <div>
+   659→                                    <p className="text-sm font-medium text-foreground">{u.name}</p>
+   660→                                    <p className="text-xs text-muted-foreground md:hidden">{u.email}</p>
+   661→                                  </div>
+   662→                                </div>
+   663→                              </TableCell>
+   664→                              <TableCell className="text-sm text-muted-foreground hidden md:table-cell">{u.email}</TableCell>
+   665→                              <TableCell>
+   666→                                <Badge variant="outline" className={`${roleBadgeVariant(u.role)} text-[10px] font-semibold uppercase tracking-wider border-transparent`}>
+   667→                                  {u.role === 'platform_admin' ? 'Plat. Admin' : u.role}
+   668→                                </Badge>
+   669→                              </TableCell>
+   670→                              <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">{u.designation || '—'}</TableCell>
+   671→                              <TableCell className="text-xs text-muted-foreground hidden xl:table-cell">{formatDate(u.lastLoginAt)}</TableCell>
+   672→                              <TableCell className="text-right">
+   673→                                <DropdownMenu>
+   674→                                  <DropdownMenuTrigger asChild>
+   675→                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-[#D4A843]">
+   676→                                      <MoreHorizontal className="h-4 w-4" />
+   677→                                    </Button>
+   678→                                  </DropdownMenuTrigger>
+   679→                                  <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-border">
+   680→                                    <DropdownMenuItem onClick={() => openEditUser(u)} className="text-xs gap-2 cursor-pointer">
+   681→                                      <Edit3 className="h-3.5 w-3.5" />
+   682→                                      Edit Role / Designation
+   683→                                    </DropdownMenuItem>
+   684→                                    {u.role !== 'owner' && (
+   685→                                      <>
+   686→                                        <DropdownMenuItem onClick={() => handleDeactivateUser(u.id)} className="text-xs gap-2 text-yellow-400 cursor-pointer focus:text-yellow-400">
+   687→                                          <Ban className="h-3.5 w-3.5" />
+   688→                                          Deactivate
+   689→                                        </DropdownMenuItem>
+   690→                                        <DropdownMenuItem onClick={() => handleRemoveUser(u.id)} className="text-xs gap-2 text-red-400 cursor-pointer focus:text-red-400">
+   691→                                          <Trash2 className="h-3.5 w-3.5" />
+   692→                                          Remove
+   693→                                        </DropdownMenuItem>
+   694→                                      </>
+   695→                                    )}
+   696→                                  </DropdownMenuContent>
+   697→                                </DropdownMenu>
+   698→                              </TableCell>
+   699→                            </TableRow>
+   700→                          ))}
+   701→                        </TableBody>
+   702→                      </Table>
+   703→                    </div>
+   704→                  )}
+   705→                </CardContent>
+   706→              </Card>
+   707→            </motion.div>
+   708→          </>
+   709→        ) : null}
+   710→      </div>
+   711→    );
+   712→  }
+   713→
+   714→  // ── Brands Grid View ──
+   715→  return (
+   716→    <div className="space-y-6">
+   717→      {/* Header */}
+   718→      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+   719→        <div>
+   720→          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+   721→            <Building2 className="h-5 w-5 text-[#D4A843]" />
+   722→            Brand Management
+   723→          </h2>
+   724→          <p className="text-sm text-muted-foreground mt-1">Manage all brands and their teams on the platform</p>
+   725→        </div>
+   726→        <Button
+   727→          onClick={() => setAddBrandOpen(true)}
+   728→          className="bg-[#D4A843] text-black hover:bg-[#D4A843]/90 gap-2 font-semibold"
+   729→        >
+   730→          <Plus className="h-4 w-4" />
+   731→          Add New Brand
+   732→        </Button>
+   733→      </div>
+   734→
+   735→      {/* Stats */}
+   736→      {stats && (
+   737→        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+   738→          <StatCard icon={Building2} label="Total Brands" value={stats.totalBrands} delay={0} />
+   739→          <StatCard icon={Users} label="Total Users" value={stats.totalUsers} delay={0.05} />
+   740→          <StatCard icon={Eye} label="Active Brands" value={stats.activeBrands} sub={`${stats.inactiveBrands} inactive`} delay={0.1} />
+   741→          <StatCard icon={Mail} label="Pending Invites" value={recentInvitations.length} delay={0.15} />
+   742→        </div>
+   743→      )}
+   744→
+   745→      {/* Search */}
+   746→      <div className="relative max-w-sm">
+   747→        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+   748→        <Input
+   749→          placeholder="Search brands..."
+   750→          value={search}
+   751→          onChange={(e) => setSearch(e.target.value)}
+   752→          className="pl-9 bg-[#111] border-[#D4A843]/15 text-sm focus:border-[#D4A843]/40"
+   753→        />
+   754→      </div>
+   755→
+   756→      {/* Error */}
+   757→      {error && (
+   758→        <Card className="border-red-500/30 bg-red-500/5">
+   759→          <CardContent className="p-4">
+   760→            <p className="text-sm text-red-400">{error}</p>
+   761→            <Button variant="outline" size="sm" onClick={fetchBrands} className="mt-2 text-xs">Retry</Button>
+   762→          </CardContent>
+   763→        </Card>
+   764→      )}
+   765→
+   766→      {/* Loading */}
+   767→      {loading && (
+   768→        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+   769→          {[...Array(6)].map((_, i) => (
+   770→            <Skeleton key={i} className="h-36 rounded-xl" />
+   771→          ))}
+   772→        </div>
+   773→      )}
+   774→
+   775→      {/* Brands Grid */}
+   776→      {!loading && !error && (
+   777→        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+   778→          <AnimatePresence>
+   779→            {filteredBrands.map((brand, i) => (
+   780→              <motion.div
+   781→                key={brand.id}
+   782→                initial={{ opacity: 0, y: 12 }}
+   783→                animate={{ opacity: 1, y: 0 }}
+   784→                exit={{ opacity: 0, y: -12 }}
+   785→                transition={{ duration: 0.3, delay: i * 0.04 }}
+   786→              >
+   787→                <Card
+   788→                  className="bg-[#111] border-[#D4A843]/10 hover:border-[#D4A843]/30 cursor-pointer transition-all group"
+   789→                  onClick={() => fetchBrandDetail(brand.id)}
+   790→                >
+   791→                  <CardContent className="p-5">
+   792→                    <div className="flex items-start gap-4">
+   793→                      <div
+   794→                        className="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-bold text-white shrink-0 transition-transform group-hover:scale-105"
+   795→                        style={{ backgroundColor: brand.primaryColor || '#D4A843' }}
+   796→                      >
+   797→                        {brand.logo ? (
+   798→                          <img src={brand.logo} alt={brand.name} className="h-9 w-9 rounded-lg object-cover" />
+   799→                        ) : (
+   800→                          brand.name.slice(0, 2).toUpperCase()
+   801→                        )}
+   802→                      </div>
+   803→                      <div className="flex-1 min-w-0">
+   804→                        <div className="flex items-center gap-2">
+   805→                          <h3 className="text-sm font-semibold text-foreground truncate">{brand.name}</h3>
+   806→                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-[#D4A843] transition-colors shrink-0" />
+   807→                        </div>
+   808→                        <p className="text-xs text-muted-foreground mt-0.5">@{brand.slug}</p>
+   809→                        <div className="flex items-center gap-2 mt-2">
+   810→                          <Badge variant="outline" className={`${PLAN_COLORS[brand.plan] || 'bg-zinc-500/15 text-zinc-400 border-transparent'} text-[9px] font-semibold uppercase tracking-wider`}>
+   811→                            {brand.plan}
+   812→                          </Badge>
+   813→                          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+   814→                            <Users className="h-3 w-3" />
+   815→                            {brand.userCount}
+   816→                          </span>
+   817→                          {!brand.isActive && (
+   818→                            <span className="text-[9px] font-semibold text-red-400 uppercase">Inactive</span>
+   819→                          )}
+   820→                        </div>
+   821→                      </div>
+   822→                    </div>
+   823→                  </CardContent>
+   824→                </Card>
+   825→              </motion.div>
+   826→            ))}
+   827→          </AnimatePresence>
+   828→        </div>
+   829→      )}
+   830→
+   831→      {!loading && !error && filteredBrands.length === 0 && (
+   832→        <div className="py-16 text-center">
+   833→          <Building2 className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
+   834→          <p className="text-sm text-muted-foreground">
+   835→            {search ? 'No brands match your search' : 'No brands created yet'}
+   836→          </p>
+   837→          {!search && (
+   838→            <Button
+   839→              onClick={() => setAddBrandOpen(true)}
+   840→              className="mt-4 bg-[#D4A843] text-black hover:bg-[#D4A843]/90 gap-2 text-sm"
+   841→            >
+   842→              <Plus className="h-4 w-4" />
+   843→              Create your first brand
+   844→            </Button>
+   845→          )}
+   846→        </div>
+   847→      )}
+   848→
+   849→      {/* ── Add Brand Dialog ── */}
+   850→      <Dialog open={addBrandOpen} onOpenChange={setAddBrandOpen}>
+   851→        <DialogContent className="sm:max-w-lg bg-[#111] border-[#D4A843]/15 max-h-[90vh] overflow-y-auto">
+   852→          <DialogHeader>
+   853→            <DialogTitle className="text-foreground flex items-center gap-2">
+   854→              <Plus className="h-5 w-5 text-[#D4A843]" />
+   855→              Add New Brand
+   856→            </DialogTitle>
+   857→            <DialogDescription>Create a new brand and its owner account</DialogDescription>
+   858→          </DialogHeader>
+   859→          <div className="space-y-4 py-2">
+   860→            <div className="space-y-1.5">
+   861→              <Label className="text-xs text-muted-foreground">Brand Name</Label>
+   862→              <Input
+   863→                value={addBrandForm.name}
+   864→                onChange={(e) => setAddBrandForm((f) => ({ ...f, name: e.target.value, slug: slugify(e.target.value) }))}
+   865→                placeholder="e.g. Luxora Jewels"
+   866→                className="bg-[#0a0a0a] border-border/50 text-sm"
+   867→              />
+   868→            </div>
+   869→            <div className="space-y-1.5">
+   870→              <Label className="text-xs text-muted-foreground">Slug</Label>
+   871→              <Input
+   872→                value={addBrandForm.slug}
+   873→                onChange={(e) => setAddBrandForm((f) => ({ ...f, slug: slugify(e.target.value) }))}
+   874→                placeholder="auto-generated"
+   875→                className="bg-[#0a0a0a] border-border/50 text-sm"
+   876→              />
+   877→            </div>
+   878→            <div className="grid grid-cols-2 gap-3">
+   879→              <div className="space-y-1.5">
+   880→                <Label className="text-xs text-muted-foreground">Primary Color</Label>
+   881→                <div className="flex items-center gap-2">
+   882→                  <input
+   883→                    type="color"
+   884→                    value={addBrandForm.primaryColor}
+   885→                    onChange={(e) => setAddBrandForm((f) => ({ ...f, primaryColor: e.target.value }))}
+   886→                    className="h-9 w-12 rounded border border-border/50 cursor-pointer bg-transparent"
+   887→                  />
+   888→                  <Input
+   889→                    value={addBrandForm.primaryColor}
+   890→                    onChange={(e) => setAddBrandForm((f) => ({ ...f, primaryColor: e.target.value }))}
+   891→                    className="bg-[#0a0a0a] border-border/50 text-sm"
+   892→                  />
+   893→                </div>
+   894→              </div>
+   895→              <div className="space-y-1.5">
+   896→                <Label className="text-xs text-muted-foreground">Logo URL</Label>
+   897→                <Input
+   898→                  value={addBrandForm.logo}
+   899→                  onChange={(e) => setAddBrandForm((f) => ({ ...f, logo: e.target.value }))}
+   900→                  placeholder="https://..."
+   901→                  className="bg-[#0a0a0a] border-border/50 text-sm"
+   902→                />
+   903→              </div>
+   904→            </div>
+   905→            <Separator className="bg-border/30" />
+   906→            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Owner Account</p>
+   907→            <div className="space-y-1.5">
+   908→              <Label className="text-xs text-muted-foreground">Owner Name</Label>
+   909→              <Input
+   910→                value={addBrandForm.ownerName}
+   911→                onChange={(e) => setAddBrandForm((f) => ({ ...f, ownerName: e.target.value }))}
+   912→                placeholder="John Doe"
+   913→                className="bg-[#0a0a0a] border-border/50 text-sm"
+   914→              />
+   915→            </div>
+   916→            <div className="space-y-1.5">
+   917→              <Label className="text-xs text-muted-foreground">Owner Email</Label>
+   918→              <Input
+   919→                type="email"
+   920→                value={addBrandForm.ownerEmail}
+   921→                onChange={(e) => setAddBrandForm((f) => ({ ...f, ownerEmail: e.target.value }))}
+   922→                placeholder="owner@brand.com"
+   923→                className="bg-[#0a0a0a] border-border/50 text-sm"
+   924→              />
+   925→            </div>
+   926→            <div className="space-y-1.5">
+   927→              <Label className="text-xs text-muted-foreground">Owner Password</Label>
+   928→              <Input
+   929→                type="password"
+   930→                value={addBrandForm.ownerPassword}
+   931→                onChange={(e) => setAddBrandForm((f) => ({ ...f, ownerPassword: e.target.value }))}
+   932→                placeholder="••••••••"
+   933→                className="bg-[#0a0a0a] border-border/50 text-sm"
+   934→              />
+   935→            </div>
+   936→          </div>
+   937→          <DialogFooter>
+   938→            <Button variant="outline" onClick={() => setAddBrandOpen(false)} className="border-border/50 text-sm">
+   939→              Cancel
+   940→            </Button>
+   941→            <Button
+   942→              onClick={handleAddBrand}
+   943→              disabled={submitting || !addBrandForm.name || !addBrandForm.slug || !addBrandForm.ownerEmail || !addBrandForm.ownerPassword || !addBrandForm.ownerName}
+   944→              className="bg-[#D4A843] text-black hover:bg-[#D4A843]/90 gap-2 text-sm font-semibold"
+   945→            >
+   946→              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+   947→              Create Brand
+   948→            </Button>
+   949→          </DialogFooter>
+   950→        </DialogContent>
+   951→      </Dialog>
+   952→
+   953→      {/* ── Invite User Dialog ── */}
+   954→      <Dialog open={inviteOpen} onOpenChange={(v) => { setInviteOpen(v); if (!v) setInviteLink(''); }}>
+   955→        <DialogContent className="sm:max-w-md bg-[#111] border-[#D4A843]/15">
+   956→          <DialogHeader>
+   957→            <DialogTitle className="text-foreground flex items-center gap-2">
+   958→              <Mail className="h-5 w-5 text-[#D4A843]" />
+   959→              Invite User
+   960→            </DialogTitle>
+   961→            <DialogDescription>
+   962→              {inviteLink ? 'Copy this invitation link and share it with the user.' : `Send an invitation to join ${selectedBrand?.name || 'the brand'}`}
+   963→            </DialogDescription>
+   964→          </DialogHeader>
+   965→          {!inviteLink ? (
+   966→            <div className="space-y-4 py-2">
+   967→              <div className="space-y-1.5">
+   968→                <Label className="text-xs text-muted-foreground">Email</Label>
+   969→                <Input
+   970→                  type="email"
+   971→                  value={inviteForm.email}
+   972→                  onChange={(e) => setInviteForm((f) => ({ ...f, email: e.target.value }))}
+   973→                  placeholder="user@example.com"
+   974→                  className="bg-[#0a0a0a] border-border/50 text-sm"
+   975→                />
+   976→              </div>
+   977→              <div className="grid grid-cols-2 gap-3">
+   978→                <div className="space-y-1.5">
+   979→                  <Label className="text-xs text-muted-foreground">Role</Label>
+   980→                  <Select value={inviteForm.role} onValueChange={(v) => setInviteForm((f) => ({ ...f, role: v }))}>
+   981→                    <SelectTrigger className="bg-[#0a0a0a] border-border/50 text-sm">
+   982→                      <SelectValue />
+   983→                    </SelectTrigger>
+   984→                    <SelectContent className="bg-[#1a1a1a] border-border">
+   985→                      {ROLE_OPTIONS.filter((r) => r.value !== 'owner').map((r) => (
+   986→                        <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+   987→                      ))}
+   988→                    </SelectContent>
+   989→                  </Select>
+   990→                </div>
+   991→                <div className="space-y-1.5">
+   992→                  <Label className="text-xs text-muted-foreground">Designation</Label>
+   993→                  <Input
+   994→                    value={inviteForm.designation}
+   995→                    onChange={(e) => setInviteForm((f) => ({ ...f, designation: e.target.value }))}
+   996→                    placeholder="Marketing Lead"
+   997→                    className="bg-[#0a0a0a] border-border/50 text-sm"
+   998→                  />
+   999→                </div>
+  1000→              </div>
+  1001→            </div>
+  1002→          ) : (
+  1003→            <div className="py-2">
+  1004→              <div className="flex items-center gap-2 p-3 rounded-lg bg-[#0a0a0a] border border-[#D4A843]/15">
+  1005→                <Link2 className="h-4 w-4 text-[#D4A843] shrink-0" />
+  1006→                <span className="text-xs text-foreground break-all flex-1">{inviteLink}</span>
+  1007→                <Button
+  1008→                  size="sm"
+  1009→                  variant="ghost"
+  1010→                  onClick={copyInviteLink}
+  1011→                  className="shrink-0 text-[#D4A843] hover:text-[#D4A843] h-8"
+  1012→                >
+  1013→                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+  1014→                </Button>
+  1015→              </div>
+  1016→              <p className="text-[11px] text-muted-foreground mt-2">
+  1017→                This link expires in 7 days. The user will choose their own password upon accepting.
+  1018→              </p>
+  1019→            </div>
+  1020→          )}
+  1021→          <DialogFooter>
+  1022→            <Button variant="outline" onClick={() => { setInviteOpen(false); setInviteLink(''); }} className="border-border/50 text-sm">
+  1023→              {inviteLink ? 'Close' : 'Cancel'}
+  1024→            </Button>
+  1025→            {!inviteLink && (
+  1026→              <Button
+  1027→                onClick={handleInvite}
+  1028→                disabled={submitting || !inviteForm.email}
+  1029→                className="bg-[#D4A843] text-black hover:bg-[#D4A843]/90 gap-2 text-sm font-semibold"
+  1030→              >
+  1031→                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+  1032→                Generate Invite Link
+  1033→              </Button>
+  1034→            )}
+  1035→          </DialogFooter>
+  1036→        </DialogContent>
+  1037→      </Dialog>
+  1038→
+  1039→      {/* ── Add User Directly Dialog ── */}
+  1040→      <Dialog open={addUserOpen} onOpenChange={setAddUserOpen}>
+  1041→        <DialogContent className="sm:max-w-md bg-[#111] border-[#D4A843]/15">
+  1042→          <DialogHeader>
+  1043→            <DialogTitle className="text-foreground flex items-center gap-2">
+  1044→              <UserPlus className="h-5 w-5 text-[#D4A843]" />
+  1045→              Add User Directly
+  1046→            </DialogTitle>
+  1047→            <DialogDescription>Create a new user account for {selectedBrand?.name}</DialogDescription>
+  1048→          </DialogHeader>
+  1049→          <div className="space-y-4 py-2">
+  1050→            <div className="space-y-1.5">
+  1051→              <Label className="text-xs text-muted-foreground">Full Name</Label>
+  1052→              <Input
+  1053→                value={addUserForm.name}
+  1054→                onChange={(e) => setAddUserForm((f) => ({ ...f, name: e.target.value }))}
+  1055→                placeholder="Jane Smith"
+  1056→                className="bg-[#0a0a0a] border-border/50 text-sm"
+  1057→              />
+  1058→            </div>
+  1059→            <div className="space-y-1.5">
+  1060→              <Label className="text-xs text-muted-foreground">Email</Label>
+  1061→              <Input
+  1062→                type="email"
+  1063→                value={addUserForm.email}
+  1064→                onChange={(e) => setAddUserForm((f) => ({ ...f, email: e.target.value }))}
+  1065→                placeholder="jane@brand.com"
+  1066→                className="bg-[#0a0a0a] border-border/50 text-sm"
+  1067→              />
+  1068→            </div>
+  1069→            <div className="space-y-1.5">
+  1070→              <Label className="text-xs text-muted-foreground">Password</Label>
+  1071→              <Input
+  1072→                type="password"
+  1073→                value={addUserForm.password}
+  1074→                onChange={(e) => setAddUserForm((f) => ({ ...f, password: e.target.value }))}
+  1075→                placeholder="••••••••"
+  1076→                className="bg-[#0a0a0a] border-border/50 text-sm"
+  1077→              />
+  1078→            </div>
+  1079→            <div className="grid grid-cols-2 gap-3">
+  1080→              <div className="space-y-1.5">
+  1081→                <Label className="text-xs text-muted-foreground">Role</Label>
+  1082→                <Select value={addUserForm.role} onValueChange={(v) => setAddUserForm((f) => ({ ...f, role: v }))}>
+  1083→                  <SelectTrigger className="bg-[#0a0a0a] border-border/50 text-sm">
+  1084→                    <SelectValue />
+  1085→                  </SelectTrigger>
+  1086→                  <SelectContent className="bg-[#1a1a1a] border-border">
+  1087→                    {ROLE_OPTIONS.filter((r) => r.value !== 'owner').map((r) => (
+  1088→                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+  1089→                    ))}
+  1090→                  </SelectContent>
+  1091→                </Select>
+  1092→              </div>
+  1093→              <div className="space-y-1.5">
+  1094→                <Label className="text-xs text-muted-foreground">Designation</Label>
+  1095→                <Input
+  1096→                  value={addUserForm.designation}
+  1097→                  onChange={(e) => setAddUserForm((f) => ({ ...f, designation: e.target.value }))}
+  1098→                  placeholder="Marketing Lead"
+  1099→                  className="bg-[#0a0a0a] border-border/50 text-sm"
+  1100→                />
+  1101→              </div>
+  1102→            </div>
+  1103→          </div>
+  1104→          <DialogFooter>
+  1105→            <Button variant="outline" onClick={() => setAddUserOpen(false)} className="border-border/50 text-sm">
+  1106→              Cancel
+  1107→            </Button>
+  1108→            <Button
+  1109→              onClick={handleAddUser}
+  1110→              disabled={submitting || !addUserForm.name || !addUserForm.email || !addUserForm.password}
+  1111→              className="bg-[#D4A843] text-black hover:bg-[#D4A843]/90 gap-2 text-sm font-semibold"
+  1112→            >
+  1113→              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+  1114→              Add User
+  1115→            </Button>
+  1116→          </DialogFooter>
+  1117→        </DialogContent>
+  1118→      </Dialog>
+  1119→
+  1120→      {/* ── Edit User Dialog ── */}
+  1121→      <Dialog open={editUserOpen} onOpenChange={setEditUserOpen}>
+  1122→        <DialogContent className="sm:max-w-md bg-[#111] border-[#D4A843]/15">
+  1123→          <DialogHeader>
+  1124→            <DialogTitle className="text-foreground flex items-center gap-2">
+  1125→              <Edit3 className="h-5 w-5 text-[#D4A843]" />
+  1126→              Edit User — {editUserForm.name}
+  1127→            </DialogTitle>
+  1128→            <DialogDescription>Change role and designation</DialogDescription>
+  1129→          </DialogHeader>
+  1130→          <div className="space-y-4 py-2">
+  1131→            <div className="space-y-1.5">
+  1132→              <Label className="text-xs text-muted-foreground">Role</Label>
+  1133→              <Select value={editUserForm.role} onValueChange={(v) => setEditUserForm((f) => ({ ...f, role: v }))}>
+  1134→                <SelectTrigger className="bg-[#0a0a0a] border-border/50 text-sm">
+  1135→                  <SelectValue />
+  1136→                </SelectTrigger>
+  1137→                <SelectContent className="bg-[#1a1a1a] border-border">
+  1138→                  {ROLE_OPTIONS.map((r) => (
+  1139→                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+  1140→                  ))}
+  1141→                </SelectContent>
+  1142→              </Select>
+  1143→            </div>
+  1144→            <div className="space-y-1.5">
+  1145→              <Label className="text-xs text-muted-foreground">Designation</Label>
+  1146→              <Input
+  1147→                value={editUserForm.designation}
+  1148→                onChange={(e) => setEditUserForm((f) => ({ ...f, designation: e.target.value }))}
+  1149→                placeholder="Marketing Lead"
+  1150→                className="bg-[#0a0a0a] border-border/50 text-sm"
+  1151→              />
+  1152→            </div>
+  1153→          </div>
+  1154→          <DialogFooter>
+  1155→            <Button variant="outline" onClick={() => setEditUserOpen(false)} className="border-border/50 text-sm">
+  1156→              Cancel
+  1157→            </Button>
+  1158→            <Button
+  1159→              onClick={handleEditUser}
+  1160→              disabled={submitting}
+  1161→              className="bg-[#D4A843] text-black hover:bg-[#D4A843]/90 gap-2 text-sm font-semibold"
+  1162→            >
+  1163→              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+  1164→              Save Changes
+  1165→            </Button>
+  1166→          </DialogFooter>
+  1167→        </DialogContent>
+  1168→      </Dialog>
+  1169→
+  1170→      {/* ── Edit Branding Dialog ── */}
+  1171→      <Dialog open={editBrandingOpen} onOpenChange={setEditBrandingOpen}>
+  1172→        <DialogContent className="sm:max-w-md bg-[#111] border-[#D4A843]/15">
+  1173→          <DialogHeader>
+  1174→            <DialogTitle className="text-foreground flex items-center gap-2">
+  1175→              <Palette className="h-5 w-5 text-[#D4A843]" />
+  1176→              Edit Branding
+  1177→            </DialogTitle>
+  1178→            <DialogDescription>Update brand visual identity</DialogDescription>
+  1179→          </DialogHeader>
+  1180→          <div className="space-y-4 py-2">
+  1181→            <div className="space-y-1.5">
+  1182→              <Label className="text-xs text-muted-foreground">Brand Name</Label>
+  1183→              <Input
+  1184→                value={editBrandingForm.name}
+  1185→                onChange={(e) => setEditBrandingForm((f) => ({ ...f, name: e.target.value }))}
+  1186→                className="bg-[#0a0a0a] border-border/50 text-sm"
+  1187→              />
+  1188→            </div>
+  1189→            <div className="space-y-1.5">
+  1190→              <Label className="text-xs text-muted-foreground">Primary Color</Label>
+  1191→              <div className="flex items-center gap-2">
+  1192→                <input
+  1193→                  type="color"
+  1194→                  value={editBrandingForm.primaryColor}
+  1195→                  onChange={(e) => setEditBrandingForm((f) => ({ ...f, primaryColor: e.target.value }))}
+  1196→                  className="h-9 w-12 rounded border border-border/50 cursor-pointer bg-transparent"
+  1197→                />
+  1198→                <Input
+  1199→                  value={editBrandingForm.primaryColor}
+  1200→                  onChange={(e) => setEditBrandingForm((f) => ({ ...f, primaryColor: e.target.value }))}
+  1201→                  className="bg-[#0a0a0a] border-border/50 text-sm"
+  1202→                />
+  1203→              </div>
+  1204→            </div>
+  1205→            <div className="space-y-1.5">
+  1206→              <Label className="text-xs text-muted-foreground">Logo URL</Label>
+  1207→              <Input
+  1208→                value={editBrandingForm.logo}
+  1209→                onChange={(e) => setEditBrandingForm((f) => ({ ...f, logo: e.target.value }))}
+  1210→                placeholder="https://..."
+  1211→                className="bg-[#0a0a0a] border-border/50 text-sm"
+  1212→              />
+  1213→            </div>
+  1214→          </div>
+  1215→          <DialogFooter>
+  1216→            <Button variant="outline" onClick={() => setEditBrandingOpen(false)} className="border-border/50 text-sm">
+  1217→              Cancel
+  1218→            </Button>
+  1219→            <Button
+  1220→              onClick={handleEditBranding}
+  1221→              disabled={submitting}
+  1222→              className="bg-[#D4A843] text-black hover:bg-[#D4A843]/90 gap-2 text-sm font-semibold"
+  1223→            >
+  1224→              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+  1225→              Save Branding
+  1226→            </Button>
+  1227→          </DialogFooter>
+  1228→        </DialogContent>
+  1229→      </Dialog>
+  1230→    </div>
+  1231→  );
+  1232→}
+  1233→
+  1234→// ── Brand Admin/Owner View ──────────────────────────────────────────
+  1235→function BrandAdminView({ userId, tenantId, tenantName }: { userId: string; tenantId: string; tenantName: string }) {
+  1236→  const [brand, setBrand] = useState<Brand | null>(null);
+  1237→  const [loading, setLoading] = useState(true);
+  1238→  const [error, setError] = useState<string | null>(null);
+  1239→
+  1240→  // Dialog states
+  1241→  const [addStaffOpen, setAddStaffOpen] = useState(false);
+  1242→  const [editStaffOpen, setEditStaffOpen] = useState(false);
+  1243→  const [editBrandingOpen, setEditBrandingOpen] = useState(false);
+  1244→
+  1245→  // Form states
+  1246→  const [addStaffForm, setAddStaffForm] = useState({ name: '', email: '', password: '', role: 'staff', designation: '' });
+  1247→  const [editStaffForm, setEditStaffForm] = useState({ role: '', designation: '', userId: '', name: '' });
+  1248→  const [editBrandingForm, setEditBrandingForm] = useState({ name: '', primaryColor: '#D4A843', logo: '' });
+  1249→  const [submitting, setSubmitting] = useState(false);
+  1250→
+  1251→  const fetchBrand = useCallback(async () => {
+  1252→    setLoading(true);
+  1253→    try {
+  1254→      const res = await fetch(`/api/tenant/brands/${tenantId}`);
+  1255→      const data = await res.json();
+  1256→      if (data.success) {
+  1257→        setBrand(data.brand);
+  1258→      } else {
+  1259→        setError(data.error || 'Failed to load brand info');
+  1260→      }
+  1261→    } catch {
+  1262→      setError('Network error');
+  1263→    } finally {
+  1264→      setLoading(false);
+  1265→    }
+  1266→  }, [tenantId]);
+  1267→
+  1268→  useEffect(() => {
+  1269→    fetchBrand();
+  1270→  }, [fetchBrand]);
+  1271→
+  1272→  const handleAddStaff = async () => {
+  1273→    setSubmitting(true);
+  1274→    try {
+  1275→      const res = await fetch(`/api/tenant/brands/${tenantId}/users`, {
+  1276→        method: 'POST',
+  1277→        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+  1278→        body: JSON.stringify(addStaffForm),
+  1279→      });
+  1280→      const data = await res.json();
+  1281→      if (data.success) {
+  1282→        setAddStaffOpen(false);
+  1283→        setAddStaffForm({ name: '', email: '', password: '', role: 'staff', designation: '' });
+  1284→        fetchBrand();
+  1285→      } else {
+  1286→        alert(data.error || 'Failed to add staff');
+  1287→      }
+  1288→    } catch {
+  1289→      alert('Network error');
+  1290→    } finally {
+  1291→      setSubmitting(false);
+  1292→    }
+  1293→  };
+  1294→
+  1295→  const handleEditStaff = async () => {
+  1296→    setSubmitting(true);
+  1297→    try {
+  1298→      const res = await fetch(`/api/tenant/brands/${tenantId}/users/${editStaffForm.userId}`, {
+  1299→        method: 'PATCH',
+  1300→        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+  1301→        body: JSON.stringify({ role: editStaffForm.role, designation: editStaffForm.designation }),
+  1302→      });
+  1303→      const data = await res.json();
+  1304→      if (data.success) {
+  1305→        setEditStaffOpen(false);
+  1306→        fetchBrand();
+  1307→      } else {
+  1308→        alert(data.error || 'Failed to update staff');
+  1309→      }
+  1310→    } catch {
+  1311→      alert('Network error');
+  1312→    } finally {
+  1313→      setSubmitting(false);
+  1314→    }
+  1315→  };
+  1316→
+  1317→  const handleEditBranding = async () => {
+  1318→    setSubmitting(true);
+  1319→    try {
+  1320→      const res = await fetch(`/api/tenant/brands/${tenantId}`, {
+  1321→        method: 'PATCH',
+  1322→        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+  1323→        body: JSON.stringify(editBrandingForm),
+  1324→      });
+  1325→      const data = await res.json();
+  1326→      if (data.success) {
+  1327→        setEditBrandingOpen(false);
+  1328→        fetchBrand();
+  1329→      } else {
+  1330→        alert(data.error || 'Failed to update branding');
+  1331→      }
+  1332→    } catch {
+  1333→      alert('Network error');
+  1334→    } finally {
+  1335→      setSubmitting(false);
+  1336→    }
+  1337→  };
+  1338→
+  1339→  const handleDeactivateStaff = async (targetUserId: string) => {
+  1340→    try {
+  1341→      const res = await fetch(`/api/tenant/brands/${tenantId}/users/${targetUserId}`, {
+  1342→        method: 'PATCH',
+  1343→        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+  1344→        body: JSON.stringify({ isActive: false }),
+  1345→      });
+  1346→      const data = await res.json();
+  1347→      if (data.success) fetchBrand();
+  1348→      else alert(data.error || 'Failed to deactivate');
+  1349→    } catch {
+  1350→      alert('Network error');
+  1351→    }
+  1352→  };
+  1353→
+  1354→  if (loading) {
+  1355→    return (
+  1356→      <div className="space-y-4">
+  1357→        <Skeleton className="h-32 rounded-xl" />
+  1358→        <Skeleton className="h-64 rounded-xl" />
+  1359→      </div>
+  1360→    );
+  1361→  }
+  1362→
+  1363→  if (error) {
+  1364→    return (
+  1365→      <Card className="border-red-500/30 bg-red-500/5">
+  1366→        <CardContent className="p-4">
+  1367→          <p className="text-sm text-red-400">{error}</p>
+  1368→          <Button variant="outline" size="sm" onClick={fetchBrand} className="mt-2 text-xs">Retry</Button>
+  1369→        </CardContent>
+  1370→      </Card>
+  1371→    );
+  1372→  }
+  1373→
+  1374→  if (!brand) return null;
+  1375→
+  1376→  return (
+  1377→    <div className="space-y-6">
+  1378→      {/* Header */}
+  1379→      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  1380→        <div>
+  1381→          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+  1382→            <Shield className="h-5 w-5 text-[#D4A843]" />
+  1383→            Brand Settings
+  1384→          </h2>
+  1385→          <p className="text-sm text-muted-foreground mt-1">Manage your brand team and settings</p>
+  1386→        </div>
+  1387→      </div>
+  1388→
+  1389→      {/* Brand Card */}
+  1390→      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+  1391→        <Card className="bg-[#111] border-[#D4A843]/10">
+  1392→          <CardContent className="p-6">
+  1393→            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+  1394→              <div
+  1395→                className="flex h-14 w-14 items-center justify-center rounded-xl text-lg font-bold text-white shrink-0"
+  1396→                style={{ backgroundColor: brand.primaryColor || '#D4A843' }}
+  1397→              >
+  1398→                {brand.logo ? (
+  1399→                  <img src={brand.logo} alt={brand.name} className="h-10 w-10 rounded-lg object-cover" />
+  1400→                ) : (
+  1401→                  brand.name.slice(0, 2).toUpperCase()
+  1402→                )}
+  1403→              </div>
+  1404→              <div className="flex-1">
+  1405→                <h3 className="text-lg font-bold text-foreground">{brand.name}</h3>
+  1406→                <div className="flex items-center gap-2 mt-1">
+  1407→                  <span className="text-sm text-muted-foreground">@{brand.slug}</span>
+  1408→                  <Badge variant="outline" className={`${PLAN_COLORS[brand.plan] || 'bg-zinc-500/15 text-zinc-400 border-transparent'} text-[10px] font-semibold uppercase tracking-wider`}>
+  1409→                    {brand.plan}
+  1410→                  </Badge>
+  1411→                  <span className="text-[11px] text-muted-foreground">{brand.users?.length || 0}/{brand.maxUsers} users</span>
+  1412→                </div>
+  1413→              </div>
+  1414→              <Button
+  1415→                onClick={() => { const c = brand.primaryColor || '#D4A843'; setEditBrandingForm({ name: brand.name, primaryColor: c, logo: brand.logo || '' }); setEditBrandingOpen(true); }}
+  1416→                className="bg-[#D4A843]/10 text-[#D4A843] border border-[#D4A843]/20 hover:bg-[#D4A843]/20 gap-2 self-start sm:self-auto"
+  1417→              >
+  1418→                <Palette className="h-4 w-4" />
+  1419→                Edit Branding
+  1420→              </Button>
+  1421→            </div>
+  1422→          </CardContent>
+  1423→        </Card>
+  1424→      </motion.div>
+  1425→
+  1426→      {/* Team Members */}
+  1427→      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+  1428→        <Card className="bg-[#111] border-[#D4A843]/10">
+  1429→          <CardHeader className="pb-3">
+  1430→            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+  1431→              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+  1432→                <Users className="h-4 w-4 text-[#D4A843]" />
+  1433→                Team Members ({brand.users?.length || 0})
+  1434→              </CardTitle>
+  1435→              <Button
+  1436→                size="sm"
+  1437→                onClick={() => { setAddStaffForm({ name: '', email: '', password: '', role: 'staff', designation: '' }); setAddStaffOpen(true); }}
+  1438→                className="bg-[#D4A843] text-black hover:bg-[#D4A843]/90 gap-1.5 text-xs font-semibold"
+  1439→              >
+  1440→                <UserPlus className="h-3.5 w-3.5" />
+  1441→                Add Staff
+  1442→              </Button>
+  1443→            </div>
+  1444→          </CardHeader>
+  1445→          <CardContent className="p-0">
+  1446→            {!brand.users?.length ? (
+  1447→              <div className="py-12 text-center">
+  1448→                <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+  1449→                <p className="text-sm text-muted-foreground">No team members yet</p>
+  1450→              </div>
+  1451→            ) : (
+  1452→              <div className="overflow-x-auto">
+  1453→                <Table>
+  1454→                  <TableHeader>
+  1455→                    <TableRow className="border-border/30 hover:bg-transparent">
+  1456→                      <TableHead className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">User</TableHead>
+  1457→                      <TableHead className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider hidden md:table-cell">Email</TableHead>
+  1458→                      <TableHead className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">Role</TableHead>
+  1459→                      <TableHead className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider hidden lg:table-cell">Designation</TableHead>
+  1460→                      <TableHead className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider hidden xl:table-cell">Last Login</TableHead>
+  1461→                      <TableHead className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider text-right">Actions</TableHead>
+  1462→                    </TableRow>
+  1463→                  </TableHeader>
+  1464→                  <TableBody>
+  1465→                    {brand.users.map((u) => (
+  1466→                      <TableRow key={u.id} className="border-border/20 hover:bg-white/[0.02]">
+  1467→                        <TableCell>
+  1468→                          <div className="flex items-center gap-3">
+  1469→                            <Avatar className="h-8 w-8 border border-[#D4A843]/20">
+  1470→                              <AvatarFallback className="bg-[#D4A843]/15 text-[#D4A843] text-[11px] font-bold">
+  1471→                                {u.name?.split(' ').map((n) => n[0]).join('').slice(0, 2) || '??'}
+  1472→                              </AvatarFallback>
+  1473→                            </Avatar>
+  1474→                            <span className="text-sm font-medium text-foreground">{u.name}</span>
+  1475→                          </div>
+  1476→                        </TableCell>
+  1477→                        <TableCell className="text-sm text-muted-foreground hidden md:table-cell">{u.email}</TableCell>
+  1478→                        <TableCell>
+  1479→                          <Badge variant="outline" className={`${roleBadgeVariant(u.role)} text-[10px] font-semibold uppercase tracking-wider border-transparent`}>
+  1480→                            {u.role}
+  1481→                          </Badge>
+  1482→                        </TableCell>
+  1483→                        <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">{u.designation || '—'}</TableCell>
+  1484→                        <TableCell className="text-xs text-muted-foreground hidden xl:table-cell">{formatDate(u.lastLoginAt)}</TableCell>
+  1485→                        <TableCell className="text-right">
+  1486→                          <DropdownMenu>
+  1487→                            <DropdownMenuTrigger asChild>
+  1488→                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-[#D4A843]">
+  1489→                                <MoreHorizontal className="h-4 w-4" />
+  1490→                              </Button>
+  1491→                            </DropdownMenuTrigger>
+  1492→                            <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-border">
+  1493→                              <DropdownMenuItem
+  1494→                                onClick={() => { setEditStaffForm({ role: u.role, designation: u.designation || '', userId: u.id, name: u.name }); setEditStaffOpen(true); }}
+  1495→                                className="text-xs gap-2 cursor-pointer"
+  1496→                              >
+  1497→                                <Edit3 className="h-3.5 w-3.5" />
+  1498→                                Edit Role / Designation
+  1499→                              </DropdownMenuItem>
+  1500→                              {u.role !== 'owner' && (
+  1501→                                <DropdownMenuItem
+  1502→                                  onClick={() => handleDeactivateStaff(u.id)}
+  1503→                                  className="text-xs gap-2 text-yellow-400 cursor-pointer focus:text-yellow-400"
+  1504→                                >
+  1505→                                  <Ban className="h-3.5 w-3.5" />
+  1506→                                  Deactivate
+  1507→                                </DropdownMenuItem>
+  1508→                              )}
+  1509→                            </DropdownMenuContent>
+  1510→                          </DropdownMenu>
+  1511→                        </TableCell>
+  1512→                      </TableRow>
+  1513→                    ))}
+  1514→                  </TableBody>
+  1515→                </Table>
+  1516→              </div>
+  1517→            )}
+  1518→          </CardContent>
+  1519→        </Card>
+  1520→      </motion.div>
+  1521→
+  1522→      {/* ── Add Staff Dialog ── */}
+  1523→      <Dialog open={addStaffOpen} onOpenChange={setAddStaffOpen}>
+  1524→        <DialogContent className="sm:max-w-md bg-[#111] border-[#D4A843]/15">
+  1525→          <DialogHeader>
+  1526→            <DialogTitle className="text-foreground flex items-center gap-2">
+  1527→              <UserPlus className="h-5 w-5 text-[#D4A843]" />
+  1528→              Add Staff Member
+  1529→            </DialogTitle>
+  1530→            <DialogDescription>Create a new team member for {brand.name}</DialogDescription>
+  1531→          </DialogHeader>
+  1532→          <div className="space-y-4 py-2">
+  1533→            <div className="space-y-1.5">
+  1534→              <Label className="text-xs text-muted-foreground">Full Name</Label>
+  1535→              <Input value={addStaffForm.name} onChange={(e) => setAddStaffForm((f) => ({ ...f, name: e.target.value }))} placeholder="Jane Smith" className="bg-[#0a0a0a] border-border/50 text-sm" />
+  1536→            </div>
+  1537→            <div className="space-y-1.5">
+  1538→              <Label className="text-xs text-muted-foreground">Email</Label>
+  1539→              <Input type="email" value={addStaffForm.email} onChange={(e) => setAddStaffForm((f) => ({ ...f, email: e.target.value }))} placeholder="jane@brand.com" className="bg-[#0a0a0a] border-border/50 text-sm" />
+  1540→            </div>
+  1541→            <div className="space-y-1.5">
+  1542→              <Label className="text-xs text-muted-foreground">Password</Label>
+  1543→              <Input type="password" value={addStaffForm.password} onChange={(e) => setAddStaffForm((f) => ({ ...f, password: e.target.value }))} placeholder="••••••••" className="bg-[#0a0a0a] border-border/50 text-sm" />
+  1544→            </div>
+  1545→            <div className="grid grid-cols-2 gap-3">
+  1546→              <div className="space-y-1.5">
+  1547→                <Label className="text-xs text-muted-foreground">Role</Label>
+  1548→                <Select value={addStaffForm.role} onValueChange={(v) => setAddStaffForm((f) => ({ ...f, role: v }))}>
+  1549→                  <SelectTrigger className="bg-[#0a0a0a] border-border/50 text-sm"><SelectValue /></SelectTrigger>
+  1550→                  <SelectContent className="bg-[#1a1a1a] border-border">
+  1551→                    {ROLE_OPTIONS.filter((r) => r.value !== 'owner').map((r) => (
+  1552→                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+  1553→                    ))}
+  1554→                  </SelectContent>
+  1555→                </Select>
+  1556→              </div>
+  1557→              <div className="space-y-1.5">
+  1558→                <Label className="text-xs text-muted-foreground">Designation</Label>
+  1559→                <Input value={addStaffForm.designation} onChange={(e) => setAddStaffForm((f) => ({ ...f, designation: e.target.value }))} placeholder="Marketing Lead" className="bg-[#0a0a0a] border-border/50 text-sm" />
+  1560→              </div>
+  1561→            </div>
+  1562→          </div>
+  1563→          <DialogFooter>
+  1564→            <Button variant="outline" onClick={() => setAddStaffOpen(false)} className="border-border/50 text-sm">Cancel</Button>
+  1565→            <Button onClick={handleAddStaff} disabled={submitting || !addStaffForm.name || !addStaffForm.email || !addStaffForm.password} className="bg-[#D4A843] text-black hover:bg-[#D4A843]/90 gap-2 text-sm font-semibold">
+  1566→              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+  1567→              Add Staff
+  1568→            </Button>
+  1569→          </DialogFooter>
+  1570→        </DialogContent>
+  1571→      </Dialog>
+  1572→
+  1573→      {/* ── Edit Staff Dialog ── */}
+  1574→      <Dialog open={editStaffOpen} onOpenChange={setEditStaffOpen}>
+  1575→        <DialogContent className="sm:max-w-md bg-[#111] border-[#D4A843]/15">
+  1576→          <DialogHeader>
+  1577→            <DialogTitle className="text-foreground flex items-center gap-2">
+  1578→              <Edit3 className="h-5 w-5 text-[#D4A843]" />
+  1579→              Edit Staff — {editStaffForm.name}
+  1580→            </DialogTitle>
+  1581→            <DialogDescription>Change role and designation</DialogDescription>
+  1582→          </DialogHeader>
+  1583→          <div className="space-y-4 py-2">
+  1584→            <div className="space-y-1.5">
+  1585→              <Label className="text-xs text-muted-foreground">Role</Label>
+  1586→              <Select value={editStaffForm.role} onValueChange={(v) => setEditStaffForm((f) => ({ ...f, role: v }))}>
+  1587→                <SelectTrigger className="bg-[#0a0a0a] border-border/50 text-sm"><SelectValue /></SelectTrigger>
+  1588→                <SelectContent className="bg-[#1a1a1a] border-border">
+  1589→                  {ROLE_OPTIONS.map((r) => (
+  1590→                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+  1591→                  ))}
+  1592→                </SelectContent>
+  1593→              </Select>
+  1594→            </div>
+  1595→            <div className="space-y-1.5">
+  1596→              <Label className="text-xs text-muted-foreground">Designation</Label>
+  1597→              <Input value={editStaffForm.designation} onChange={(e) => setEditStaffForm((f) => ({ ...f, designation: e.target.value }))} placeholder="Marketing Lead" className="bg-[#0a0a0a] border-border/50 text-sm" />
+  1598→            </div>
+  1599→          </div>
+  1600→          <DialogFooter>
+  1601→            <Button variant="outline" onClick={() => setEditStaffOpen(false)} className="border-border/50 text-sm">Cancel</Button>
+  1602→            <Button onClick={handleEditStaff} disabled={submitting} className="bg-[#D4A843] text-black hover:bg-[#D4A843]/90 gap-2 text-sm font-semibold">
+  1603→              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+  1604→              Save Changes
+  1605→            </Button>
+  1606→          </DialogFooter>
+  1607→        </DialogContent>
+  1608→      </Dialog>
+  1609→
+  1610→      {/* ── Edit Branding Dialog ── */}
+  1611→      <Dialog open={editBrandingOpen} onOpenChange={setEditBrandingOpen}>
+  1612→        <DialogContent className="sm:max-w-md bg-[#111] border-[#D4A843]/15">
+  1613→          <DialogHeader>
+  1614→            <DialogTitle className="text-foreground flex items-center gap-2">
+  1615→              <Palette className="h-5 w-5 text-[#D4A843]" />
+  1616→              Edit Branding
+  1617→            </DialogTitle>
+  1618→            <DialogDescription>Update your brand visual identity</DialogDescription>
+  1619→          </DialogHeader>
+  1620→          <div className="space-y-4 py-2">
+  1621→            <div className="space-y-1.5">
+  1622→              <Label className="text-xs text-muted-foreground">Brand Name</Label>
+  1623→              <Input value={editBrandingForm.name} onChange={(e) => setEditBrandingForm((f) => ({ ...f, name: e.target.value }))} className="bg-[#0a0a0a] border-border/50 text-sm" />
+  1624→            </div>
+  1625→            <div className="space-y-1.5">
+  1626→              <Label className="text-xs text-muted-foreground">Primary Color</Label>
+  1627→              <div className="flex items-center gap-2">
+  1628→                <input type="color" value={editBrandingForm.primaryColor} onChange={(e) => setEditBrandingForm((f) => ({ ...f, primaryColor: e.target.value }))} className="h-9 w-12 rounded border border-border/50 cursor-pointer bg-transparent" />
+  1629→                <Input value={editBrandingForm.primaryColor} onChange={(e) => setEditBrandingForm((f) => ({ ...f, primaryColor: e.target.value }))} className="bg-[#0a0a0a] border-border/50 text-sm" />
+  1630→              </div>
+  1631→            </div>
+  1632→            <div className="space-y-1.5">
+  1633→              <Label className="text-xs text-muted-foreground">Logo URL</Label>
+  1634→              <Input value={editBrandingForm.logo} onChange={(e) => setEditBrandingForm((f) => ({ ...f, logo: e.target.value }))} placeholder="https://..." className="bg-[#0a0a0a] border-border/50 text-sm" />
+  1635→            </div>
+  1636→          </div>
+  1637→          <DialogFooter>
+  1638→            <Button variant="outline" onClick={() => setEditBrandingOpen(false)} className="border-border/50 text-sm">Cancel</Button>
+  1639→            <Button onClick={handleEditBranding} disabled={submitting} className="bg-[#D4A843] text-black hover:bg-[#D4A843]/90 gap-2 text-sm font-semibold">
+  1640→              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+  1641→              Save Branding
+  1642→            </Button>
+  1643→          </DialogFooter>
+  1644→        </DialogContent>
+  1645→      </Dialog>
+  1646→    </div>
+  1647→  );
+  1648→}
+  1649→
+  1650→// ── Main Admin Panel ────────────────────────────────────────────────
+  1651→export default function AdminPanel() {
+  1652→  // Read session once; derive initial state from it
+  1653→  const [session] = useState<{ user: SessionUser; tenant: SessionTenant } | null>(() => {
+  1654→    if (typeof window === 'undefined') return null;
+  1655→    return getSession();
+  1656→  });
+  1657→
+  1658→  const sessionEmail = session?.user?.email;
+  1659→  const hasIdInSession = !!session?.user?.id;
+  1660→  const needsLookup = !hasIdInSession && !!sessionEmail;
+  1661→  const [userId, setUserId] = useState<string>(() => session?.user?.id || '');
+  1662→  const [resolved, setResolved] = useState(!needsLookup);
+  1663→  const tenantId = session?.tenant?.id;
+  1664→
+  1665→  // Only run async lookup when we have email but no user ID
+  1666→  useEffect(() => {
+  1667→    if (hasIdInSession || !sessionEmail) return;
+  1668→    let cancelled = false;
+  1669→    (async () => {
+  1670→      try {
+  1671→        const res = await fetch(`/api/tenant/auth/lookup?email=${encodeURIComponent(sessionEmail)}`);
+  1672→        const data = await res.json();
+  1673→        if (!cancelled && data.success && data.user?.id) {
+  1674→          setUserId(data.user.id);
+  1675→        }
+  1676→      } catch {
+  1677→        // Will use empty userId
+  1678→      }
+  1679→      if (!cancelled) setResolved(true);
+  1680→    })();
+  1681→    return () => { cancelled = true; };
+  1682→  }, [hasIdInSession, sessionEmail]);
+  1683→
+  1684→  if (!resolved) {
+  1685→    return (
+  1686→      <div className="space-y-4">
+  1687→        <Skeleton className="h-8 w-48" />
+  1688→        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  1689→          {[...Array(4)].map((_, i) => (
+  1690→            <Skeleton key={i} className="h-28 rounded-xl" />
+  1691→          ))}
+  1692→        </div>
+  1693→        <Skeleton className="h-80 rounded-xl" />
+  1694→      </div>
+  1695→    );
+  1696→  }
+  1697→
+  1698→  if (!session?.user) {
+  1699→    return (
+  1700→      <Card className="bg-[#111] border-[#D4A843]/10">
+  1701→        <CardContent className="py-16 text-center">
+  1702→          <Shield className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
+  1703→          <p className="text-sm text-muted-foreground">Unable to load session data</p>
+  1704→        </CardContent>
+  1705→      </Card>
+  1706→    );
+  1707→  }
+  1708→
+  1709→  const role = session.user.role;
+  1710→  const isPlatformAdmin = role === 'platform_admin';
+  1711→  const isBrandAdmin = role === 'owner' || role === 'admin';
+  1712→
+  1713→  // Demo role mapping: treat 'admin' as platform_admin for demo
+  1714→  const effectiveIsPlatformAdmin = isPlatformAdmin || role === 'admin';
+  1715→  const effectiveIsBrandAdmin = isBrandAdmin;
+  1716→
+  1717→  if (effectiveIsPlatformAdmin && userId) {
+  1718→    return <PlatformAdminView userId={userId} />;
+  1719→  }
+  1720→
+  1721→  if (effectiveIsBrandAdmin && userId && tenantId) {
+  1722→    return <BrandAdminView userId={userId} tenantId={tenantId} tenantName={session?.tenant?.name || ''} />;
+  1723→  }
+  1724→
+  1725→  // No admin access — show access denied
+  1726→  return (
+  1727→    <div className="space-y-6">
+  1728→      <div>
+  1729→        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+  1730→          <Shield className="h-5 w-5 text-[#D4A843]" />
+  1731→          Admin Panel
+  1732→        </h2>
+  1733→        <p className="text-sm text-muted-foreground mt-1">Manage brands, teams, and settings</p>
+  1734→      </div>
+  1735→      <Card className="bg-[#111] border-[#D4A843]/10">
+  1736→        <CardContent className="py-16 text-center">
+  1737→          <Shield className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
+  1738→          <h3 className="text-base font-semibold text-foreground mb-1">Access Restricted</h3>
+  1739→          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+  1740→            You don&apos;t have permission to access this panel. Admin access is required (Platform Admin, Brand Owner, or Brand Admin role).
+  1741→          </p>
+  1742→        </CardContent>
+  1743→      </Card>
+  1744→    </div>
+  1745→  );
+  1746→}
