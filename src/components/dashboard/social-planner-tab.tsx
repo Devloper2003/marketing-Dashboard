@@ -211,7 +211,7 @@ export default function SocialPlannerTab() {
       const published = posts.filter((p) => p.status === 'published');
       const totalEng = published.reduce((s, p) => s + p.likes + p.comments + p.shares + p.saves, 0);
       const avgRate =
-        published.length > 0
+        published.length > 0 && followers[key] > 0
           ? ((totalEng / published.length / followers[key]) * 100).toFixed(2)
           : '0.00';
       stats[key] = { posts: posts.length, engagement: totalEng, rate: avgRate };

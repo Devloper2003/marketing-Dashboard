@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Wand2,
   LayoutDashboard,

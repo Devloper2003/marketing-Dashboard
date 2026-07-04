@@ -343,7 +343,6 @@ export default function ReportsTab() {
   const [formName, setFormName] = useState('');
   const [formType, setFormType] = useState<string>('');
   const [formRange, setFormRange] = useState<string>('');
-  const [formSchedule, setFormSchedule] = useState<string>('one-time');
 
   const fetchData = useCallback(async () => {
     try {
@@ -781,19 +780,6 @@ export default function ReportsTab() {
                   <SelectItem value="Last Month">Last Month</SelectItem>
                   <SelectItem value="Last 90 Days">Last 90 Days</SelectItem>
                   <SelectItem value="Custom">Custom</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-[12px] font-medium text-muted-foreground mb-1.5 block">Schedule</label>
-              <Select value={formSchedule} onValueChange={setFormSchedule}>
-                <SelectTrigger className="bg-[#111] border-border/50 focus-gold h-9 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#111] border-border">
-                  <SelectItem value="one-time">One-time (Generate Now)</SelectItem>
-                  <SelectItem value="weekly">Recurring - Weekly</SelectItem>
-                  <SelectItem value="monthly">Recurring - Monthly</SelectItem>
                 </SelectContent>
               </Select>
             </div>

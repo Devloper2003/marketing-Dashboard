@@ -220,6 +220,15 @@ export default function OverviewTab() {
 
   // ─── KPI cards config ────────────────────────────────────────────────────
 
+  // Null guard — if API fails, data stays null
+  if (!loading && !data) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground text-sm">Failed to load overview data. Please try refreshing.</p>
+      </div>
+    );
+  }
+
   const kpiCards = loading
     ? null
     : [
@@ -382,8 +391,8 @@ export default function OverviewTab() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 stagger-children count-animate">
         {loading ? (
           Array.from({ length: 6 }).map((_, i) => <KpiSkeleton key={i} />)
-        ) : (
-          kpiCards!.map((kpi, idx) => (
+        ) : kpiCards ? (
+          kpiCards.map((kpi, idx) => (
             <div
               key={kpi.label}
               className="premium-card metric-sparkle stat-animate gold-shimmer rounded-xl p-4"
@@ -423,7 +432,7 @@ export default function OverviewTab() {
               </div>
             </div>
           ))
-        )}
+        ) : null}
       </div>
 
       {/* ── Charts Grid 2×2 ────────────────────────────────────────────── */}
@@ -666,10 +675,9 @@ export default function OverviewTab() {
               {/* Individual goals */}
               <div className="max-h-[140px] space-y-3 overflow-y-auto pr-1 custom-scrollbar">
                 {data!.goals.slice(0, 6).map((goal) => {
-                  const pct = Math.min(
-                    100,
-                    Math.round((goal.current / goal.target) * 100)
-                  );
+                  const pct = goal.target > 0
+                    ? Math.min(100, Math.round((goal.current / goal.target) * 100))
+                    : 0;
                   const statusColor =
                     goal.status === 'on_track'
                       ? 'text-green-400'

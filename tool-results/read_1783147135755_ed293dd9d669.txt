@@ -1,0 +1,856 @@
+     1→'use client';
+     2→
+     3→import React, { useState, useEffect, useMemo, useCallback } from 'react';
+     4→import {
+     5→  BarChart3,
+     6→  TrendingUp,
+     7→  Heart,
+     8→  MessageCircle,
+     9→  Share2,
+    10→  Bookmark,
+    11→  Users,
+    12→  Clock,
+    13→  ArrowUpRight,
+    14→  Instagram,
+    15→  Twitter,
+    16→  Facebook,
+    17→  Megaphone,
+    18→} from 'lucide-react';
+    19→import {
+    20→  Card,
+    21→  CardContent,
+    22→  CardHeader,
+    23→  CardTitle,
+    24→  CardDescription,
+    25→} from '@/components/ui/card';
+    26→import { Badge } from '@/components/ui/badge';
+    27→import { Skeleton } from '@/components/ui/skeleton';
+    28→import { Progress } from '@/components/ui/progress';
+    29→import {
+    30→  Table,
+    31→  TableBody,
+    32→  TableCell,
+    33→  TableHead,
+    34→  TableHeader,
+    35→  TableRow,
+    36→} from '@/components/ui/table';
+    37→import {
+    38→  AreaChart,
+    39→  Area,
+    40→  BarChart,
+    41→  Bar,
+    42→  XAxis,
+    43→  YAxis,
+    44→  CartesianGrid,
+    45→  Tooltip,
+    46→  ResponsiveContainer,
+    47→  Legend,
+    48→} from 'recharts';
+    49→
+    50→// ─── Types ───────────────────────────────────────────────────────────
+    51→interface SocialPost {
+    52→  id: string;
+    53→  platform: string;
+    54→  content: string | null;
+    55→  status: string;
+    56→  scheduledAt: string | null;
+    57→  likes: number;
+    58→  comments: number;
+    59→  shares: number;
+    60→  saves: number;
+    61→}
+    62→
+    63→interface SocialData {
+    64→  posts: SocialPost[];
+    65→  platforms: string[];
+    66→  statusCounts: {
+    67→    published: number;
+    68→    scheduled: number;
+    69→    draft: number;
+    70→  };
+    71→  totalEngagement: number;
+    72→}
+    73→
+    74→// ─── Constants ───────────────────────────────────────────────────────
+    75→
+    76→const PLATFORM_CONFIG: Record<
+    77→  string,
+    78→  {
+    79→    name: string;
+    80→    icon: React.ReactNode;
+    81→    color: string;
+    82→    badgeClass: string;
+    83→    areaColor: string;
+    84→    areaFill: string;
+    85→  }
+    86→> = {
+    87→  Instagram: {
+    88→    name: 'Instagram',
+    89→    icon: <Instagram className="size-4" />,
+    90→    color: '#E1306C',
+    91→    badgeClass: 'bg-gradient-to-r from-[#f09433] via-[#e6683c] to-[#bc1888] text-white border-none',
+    92→    areaColor: '#E1306C',
+    93→    areaFill: 'rgba(225, 48, 108, 0.15)',
+    94→  },
+    95→  Twitter: {
+    96→    name: 'Twitter / X',
+    97→    icon: <Twitter className="size-4" />,
+    98→    color: '#38BDF8',
+    99→    badgeClass: 'bg-[#1a1a1a] text-sky-400 border border-sky-400/50',
+   100→    areaColor: '#38BDF8',
+   101→    areaFill: 'rgba(56, 189, 248, 0.15)',
+   102→  },
+   103→  Facebook: {
+   104→    name: 'Facebook',
+   105→    icon: <Facebook className="size-4" />,
+   106→    color: '#3B82F6',
+   107→    badgeClass: 'bg-[#1877F2] text-white border-none',
+   108→    areaColor: '#3B82F6',
+   109→    areaFill: 'rgba(59, 130, 246, 0.15)',
+   110→  },
+   111→  Pinterest: {
+   112→    name: 'Pinterest',
+   113→    icon: <Megaphone className="size-4" />,
+   114→    color: '#E60023',
+   115→    badgeClass: 'bg-[#E60023] text-white border-none',
+   116→    areaColor: '#E60023',
+   117→    areaFill: 'rgba(230, 0, 35, 0.15)',
+   118→  },
+   119→};
+   120→
+   121→const TOP_STATS = [
+   122→  {
+   123→    label: 'Total Followers',
+   124→    value: '180,160',
+   125→    change: '+2.3K this month',
+   126→    positive: true,
+   127→    icon: <Users className="size-5" />,
+   128→  },
+   129→  {
+   130→    label: 'Total Engagement',
+   131→    value: '5,942',
+   132→    change: '+12.4%',
+   133→    positive: true,
+   134→    icon: <Heart className="size-5" />,
+   135→  },
+   136→  {
+   137→    label: 'Avg. Engagement Rate',
+   138→    value: '3.9%',
+   139→    change: '+0.5%',
+   140→    positive: true,
+   141→    icon: <TrendingUp className="size-5" />,
+   142→  },
+   143→  {
+   144→    label: 'Total Posts',
+   145→    value: '4',
+   146→    change: 'published this month',
+   147→    positive: null,
+   148→    icon: <BarChart3 className="size-5" />,
+   149→  },
+   150→];
+   151→
+   152→const PLATFORM_STATS = [
+   153→  {
+   154→    platform: 'Instagram',
+   155→    followers: 135145,
+   156→    posts: 5,
+   157→    engagementRate: 4.8,
+   158→  },
+   159→  {
+   160→    platform: 'Twitter',
+   161→    followers: 45015,
+   162→    posts: 1,
+   163→    engagementRate: 2.1,
+   164→  },
+   165→  {
+   166→    platform: 'Facebook',
+   167→    followers: 28900,
+   168→    posts: 1,
+   169→    engagementRate: 3.2,
+   170→  },
+   171→  {
+   172→    platform: 'Pinterest',
+   173→    followers: 12800,
+   174→    posts: 1,
+   175→    engagementRate: 5.6,
+   176→  },
+   177→];
+   178→
+   179→const FOLLOWER_GROWTH_DATA = [
+   180→  { month: 'Sep', Instagram: 120500, Twitter: 40200, Facebook: 25000, Pinterest: 10200 },
+   181→  { month: 'Oct', Instagram: 123800, Twitter: 41500, Facebook: 25800, Pinterest: 10700 },
+   182→  { month: 'Nov', Instagram: 127200, Twitter: 42400, Facebook: 26600, Pinterest: 11200 },
+   183→  { month: 'Dec', Instagram: 129800, Twitter: 43200, Facebook: 27400, Pinterest: 11600 },
+   184→  { month: 'Jan', Instagram: 132600, Twitter: 44100, Facebook: 28100, Pinterest: 12200 },
+   185→  { month: 'Feb', Instagram: 135145, Twitter: 45015, Facebook: 28900, Pinterest: 12800 },
+   186→];
+   187→
+   188→const BEST_TIMES = [
+   189→  {
+   190→    platform: 'Instagram',
+   191→    times: ['10 AM – 1 PM', '7 PM – 9 PM'],
+   192→    badgeClass: PLATFORM_CONFIG.Instagram.badgeClass,
+   193→    icon: PLATFORM_CONFIG.Instagram.icon,
+   194→  },
+   195→  {
+   196→    platform: 'Facebook',
+   197→    times: ['9 AM – 11 AM'],
+   198→    badgeClass: PLATFORM_CONFIG.Facebook.badgeClass,
+   199→    icon: PLATFORM_CONFIG.Facebook.icon,
+   200→  },
+   201→  {
+   202→    platform: 'Twitter',
+   203→    times: ['12 PM – 3 PM'],
+   204→    badgeClass: PLATFORM_CONFIG.Twitter.badgeClass,
+   205→    icon: PLATFORM_CONFIG.Twitter.icon,
+   206→  },
+   207→  {
+   208→    platform: 'Pinterest',
+   209→    times: ['8 PM – 11 PM'],
+   210→    badgeClass: PLATFORM_CONFIG.Pinterest.badgeClass,
+   211→    icon: PLATFORM_CONFIG.Pinterest.icon,
+   212→  },
+   213→];
+   214→
+   215→// Gold palette for stacked bars
+   216→const BAR_COLORS = {
+   217→  Likes: '#D4A843',
+   218→  Comments: '#E8C46A',
+   219→  Shares: '#F5ECD0',
+   220→  Saves: '#B8922F',
+   221→};
+   222→
+   223→// ─── Custom Tooltip ──────────────────────────────────────────────────
+   224→function CustomTooltip({
+   225→  active,
+   226→  payload,
+   227→  label,
+   228→}: {
+   229→  active?: boolean;
+   230→  payload?: Array<{ name: string; value: number; color: string }>;
+   231→  label?: string;
+   232→}) {
+   233→  if (!active || !payload?.length) return null;
+   234→  return (
+   235→    <div className="rounded-lg border border-[#2a2520] bg-[#111111] px-3 py-2 shadow-xl">
+   236→      <p className="mb-1.5 text-xs font-medium text-[#f5f0e8]">{label}</p>
+   237→      {payload.map((entry) => (
+   238→        <div key={entry.name} className="flex items-center gap-2 text-xs">
+   239→          <span
+   240→            className="inline-block h-2.5 w-2.5 rounded-sm"
+   241→            style={{ backgroundColor: entry.color }}
+   242→          />
+   243→          <span className="text-[#9a9080]">{entry.name}:</span>
+   244→          <span className="font-medium text-[#f5f0e8]">{entry.value.toLocaleString()}</span>
+   245→        </div>
+   246→      ))}
+   247→    </div>
+   248→  );
+   249→}
+   250→
+   251→// ─── Loading Skeleton ────────────────────────────────────────────────
+   252→function LoadingSkeleton() {
+   253→  return (
+   254→    <div className="space-y-6">
+   255→      <div>
+   256→        <Skeleton className="mb-1.5 h-6 w-48" />
+   257→        <Skeleton className="h-4 w-64" />
+   258→      </div>
+   259→      {/* Stats row */}
+   260→      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+   261→        {Array.from({ length: 4 }).map((_, i) => (
+   262→          <Card key={i} className="gold-card border-0">
+   263→            <CardContent className="p-5">
+   264→              <div className="flex items-start justify-between">
+   265→                <div className="space-y-2.5">
+   266→                  <Skeleton className="h-3.5 w-28" />
+   267→                  <Skeleton className="h-7 w-20" />
+   268→                  <Skeleton className="h-3 w-24" />
+   269→                </div>
+   270→                <Skeleton className="size-10 rounded-full" />
+   271→              </div>
+   272→            </CardContent>
+   273→          </Card>
+   274→        ))}
+   275→      </div>
+   276→      {/* Platform cards */}
+   277→      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+   278→        {Array.from({ length: 4 }).map((_, i) => (
+   279→          <Card key={i} className="gold-card border-0">
+   280→            <CardContent className="p-5">
+   281→              <Skeleton className="mb-4 h-5 w-28" />
+   282→              <Skeleton className="mb-2 h-7 w-24" />
+   283→              <Skeleton className="mb-1 h-3.5 w-32" />
+   284→              <Skeleton className="mb-3 h-3.5 w-20" />
+   285→              <Skeleton className="h-2 w-full" />
+   286→            </CardContent>
+   287→          </Card>
+   288→        ))}
+   289→      </div>
+   290→      {/* Charts */}
+   291→      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+   292→        <Card className="gold-card border-0">
+   293→          <CardHeader className="pb-2">
+   294→            <Skeleton className="h-5 w-44" />
+   295→            <Skeleton className="h-3.5 w-56" />
+   296→          </CardHeader>
+   297→          <CardContent>
+   298→            <Skeleton className="h-[300px] w-full" />
+   299→          </CardContent>
+   300→        </Card>
+   301→        <Card className="gold-card border-0">
+   302→          <CardHeader className="pb-2">
+   303→            <Skeleton className="h-5 w-40" />
+   304→            <Skeleton className="h-3.5 w-56" />
+   305→          </CardHeader>
+   306→          <CardContent>
+   307→            <Skeleton className="h-[300px] w-full" />
+   308→          </CardContent>
+   309→        </Card>
+   310→      </div>
+   311→      {/* Table + Best Time */}
+   312→      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+   313→        <Card className="gold-card border-0 lg:col-span-2">
+   314→          <CardHeader className="pb-2">
+   315→            <Skeleton className="h-5 w-44" />
+   316→            <Skeleton className="h-3.5 w-48" />
+   317→          </CardHeader>
+   318→          <CardContent>
+   319→            <Skeleton className="h-[250px] w-full" />
+   320→          </CardContent>
+   321→        </Card>
+   322→        <Card className="gold-card border-0">
+   323→          <CardHeader className="pb-2">
+   324→            <Skeleton className="h-5 w-36" />
+   325→            <Skeleton className="h-3.5 w-48" />
+   326→          </CardHeader>
+   327→          <CardContent>
+   328→            <Skeleton className="h-[250px] w-full" />
+   329→          </CardContent>
+   330→        </Card>
+   331→      </div>
+   332→    </div>
+   333→  );
+   334→}
+   335→
+   336→// ─── Time Slot Visual ────────────────────────────────────────────────
+   337→const HOURS = [
+   338→  '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM',
+   339→  '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM',
+   340→  '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM',
+   341→];
+   342→
+   343→function isOptimal(hour: string, times: string[]): boolean {
+   344→  const hourNum = parseInt(hour, 10);
+   345→  let startAM = 0, startPM = 0;
+   346→  // Parse time ranges
+   347→  for (const t of times) {
+   348→    const parts = t.split('–').map((s) => s.trim());
+   349→    if (parts.length !== 2) continue;
+   350→    const [s, e] = parts.map((p) => {
+   351→      const [num, ampm] = p.split(' ');
+   352→      let h = parseInt(num, 10);
+   353→      if (ampm === 'PM' && h !== 12) h += 12;
+   354→      if (ampm === 'AM' && h === 12) h = 0;
+   355→      return h;
+   356→    });
+   357→    if (s > e) {
+   358→      // Spans midnight (not in our data but handle)
+   359→      if (hourNum >= s || hourNum < e) return true;
+   360→    } else {
+   361→      if (hourNum >= s && hourNum < e) return true;
+   362→    }
+   363→  }
+   364→  return false;
+   365→}
+   366→
+   367→function formatHour(h: string): string {
+   368→  return h;
+   369→}
+   370→
+   371→// ─── Main Component ──────────────────────────────────────────────────
+   372→export default function SocialAnalyticsTab() {
+   373→  const [data, setData] = useState<SocialData | null>(null);
+   374→  const [loading, setLoading] = useState(true);
+   375→
+   376→  const fetchData = useCallback(async () => {
+   377→    try {
+   378→      setLoading(true);
+   379→      const res = await fetch('/api/marketing/social-posts');
+   380→      if (!res.ok) throw new Error('Failed');
+   381→      const json = await res.json();
+   382→      setData(json);
+   383→    } catch {
+   384→      // Silently handle – use mock data for charts
+   385→    } finally {
+   386→      setLoading(false);
+   387→    }
+   388→  }, []);
+   389→
+   390→  useEffect(() => {
+   391→    fetchData();
+   392→  }, [fetchData]);
+   393→
+   394→  // ── Derived data ──
+   395→
+   396→  // Engagement breakdown per platform (from API data, fallback to mock)
+   397→  const engagementByPlatform = useMemo(() => {
+   398→    const platforms = ['Instagram', 'Twitter', 'Facebook', 'Pinterest'];
+   399→    if (data && data.posts.length > 0) {
+   400→      return platforms.map((p) => {
+   401→        const posts = data.posts.filter((post) => post.platform === p && post.status === 'published');
+   402→        return {
+   403→          platform: p,
+   404→          Likes: posts.reduce((s, post) => s + post.likes, 0),
+   405→          Comments: posts.reduce((s, post) => s + post.comments, 0),
+   406→          Shares: posts.reduce((s, post) => s + post.shares, 0),
+   407→          Saves: posts.reduce((s, post) => s + post.saves, 0),
+   408→        };
+   409→      });
+   410→    }
+   411→    // Fallback mock data
+   412→    return [
+   413→      { platform: 'Instagram', Likes: 1942, Comments: 111, Shares: 227, Saves: 1458 },
+   414→      { platform: 'Twitter', Likes: 156, Comments: 12, Shares: 89, Saves: 34 },
+   415→      { platform: 'Facebook', Likes: 432, Comments: 67, Shares: 234, Saves: 178 },
+   416→      { platform: 'Pinterest', Likes: 89, Comments: 5, Shares: 345, Saves: 1234 },
+   417→    ];
+   418→  }, [data]);
+   419→
+   420→  // Top performing posts (from API, sorted by total engagement)
+   421→  const topPosts = useMemo(() => {
+   422→    if (!data || data.posts.length === 0) return [];
+   423→    return data.posts
+   424→      .filter((p) => p.status === 'published')
+   425→      .map((p) => ({
+   426→        ...p,
+   427→        totalEngagement: p.likes + p.comments + p.shares + p.saves,
+   428→      }))
+   429→      .sort((a, b) => b.totalEngagement - a.totalEngagement);
+   430→  }, [data]);
+   431→
+   432→  if (loading) return <LoadingSkeleton />;
+   433→
+   434→  return (
+   435→    <div className="space-y-6">
+   436→      {/* Header */}
+   437→      <div>
+   438→        <h2 className="text-lg font-semibold text-foreground">Social Analytics</h2>
+   439→        <p className="text-sm text-muted-foreground">Deep dive into social media performance</p>
+   440→      </div>
+   441→
+   442→      {/* ── Top Stats Row ── */}
+   443→      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+   444→        {TOP_STATS.map((stat) => (
+   445→          <Card key={stat.label} className="gold-card border-0 gold-shimmer">
+   446→            <CardContent className="p-5">
+   447→              <div className="flex items-start justify-between">
+   448→                <div className="space-y-1.5">
+   449→                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+   450→                    {stat.label}
+   451→                  </p>
+   452→                  <p className="text-2xl font-bold tracking-tight text-foreground gold-glow">
+   453→                    {stat.value}
+   454→                  </p>
+   455→                  <div className="flex items-center gap-1.5">
+   456→                    {stat.positive === true && (
+   457→                      <ArrowUpRight className="size-3.5 text-emerald-400" />
+   458→                    )}
+   459→                    <span
+   460→                      className={`text-xs font-medium ${
+   461→                        stat.positive === true
+   462→                          ? 'text-emerald-400'
+   463→                          : stat.positive === false
+   464→                            ? 'text-red-400'
+   465→                            : 'text-muted-foreground'
+   466→                      }`}
+   467→                    >
+   468→                      {stat.change}
+   469→                    </span>
+   470→                  </div>
+   471→                </div>
+   472→                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[rgba(212,168,67,0.12)] text-[#D4A843]">
+   473→                  {stat.icon}
+   474→                </div>
+   475→              </div>
+   476→            </CardContent>
+   477→          </Card>
+   478→        ))}
+   479→      </div>
+   480→
+   481→      {/* ── Platform Comparison Cards ── */}
+   482→      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+   483→        {PLATFORM_STATS.map((p) => {
+   484→          const config = PLATFORM_CONFIG[p.platform] || PLATFORM_CONFIG.Instagram;
+   485→          return (
+   486→            <Card key={p.platform} className="gold-card border-0">
+   487→              <CardContent className="p-5">
+   488→                <div className="mb-3 flex items-center gap-2.5">
+   489→                  <div
+   490→                    className="flex size-8 items-center justify-center rounded-lg"
+   491→                    style={{ backgroundColor: `${config.color}20`, color: config.color }}
+   492→                  >
+   493→                    {config.icon}
+   494→                  </div>
+   495→                  <span className="text-sm font-semibold text-foreground">{config.name}</span>
+   496→                </div>
+   497→                <p className="mb-1 text-xl font-bold text-foreground gold-glow">
+   498→                  {p.followers.toLocaleString()}
+   499→                </p>
+   500→                <p className="mb-3 text-xs text-muted-foreground">
+   501→                  {p.posts} {p.posts === 1 ? 'post' : 'posts'} this month
+   502→                </p>
+   503→                <div className="space-y-1.5">
+   504→                  <div className="flex items-center justify-between text-xs">
+   505→                    <span className="text-muted-foreground">Engagement Rate</span>
+   506→                    <span className="font-semibold text-[#D4A843]">{p.engagementRate}%</span>
+   507→                  </div>
+   508→                  <Progress
+   509→                    value={p.engagementRate * 10}
+   510→                    className="h-1.5 bg-[#1a1a1a]"
+   511→                  />
+   512→                </div>
+   513→              </CardContent>
+   514→            </Card>
+   515→          );
+   516→        })}
+   517→      </div>
+   518→
+   519→      {/* ── Charts Row ── */}
+   520→      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+   521→        {/* Engagement Breakdown Chart */}
+   522→        <Card className="gold-card border-0">
+   523→          <CardHeader className="pb-2">
+   524→            <CardTitle className="text-sm font-semibold text-foreground">
+   525→              Engagement Breakdown
+   526→            </CardTitle>
+   527→            <CardDescription className="text-xs text-muted-foreground">
+   528→              Likes, comments, shares &amp; saves by platform
+   529→            </CardDescription>
+   530→          </CardHeader>
+   531→          <CardContent>
+   532→            <div className="h-[300px] w-full">
+   533→              <ResponsiveContainer width="100%" height="100%">
+   534→                <BarChart
+   535→                  data={engagementByPlatform}
+   536→                  margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
+   537→                >
+   538→                  <CartesianGrid strokeDasharray="3 3" stroke="#2a2520" vertical={false} />
+   539→                  <XAxis
+   540→                    dataKey="platform"
+   541→                    tick={{ fill: '#9a9080', fontSize: 12 }}
+   542→                    axisLine={{ stroke: '#2a2520' }}
+   543→                    tickLine={false}
+   544→                  />
+   545→                  <YAxis
+   546→                    tick={{ fill: '#9a9080', fontSize: 11 }}
+   547→                    axisLine={false}
+   548→                    tickLine={false}
+   549→                    width={40}
+   550→                  />
+   551→                  <Tooltip
+   552→                    content={<CustomTooltip />}
+   553→                    cursor={{ fill: 'rgba(212, 168, 67, 0.05)' }}
+   554→                  />
+   555→                  <Legend
+   556→                    wrapperStyle={{ fontSize: 11, color: '#9a9080' }}
+   557→                    iconType="circle"
+   558→                    iconSize={8}
+   559→                  />
+   560→                  <Bar dataKey="Likes" stackId="a" fill={BAR_COLORS.Likes} radius={[0, 0, 0, 0]} />
+   561→                  <Bar dataKey="Comments" stackId="a" fill={BAR_COLORS.Comments} />
+   562→                  <Bar dataKey="Shares" stackId="a" fill={BAR_COLORS.Shares} />
+   563→                  <Bar dataKey="Saves" stackId="a" fill={BAR_COLORS.Saves} radius={[4, 4, 0, 0]} />
+   564→                </BarChart>
+   565→              </ResponsiveContainer>
+   566→            </div>
+   567→          </CardContent>
+   568→        </Card>
+   569→
+   570→        {/* Follower Growth Chart */}
+   571→        <Card className="gold-card border-0">
+   572→          <CardHeader className="pb-2">
+   573→            <CardTitle className="text-sm font-semibold text-foreground">
+   574→              Follower Growth
+   575→            </CardTitle>
+   576→            <CardDescription className="text-xs text-muted-foreground">
+   577→              Last 6 months follower trend per platform
+   578→            </CardDescription>
+   579→          </CardHeader>
+   580→          <CardContent>
+   581→            <div className="h-[300px] w-full">
+   582→              <ResponsiveContainer width="100%" height="100%">
+   583→                <AreaChart
+   584→                  data={FOLLOWER_GROWTH_DATA}
+   585→                  margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
+   586→                >
+   587→                  <defs>
+   588→                    <linearGradient id="gradInstagram" x1="0" y1="0" x2="0" y2="1">
+   589→                      <stop offset="5%" stopColor={PLATFORM_CONFIG.Instagram.areaColor} stopOpacity={0.25} />
+   590→                      <stop offset="95%" stopColor={PLATFORM_CONFIG.Instagram.areaColor} stopOpacity={0} />
+   591→                    </linearGradient>
+   592→                    <linearGradient id="gradTwitter" x1="0" y1="0" x2="0" y2="1">
+   593→                      <stop offset="5%" stopColor={PLATFORM_CONFIG.Twitter.areaColor} stopOpacity={0.25} />
+   594→                      <stop offset="95%" stopColor={PLATFORM_CONFIG.Twitter.areaColor} stopOpacity={0} />
+   595→                    </linearGradient>
+   596→                    <linearGradient id="gradFacebook" x1="0" y1="0" x2="0" y2="1">
+   597→                      <stop offset="5%" stopColor={PLATFORM_CONFIG.Facebook.areaColor} stopOpacity={0.25} />
+   598→                      <stop offset="95%" stopColor={PLATFORM_CONFIG.Facebook.areaColor} stopOpacity={0} />
+   599→                    </linearGradient>
+   600→                    <linearGradient id="gradPinterest" x1="0" y1="0" x2="0" y2="1">
+   601→                      <stop offset="5%" stopColor={PLATFORM_CONFIG.Pinterest.areaColor} stopOpacity={0.25} />
+   602→                      <stop offset="95%" stopColor={PLATFORM_CONFIG.Pinterest.areaColor} stopOpacity={0} />
+   603→                    </linearGradient>
+   604→                  </defs>
+   605→                  <CartesianGrid strokeDasharray="3 3" stroke="#2a2520" vertical={false} />
+   606→                  <XAxis
+   607→                    dataKey="month"
+   608→                    tick={{ fill: '#9a9080', fontSize: 12 }}
+   609→                    axisLine={{ stroke: '#2a2520' }}
+   610→                    tickLine={false}
+   611→                  />
+   612→                  <YAxis
+   613→                    tick={{ fill: '#9a9080', fontSize: 11 }}
+   614→                    axisLine={false}
+   615→                    tickLine={false}
+   616→                    tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}K`}
+   617→                    width={40}
+   618→                  />
+   619→                  <Tooltip
+   620→                    content={<CustomTooltip />}
+   621→                  />
+   622→                  <Legend
+   623→                    wrapperStyle={{ fontSize: 11, color: '#9a9080' }}
+   624→                    iconType="circle"
+   625→                    iconSize={8}
+   626→                  />
+   627→                  <Area
+   628→                    type="monotone"
+   629→                    dataKey="Instagram"
+   630→                    stroke={PLATFORM_CONFIG.Instagram.areaColor}
+   631→                    fill="url(#gradInstagram)"
+   632→                    strokeWidth={2}
+   633→                  />
+   634→                  <Area
+   635→                    type="monotone"
+   636→                    dataKey="Twitter"
+   637→                    stroke={PLATFORM_CONFIG.Twitter.areaColor}
+   638→                    fill="url(#gradTwitter)"
+   639→                    strokeWidth={2}
+   640→                  />
+   641→                  <Area
+   642→                    type="monotone"
+   643→                    dataKey="Facebook"
+   644→                    stroke={PLATFORM_CONFIG.Facebook.areaColor}
+   645→                    fill="url(#gradFacebook)"
+   646→                    strokeWidth={2}
+   647→                  />
+   648→                  <Area
+   649→                    type="monotone"
+   650→                    dataKey="Pinterest"
+   651→                    stroke={PLATFORM_CONFIG.Pinterest.areaColor}
+   652→                    fill="url(#gradPinterest)"
+   653→                    strokeWidth={2}
+   654→                  />
+   655→                </AreaChart>
+   656→              </ResponsiveContainer>
+   657→            </div>
+   658→          </CardContent>
+   659→        </Card>
+   660→      </div>
+   661→
+   662→      {/* ── Table + Best Time to Post ── */}
+   663→      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+   664→        {/* Top Performing Posts Table */}
+   665→        <Card className="gold-card border-0 lg:col-span-2">
+   666→          <CardHeader className="pb-2">
+   667→            <CardTitle className="text-sm font-semibold text-foreground">
+   668→              Top Performing Posts
+   669→            </CardTitle>
+   670→            <CardDescription className="text-xs text-muted-foreground">
+   671→              Published posts ranked by total engagement
+   672→            </CardDescription>
+   673→          </CardHeader>
+   674→          <CardContent className="px-0">
+   675→            <div className="max-h-[400px] overflow-y-auto">
+   676→              <Table>
+   677→                <TableHeader>
+   678→                  <TableRow className="gold-table-header hover:bg-transparent">
+   679→                    <TableHead className="text-xs font-semibold text-[#9a9080]">Platform</TableHead>
+   680→                    <TableHead className="text-xs font-semibold text-[#9a9080]">Content</TableHead>
+   681→                    <TableHead className="text-right text-xs font-semibold text-[#9a9080]">
+   682→                      <Heart className="mr-1 inline size-3" />
+   683→                      Likes
+   684→                    </TableHead>
+   685→                    <TableHead className="text-right text-xs font-semibold text-[#9a9080]">
+   686→                      <MessageCircle className="mr-1 inline size-3" />
+   687→                      Comments
+   688→                    </TableHead>
+   689→                    <TableHead className="text-right text-xs font-semibold text-[#9a9080]">
+   690→                      <Share2 className="mr-1 inline size-3" />
+   691→                      Shares
+   692→                    </TableHead>
+   693→                    <TableHead className="text-right text-xs font-semibold text-[#9a9080]">
+   694→                      <Bookmark className="mr-1 inline size-3" />
+   695→                      Saves
+   696→                    </TableHead>
+   697→                    <TableHead className="text-right text-xs font-semibold text-[#9a9080]">
+   698→                      Total
+   699→                    </TableHead>
+   700→                  </TableRow>
+   701→                </TableHeader>
+   702→                <TableBody>
+   703→                  {topPosts.length === 0 ? (
+   704→                    <TableRow>
+   705→                      <TableCell colSpan={7} className="h-24 text-center text-xs text-muted-foreground">
+   706→                        No published posts yet
+   707→                      </TableCell>
+   708→                    </TableRow>
+   709→                  ) : (
+   710→                    topPosts.map((post, idx) => {
+   711→                      const config = PLATFORM_CONFIG[post.platform] || PLATFORM_CONFIG.Instagram;
+   712→                      return (
+   713→                        <TableRow
+   714→                          key={post.id}
+   715→                          className={
+   716→                            idx === 0
+   717→                              ? 'border-b border-[#2a2520] border-l-2 border-l-[#D4A843] bg-[rgba(212,168,67,0.04)]'
+   718→                              : 'border-b border-[#2a2520]'
+   719→                          }
+   720→                        >
+   721→                          <TableCell className="py-3 pr-3">
+   722→                            <Badge
+   723→                              variant="outline"
+   724→                              className={`gap-1.5 text-[10px] font-medium ${config.badgeClass}`}
+   725→                            >
+   726→                              {config.icon}
+   727→                              {config.name}
+   728→                            </Badge>
+   729→                          </TableCell>
+   730→                          <TableCell className="max-w-[200px] truncate py-3 pr-3 text-xs text-[#f5f0e8]">
+   731→                            {post.content || '—'}
+   732→                          </TableCell>
+   733→                          <TableCell className="py-3 text-right text-xs font-medium text-[#f5f0e8]">
+   734→                            {post.likes.toLocaleString()}
+   735→                          </TableCell>
+   736→                          <TableCell className="py-3 text-right text-xs font-medium text-[#f5f0e8]">
+   737→                            {post.comments.toLocaleString()}
+   738→                          </TableCell>
+   739→                          <TableCell className="py-3 text-right text-xs font-medium text-[#f5f0e8]">
+   740→                            {post.shares.toLocaleString()}
+   741→                          </TableCell>
+   742→                          <TableCell className="py-3 text-right text-xs font-medium text-[#f5f0e8]">
+   743→                            {post.saves.toLocaleString()}
+   744→                          </TableCell>
+   745→                          <TableCell className="py-3 text-right text-xs font-bold text-[#D4A843]">
+   746→                            {post.totalEngagement.toLocaleString()}
+   747→                          </TableCell>
+   748→                        </TableRow>
+   749→                      );
+   750→                    })
+   751→                  )}
+   752→                </TableBody>
+   753→              </Table>
+   754→            </div>
+   755→          </CardContent>
+   756→        </Card>
+   757→
+   758→        {/* Best Time to Post */}
+   759→        <Card className="gold-card border-0">
+   760→          <CardHeader className="pb-2">
+   761→            <div className="flex items-center gap-2">
+   762→              <Clock className="size-4 text-[#D4A843]" />
+   763→              <CardTitle className="text-sm font-semibold text-foreground">
+   764→                Best Time to Post
+   765→              </CardTitle>
+   766→            </div>
+   767→            <CardDescription className="text-xs text-muted-foreground">
+   768→              Optimal posting windows per platform
+   769→            </CardDescription>
+   770→          </CardHeader>
+   771→          <CardContent>
+   772→            <div className="space-y-4">
+   773→              {BEST_TIMES.map((bt) => (
+   774→                <div
+   775→                  key={bt.platform}
+   776→                  className="rounded-lg border border-[#2a2520] bg-[#0d0d0d] p-3.5"
+   777→                >
+   778→                  <div className="mb-2 flex items-center gap-2">
+   779→                    <Badge
+   780→                      variant="outline"
+   781→                      className={`gap-1.5 text-[10px] font-medium ${bt.badgeClass}`}
+   782→                    >
+   783→                      {bt.icon}
+   784→                      {bt.platform}
+   785→                    </Badge>
+   786→                  </div>
+   787→                  <div className="flex flex-wrap gap-2">
+   788→                    {bt.times.map((t) => (
+   789→                      <span
+   790→                        key={t}
+   791→                        className="inline-flex items-center rounded-md bg-[rgba(212,168,67,0.1)] px-2.5 py-1 text-xs font-medium text-[#D4A843] border border-[rgba(212,168,67,0.2)]"
+   792→                      >
+   793→                        {t}
+   794→                      </span>
+   795→                    ))}
+   796→                  </div>
+   797→                </div>
+   798→              ))}
+   799→
+   800→              {/* Timeline Visual */}
+   801→              <div className="mt-5 rounded-lg border border-[#2a2520] bg-[#0d0d0d] p-3.5">
+   802→                <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+   803→                  Daily Schedule Overview
+   804→                </p>
+   805→                <div className="relative">
+   806→                  {/* Hour grid */}
+   807→                  <div className="flex gap-0.5">
+   808→                    {HOURS.map((hour) => {
+   809→                      // Check if any platform is optimal at this hour
+   810→                      const activePlatforms = BEST_TIMES.filter((bt) =>
+   811→                        isOptimal(hour, bt.times)
+   812→                      );
+   813→                      const isAny = activePlatforms.length > 0;
+   814→
+   815→                      return (
+   816→                        <div
+   817→                          key={hour}
+   818→                          className="group relative flex flex-1 flex-col items-center"
+   819→                        >
+   820→                          {/* Bar */}
+   821→                          <div
+   822→                            className="mb-1 w-full rounded-sm transition-all"
+   823→                            style={{
+   824→                              height: isAny ? `${12 + activePlatforms.length * 8}px` : '4px',
+   825→                              backgroundColor: isAny
+   826→                                ? 'rgba(212, 168, 67, 0.5)'
+   827→                                : 'rgba(42, 37, 32, 0.6)',
+   828→                            }}
+   829→                          />
+   830→                          {/* Label */}
+   831→                          <span
+   832→                            className={`text-center text-[8px] leading-tight ${
+   833→                              isAny ? 'font-semibold text-[#D4A843]' : 'text-[#4a4538]'
+   834→                            }`}
+   835→                          >
+   836→                            {hour.replace(' ', '')}
+   837→                          </span>
+   838→                          {/* Tooltip */}
+   839→                          {isAny && (
+   840→                            <div className="pointer-events-none absolute -top-16 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-md border border-[#2a2520] bg-[#111111] px-2 py-1 text-[9px] text-[#f5f0e8] opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+   841→                              {activePlatforms.map((p) => p.platform).join(', ')}
+   842→                            </div>
+   843→                          )}
+   844→                        </div>
+   845→                      );
+   846→                    })}
+   847→                  </div>
+   848→                </div>
+   849→              </div>
+   850→            </div>
+   851→          </CardContent>
+   852→        </Card>
+   853→      </div>
+   854→    </div>
+   855→  );
+   856→}

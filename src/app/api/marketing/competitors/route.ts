@@ -105,7 +105,9 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, ...data } = body;
+    const { id, name, website, category, marketShare, avgPriceRange,
+            socialFollowers, monthlyTraffic, seoAuthority,
+            strengths, weaknesses, notes } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -113,7 +115,19 @@ export async function PUT(request: NextRequest) {
 
     const competitor = await db.competitor.update({
       where: { id },
-      data,
+      data: {
+        ...(name !== undefined && { name }),
+        ...(website !== undefined && { website: website || null }),
+        ...(category !== undefined && { category: category || null }),
+        ...(marketShare !== undefined && { marketShare: Number(marketShare) || 0 }),
+        ...(avgPriceRange !== undefined && { avgPriceRange: avgPriceRange || null }),
+        ...(socialFollowers !== undefined && { socialFollowers: Number(socialFollowers) || 0 }),
+        ...(monthlyTraffic !== undefined && { monthlyTraffic: Number(monthlyTraffic) || 0 }),
+        ...(seoAuthority !== undefined && { seoAuthority: Number(seoAuthority) || 0 }),
+        ...(strengths !== undefined && { strengths }),
+        ...(weaknesses !== undefined && { weaknesses }),
+        ...(notes !== undefined && { notes }),
+      },
     });
 
     return NextResponse.json(competitor);
