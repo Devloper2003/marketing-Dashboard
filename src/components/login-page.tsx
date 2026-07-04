@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gem, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import { Gem, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -75,13 +75,17 @@ function BrandPanel() {
       <div className="absolute w-64 h-64 rounded-full bg-[radial-gradient(circle,rgba(212,168,67,0.1)_0%,transparent_70%)]" />
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
-        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: 'easeOut' }}
         className="relative mb-8"
       >
-        <div className="w-28 h-28 rounded-3xl gold-gradient flex items-center justify-center shadow-[0_0_40px_rgba(212,168,67,0.2)]">
-          <Gem className="w-14 h-14 text-[#0a0a0a]" strokeWidth={1.8} />
+        <div className="w-52 h-auto mx-auto">
+          <img
+            src="/logos/laxree-logo.png"
+            alt="Laxree"
+            className="w-full h-auto object-contain drop-shadow-[0_0_30px_rgba(212,168,67,0.15)]"
+          />
         </div>
         {/* Decorative rings */}
         <motion.div
@@ -96,20 +100,11 @@ function BrandPanel() {
         />
       </motion.div>
 
-      <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.2 }}
-        className="text-5xl xl:text-6xl font-bold tracking-[0.2em] gold-gradient-text mb-4"
-      >
-        LAXREE
-      </motion.h1>
-
       <motion.div
         initial={{ opacity: 0, scaleX: 0 }}
         animate={{ opacity: 1, scaleX: 1 }}
         transition={{ duration: 0.6, delay: 0.4 }}
-        className="w-24 h-px gold-gradient mb-6"
+        className="w-24 h-px gold-gradient mb-4"
       />
 
       <motion.p
@@ -129,7 +124,7 @@ function BrandPanel() {
         className="absolute bottom-12 text-center"
       >
         <p className="text-xs text-[rgba(212,168,67,0.3)] tracking-[0.3em] uppercase">
-          Premium Jewellery Intelligence
+          Admin Dashboard
         </p>
       </motion.div>
     </div>
@@ -215,16 +210,14 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="lg:hidden flex flex-col items-center mb-10"
           >
-            <div className="w-16 h-16 rounded-2xl gold-gradient flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(212,168,67,0.15)]">
-              <Gem className="w-8 h-8 text-[#0a0a0a]" strokeWidth={1.8} />
+            <div className="w-32 h-auto mx-auto mb-4">
+              <img
+                src="/logos/laxree-logo.png"
+                alt="Laxree"
+                className="w-full h-auto object-contain"
+              />
             </div>
-            <h1 className="text-3xl font-bold tracking-[0.2em] gold-gradient-text">
-              LAXREE
-            </h1>
             <div className="w-16 h-px gold-gradient mt-3 mb-2" />
-            <p className="text-muted-foreground text-xs tracking-[0.15em] uppercase">
-              Marketing Analytics Suite
-            </p>
           </motion.div>
 
           {/* Form card */}
@@ -402,34 +395,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               </motion.div>
             </form>
 
-            {/* Demo credentials hint */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.9 }}
-              className="mt-8 pt-6 border-t border-[rgba(212,168,67,0.08)]"
-            >
-              <div className="flex items-start gap-3 bg-[rgba(212,168,67,0.04)] border border-[rgba(212,168,67,0.08)] rounded-xl p-4">
-                <div className="mt-0.5 w-5 h-5 rounded-md gold-gradient flex items-center justify-center shrink-0">
-                  <Gem className="w-3 h-3 text-[#0a0a0a]" strokeWidth={2} />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-[#D4A843]/80 mb-1.5">
-                    Demo Credentials
-                  </p>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-mono">
-                      <span className="text-[rgba(212,168,67,0.5)]">Email:</span>{' '}
-                      admin@laxree.com
-                    </p>
-                    <p className="text-xs text-muted-foreground font-mono">
-                      <span className="text-[rgba(212,168,67,0.5)]">Pass:</span>{' '}
-                      laxree2024
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+
           </div>
 
           {/* Bottom text */}
@@ -439,7 +405,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             transition={{ duration: 0.5, delay: 1.1 }}
             className="text-center text-xs text-muted-foreground/40 mt-8"
           >
-            &copy; {new Date().getFullYear()} Laxree Jewellery. All rights reserved.
+            &copy; {new Date().getFullYear()} Laxree. All rights reserved.
           </motion.p>
         </motion.div>
       </div>

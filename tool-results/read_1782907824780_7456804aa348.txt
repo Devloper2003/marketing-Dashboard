@@ -1,0 +1,879 @@
+     1→'use client';
+     2→
+     3→import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+     4→import { useSearchParams } from 'next/navigation';
+     5→import { motion, AnimatePresence } from 'framer-motion';
+     6→import { Gem, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Building2, ChevronDown, ChevronUp, X } from 'lucide-react';
+     7→import { Button } from '@/components/ui/button';
+     8→import { Input } from '@/components/ui/input';
+     9→import { Checkbox } from '@/components/ui/checkbox';
+    10→import { Label } from '@/components/ui/label';
+    11→
+    12→/* ─── Types ──────────────────────────────────────────────────── */
+    13→export interface TenantUser {
+    14→  id: string;
+    15→  name: string;
+    16→  email: string;
+    17→  role: string;
+    18→  designation: string | null;
+    19→  avatar: string | null;
+    20→}
+    21→
+    22→export interface TenantInfo {
+    23→  id: string;
+    24→  name: string;
+    25→  slug: string;
+    26→  logo: string | null;
+    27→  primaryColor: string;
+    28→  secondaryColor: string | null;
+    29→  bgAccent: string | null;
+    30→}
+    31→
+    32→interface BrandData {
+    33→  id: string;
+    34→  name: string;
+    35→  slug: string;
+    36→  logo: string | null;
+    37→  primaryColor: string;
+    38→  secondaryColor: string | null;
+    39→  bgAccent: string | null;
+    40→}
+    41→
+    42→interface LoginPageProps {
+    43→  onLogin: (data: { user: TenantUser; tenant: TenantInfo }) => void;
+    44→}
+    45→
+    46→/* ─── Default platform branding (Growthive) ─────────────────── */
+    47→const PLATFORM_BRAND: BrandData = {
+    48→  id: '__platform__',
+    49→  name: 'Growthive',
+    50→  slug: '',
+    51→  logo: '/logos/growthive.svg',
+    52→  primaryColor: '#6366f1',
+    53→  secondaryColor: null,
+    54→  bgAccent: null,
+    55→};
+    56→
+    57→/* ─── Color utilities (avoid Tailwind dynamic classes) ──────── */
+    58→function hexToRgb(hex: string): { r: number; g: number; b: number } {
+    59→  const clean = hex.replace('#', '');
+    60→  const num = parseInt(clean, 16);
+    61→  return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+    62→}
+    63→
+    64→function withAlpha(hex: string, alpha: number): string {
+    65→  const { r, g, b } = hexToRgb(hex);
+    66→  return `rgba(${r},${g},${b},${alpha})`;
+    67→}
+    68→
+    69→/* ─── Floating animated particles ──────────────────────────── */
+    70→function Particles({ color }: { color: string }) {
+    71→  const particles = useMemo(
+    72→    () =>
+    73→      Array.from({ length: 30 }, (_, i) => ({
+    74→        id: i,
+    75→        size: Math.random() * 4 + 1,
+    76→        x: Math.random() * 100,
+    77→        y: Math.random() * 100,
+    78→        duration: Math.random() * 12 + 8,
+    79→        delay: Math.random() * 6,
+    80→        opacity: Math.random() * 0.4 + 0.1,
+    81→      })),
+    82→    [],
+    83→  );
+    84→
+    85→  return (
+    86→    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    87→      {particles.map((p) => (
+    88→        <motion.div
+    89→          key={p.id}
+    90→          className="absolute rounded-full"
+    91→          style={{
+    92→            width: p.size,
+    93→            height: p.size,
+    94→            left: `${p.x}%`,
+    95→            top: `${p.y}%`,
+    96→            background:
+    97→              p.size > 3
+    98→                ? `radial-gradient(circle, ${withAlpha(color, 0.6)}, transparent)`
+    99→                : withAlpha(color, 0.5),
+   100→            boxShadow: p.size > 3 ? `0 0 6px ${withAlpha(color, 0.3)}` : 'none',
+   101→          }}
+   102→          animate={{
+   103→            y: [0, -30, 10, -20, 0],
+   104→            x: [0, 10, -5, 15, 0],
+   105→            opacity: [p.opacity, p.opacity * 1.5, p.opacity * 0.7, p.opacity * 1.2, p.opacity],
+   106→          }}
+   107→          transition={{
+   108→            duration: p.duration,
+   109→            repeat: Infinity,
+   110→            delay: p.delay,
+   111→            ease: 'easeInOut',
+   112→          }}
+   113→        />
+   114→      ))}
+   115→    </div>
+   116→  );
+   117→}
+   118→
+   119→/* ─── Brand panel (desktop only) ────────────────────────────── */
+   120→function BrandPanel({ brand }: { brand: BrandData }) {
+   121→  const color = brand.primaryColor;
+   122→
+   123→  return (
+   124→    <div
+   125→      className="hidden lg:flex lg:w-[480px] xl:w-[540px] relative flex-col items-center justify-center p-12"
+   126→      style={{ borderRight: `1px solid ${withAlpha(color, 0.12)}` }}
+   127→    >
+   128→      {/* Decorative corner accents */}
+   129→      <div
+   130→        className="absolute top-8 left-8 w-16 h-16"
+   131→        style={{ borderTop: `2px solid ${withAlpha(color, 0.3)}`, borderLeft: `2px solid ${withAlpha(color, 0.3)}` }}
+   132→      />
+   133→      <div
+   134→        className="absolute bottom-8 right-8 w-16 h-16"
+   135→        style={{ borderBottom: `2px solid ${withAlpha(color, 0.3)}`, borderRight: `2px solid ${withAlpha(color, 0.3)}` }}
+   136→      />
+   137→
+   138→      {/* Radial glow behind logo */}
+   139→      <div
+   140→        className="absolute w-64 h-64 rounded-full"
+   141→        style={{ background: `radial-gradient(circle, ${withAlpha(color, 0.1)} 0%, transparent 70%)` }}
+   142→      />
+   143→
+   144→      <motion.div
+   145→        initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+   146→        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+   147→        transition={{ duration: 0.8, ease: 'easeOut' }}
+   148→        className="relative mb-8"
+   149→      >
+   150→        {brand.logo ? (
+   151→          <div
+   152→            className="w-28 h-28 rounded-3xl flex items-center justify-center overflow-hidden"
+   153→            style={{
+   154→              background: `linear-gradient(135deg, ${color}, ${withAlpha(color, 0.7)})`,
+   155→              boxShadow: `0 0 40px ${withAlpha(color, 0.2)}`,
+   156→            }}
+   157→          >
+   158→            <img
+   159→              src={brand.logo}
+   160→              alt={brand.name}
+   161→              className="w-16 h-16 object-contain"
+   162→              onError={(e) => {
+   163→                // Fallback to icon on error
+   164→                (e.target as HTMLImageElement).style.display = 'none';
+   165→                (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+   166→              }}
+   167→            />
+   168→            <Gem
+   169→              className="w-14 h-14 text-[#0a0a0a] hidden"
+   170→              strokeWidth={1.8}
+   171→            />
+   172→          </div>
+   173→        ) : (
+   174→          <div
+   175→            className="w-28 h-28 rounded-3xl flex items-center justify-center"
+   176→            style={{
+   177→              background: `linear-gradient(135deg, ${color}, ${withAlpha(color, 0.7)})`,
+   178→              boxShadow: `0 0 40px ${withAlpha(color, 0.2)}`,
+   179→            }}
+   180→          >
+   181→            <Building2 className="w-14 h-14 text-[#0a0a0a]" strokeWidth={1.8} />
+   182→          </div>
+   183→        )}
+   184→
+   185→        {/* Decorative rings */}
+   186→        <motion.div
+   187→          className="absolute -inset-4 rounded-[2rem]"
+   188→          style={{ border: `1px solid ${withAlpha(color, 0.15)}` }}
+   189→          animate={{ rotate: 360 }}
+   190→          transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+   191→        />
+   192→        <motion.div
+   193→          className="absolute -inset-8 rounded-[2.5rem]"
+   194→          style={{ border: `1px dashed ${withAlpha(color, 0.08)}` }}
+   195→          animate={{ rotate: -360 }}
+   196→          transition={{ duration: 45, repeat: Infinity, ease: 'linear' }}
+   197→        />
+   198→      </motion.div>
+   199→
+   200→      <motion.h1
+   201→        initial={{ opacity: 0, y: 20 }}
+   202→        animate={{ opacity: 1, y: 0 }}
+   203→        transition={{ duration: 0.7, delay: 0.2 }}
+   204→        className="text-5xl xl:text-6xl font-bold tracking-[0.2em] mb-4"
+   205→        style={{
+   206→          background: `linear-gradient(135deg, ${color}, ${withAlpha(color, 0.8)})`,
+   207→          WebkitBackgroundClip: 'text',
+   208→          WebkitTextFillColor: 'transparent',
+   209→          backgroundClip: 'text',
+   210→        }}
+   211→      >
+   212→        {brand.name.toUpperCase()}
+   213→      </motion.h1>
+   214→
+   215→      <motion.div
+   216→        initial={{ opacity: 0, scaleX: 0 }}
+   217→        animate={{ opacity: 1, scaleX: 1 }}
+   218→        transition={{ duration: 0.6, delay: 0.4 }}
+   219→        className="w-24 h-px"
+   220→        style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }}
+   221→      />
+   222→
+   223→      <motion.p
+   224→        initial={{ opacity: 0, y: 10 }}
+   225→        animate={{ opacity: 1, y: 0 }}
+   226→        transition={{ duration: 0.6, delay: 0.5 }}
+   227→        className="text-muted-foreground text-sm tracking-[0.15em] uppercase text-center mt-6"
+   228→      >
+   229→        {brand.slug ? 'Brand Dashboard' : 'Marketing Dashboard Platform'}
+   230→      </motion.p>
+   231→
+   232→      {/* Bottom decorative text */}
+   233→      <motion.div
+   234→        initial={{ opacity: 0 }}
+   235→        animate={{ opacity: 1 }}
+   236→        transition={{ duration: 0.6, delay: 0.8 }}
+   237→        className="absolute bottom-12 text-center"
+   238→      >
+   239→        <p
+   240→          className="text-xs tracking-[0.3em] uppercase"
+   241→          style={{ color: withAlpha(color, 0.3) }}
+   242→        >
+   243→          Marketing Intelligence Platform
+   244→        </p>
+   245→      </motion.div>
+   246→    </div>
+   247→  );
+   248→}
+   249→
+   250→/* ─── Mobile brand header ───────────────────────────────────── */
+   251→function MobileBrandHeader({ brand }: { brand: BrandData }) {
+   252→  const color = brand.primaryColor;
+   253→
+   254→  return (
+   255→    <motion.div
+   256→      initial={{ opacity: 0, y: -10 }}
+   257→      animate={{ opacity: 1, y: 0 }}
+   258→      transition={{ duration: 0.5, delay: 0.1 }}
+   259→      className="lg:hidden flex flex-col items-center mb-10"
+   260→    >
+   261→      {brand.logo ? (
+   262→        <div
+   263→          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 overflow-hidden"
+   264→          style={{
+   265→            background: `linear-gradient(135deg, ${color}, ${withAlpha(color, 0.7)})`,
+   266→            boxShadow: `0 0 30px ${withAlpha(color, 0.15)}`,
+   267→          }}
+   268→        >
+   269→          <img
+   270→            src={brand.logo}
+   271→            alt={brand.name}
+   272→            className="w-9 h-9 object-contain"
+   273→            onError={(e) => {
+   274→              (e.target as HTMLImageElement).style.display = 'none';
+   275→              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+   276→            }}
+   277→          />
+   278→          <Gem className="w-8 h-8 text-[#0a0a0a] hidden" strokeWidth={1.8} />
+   279→        </div>
+   280→      ) : (
+   281→        <div
+   282→          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+   283→          style={{
+   284→            background: `linear-gradient(135deg, ${color}, ${withAlpha(color, 0.7)})`,
+   285→            boxShadow: `0 0 30px ${withAlpha(color, 0.15)}`,
+   286→          }}
+   287→        >
+   288→          <Building2 className="w-8 h-8 text-[#0a0a0a]" strokeWidth={1.8} />
+   289→        </div>
+   290→      )}
+   291→      <h1
+   292→        className="text-3xl font-bold tracking-[0.2em]"
+   293→        style={{
+   294→          background: `linear-gradient(135deg, ${color}, ${withAlpha(color, 0.8)})`,
+   295→          WebkitBackgroundClip: 'text',
+   296→          WebkitTextFillColor: 'transparent',
+   297→          backgroundClip: 'text',
+   298→        }}
+   299→      >
+   300→        {brand.name.toUpperCase()}
+   301→      </h1>
+   302→      <div
+   303→        className="w-16 h-px mt-3 mb-2"
+   304→        style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }}
+   305→      />
+   306→      <p className="text-muted-foreground text-xs tracking-[0.15em] uppercase">
+   307→        {brand.slug ? 'Brand Dashboard' : 'Marketing Dashboard Platform'}
+   308→      </p>
+   309→    </motion.div>
+   310→  );
+   311→}
+   312→
+   313→/* ─── Main Login Page Component ─────────────────────────────── */
+   314→export default function LoginPage({ onLogin }: LoginPageProps) {
+   315→  const searchParams = useSearchParams();
+   316→  const urlBrandSlug = searchParams.get('brand');
+   317→
+   318→  const [email, setEmail] = useState('');
+   319→  const [password, setPassword] = useState('');
+   320→  const [showPassword, setShowPassword] = useState(false);
+   321→  const [remember, setRemember] = useState(false);
+   322→  const [loading, setLoading] = useState(false);
+   323→  const [error, setError] = useState('');
+   324→  const [mounted, setMounted] = useState(false);
+   325→  const [brand, setBrand] = useState<BrandData | null>(urlBrandSlug ? null : PLATFORM_BRAND);
+   326→  const [brandLoading, setBrandLoading] = useState(!!urlBrandSlug);
+   327→
+   328→  // Brand code toggle + input state
+   329→  const [showBrandInput, setShowBrandInput] = useState(!!urlBrandSlug);
+   330→  const [brandCode, setBrandCode] = useState(urlBrandSlug || '');
+   331→  const [brandCodeError, setBrandCodeError] = useState('');
+   332→  const [brandCodeLoading, setBrandCodeLoading] = useState(false);
+   333→  const brandCodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+   334→
+   335→  // Fetch tenant branding if ?brand=slug is present (URL param)
+   336→  useEffect(() => {
+   337→    setMounted(true);
+   338→    if (!urlBrandSlug) return;
+   339→
+   340→    let cancelled = false;
+   341→    async function fetchBrand() {
+   342→      try {
+   343→        const res = await fetch(`/api/tenant/brands/by-slug/${encodeURIComponent(urlBrandSlug)}`);
+   344→        if (!res.ok) {
+   345→          if (!cancelled) {
+   346→            setBrand(PLATFORM_BRAND);
+   347→            setBrandLoading(false);
+   348→          }
+   349→          return;
+   350→        }
+   351→        const data = await res.json();
+   352→        if (!cancelled && data.success && data.brand) {
+   353→          setBrand(data.brand);
+   354→        } else if (!cancelled) {
+   355→          setBrand(PLATFORM_BRAND);
+   356→        }
+   357→      } catch {
+   358→        if (!cancelled) setBrand(PLATFORM_BRAND);
+   359→      } finally {
+   360→        if (!cancelled) setBrandLoading(false);
+   361→      }
+   362→    }
+   363→    fetchBrand();
+   364→    return () => { cancelled = true; };
+   365→  }, [urlBrandSlug]);
+   366→
+   367→  // Fetch brand by manual brand code input (debounced)
+   368→  const fetchBrandByCode = useCallback(async (slug: string) => {
+   369→    if (!slug.trim()) {
+   370→      setBrand(PLATFORM_BRAND);
+   371→      setBrandCodeError('');
+   372→      return;
+   373→    }
+   374→    setBrandCodeLoading(true);
+   375→    setBrandCodeError('');
+   376→    try {
+   377→      const res = await fetch(`/api/tenant/brands/by-slug/${encodeURIComponent(slug.trim())}`);
+   378→      if (!res.ok) {
+   379→        setBrand(PLATFORM_BRAND);
+   380→        setBrandCodeError('Brand not found');
+   381→        return;
+   382→      }
+   383→      const data = await res.json();
+   384→      if (data.success && data.brand) {
+   385→        setBrand(data.brand);
+   386→      } else {
+   387→        setBrand(PLATFORM_BRAND);
+   388→        setBrandCodeError('Brand not found');
+   389→      }
+   390→    } catch {
+   391→      setBrand(PLATFORM_BRAND);
+   392→      setBrandCodeError('Failed to lookup brand');
+   393→    } finally {
+   394→      setBrandCodeLoading(false);
+   395→    }
+   396→  }, []);
+   397→
+   398→  const handleBrandCodeChange = useCallback((value: string) => {
+   399→ const clean = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+   400→    setBrandCode(clean);
+   401→    if (brandCodeTimer.current) clearTimeout(brandCodeTimer.current);
+   402→    brandCodeTimer.current = setTimeout(() => {
+   403→      fetchBrandByCode(clean);
+   404→    }, 500);
+   405→  }, [fetchBrandByCode]);
+   406→
+   407→  const handleToggleBrandInput = useCallback(() => {
+   408→    const next = !showBrandInput;
+   409→    setShowBrandInput(next);
+   410→    if (!next) {
+   411→      setBrandCode('');
+   412→      setBrandCodeError('');
+   413→      setBrand(PLATFORM_BRAND);
+   414→    }
+   415→  }, [showBrandInput]);
+   416→
+   417→  // Cleanup timer on unmount
+   418→  useEffect(() => {
+   419→    return () => {
+   420→      if (brandCodeTimer.current) clearTimeout(brandCodeTimer.current);
+   421→    };
+   422→  }, []);
+   423→
+   424→  const color = brand?.primaryColor ?? PLATFORM_BRAND.primaryColor;
+   425→  const activeSlug = urlBrandSlug || (showBrandInput ? brandCode.trim() : '');
+   426→  const isPlatform = !activeSlug;
+   427→
+   428→  const handleSubmit = useCallback(
+   429→    async (e: React.FormEvent) => {
+   430→      e.preventDefault();
+   431→      setError('');
+   432→      setLoading(true);
+   433→
+   434→      try {
+   435→        const res = await fetch('/api/tenant/auth/login', {
+   436→          method: 'POST',
+   437→          headers: { 'Content-Type': 'application/json' },
+   438→          body: JSON.stringify({
+   439→            email,
+   440→            password,
+   441→            ...(activeSlug ? { slug: activeSlug } : {}),
+   442→          }),
+   443→        });
+   444→
+   445→        if (!res.ok) {
+   446→          const data = await res.json().catch(() => ({}));
+   447→          throw new Error(data.error || 'Invalid credentials. Please try again.');
+   448→        }
+   449→
+   450→        const data = await res.json();
+   451→        onLogin({ user: data.user, tenant: data.tenant });
+   452→      } catch (err: unknown) {
+   453→        const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+   454→        setError(message);
+   455→      } finally {
+   456→        setLoading(false);
+   457→      }
+   458→    },
+   459→    [email, password, activeSlug, onLogin],
+   460→  );
+   461→
+   462→  if (!mounted || brandLoading) {
+   463→    return <div className="min-h-screen bg-[#0a0a0a]" />;
+   464→  }
+   465→
+   466→  const activeBrand = brand ?? PLATFORM_BRAND;
+   467→
+   468→  // Demo credentials based on context
+   469→  const demoEmail = activeSlug ? 'admin@laxree.com' : 'admin@growthive.com';
+   470→  const demoPassword = activeSlug ? 'laxree2024' : 'growthive2024';
+   471→  const demoNote = activeSlug ? '' : 'Platform Admin';
+   472→
+   473→  return (
+   474→    <div className="min-h-screen bg-[#0a0a0a] flex relative overflow-hidden">
+   475→      {/* Animated radial gradient background */}
+   476→      <div className="absolute inset-0">
+   477→        <div
+   478→          className="absolute inset-0"
+   479→          style={{ background: `radial-gradient(ellipse at 30% 50%, ${withAlpha(color, 0.06)} 0%, transparent 60%)` }}
+   480→        />
+   481→        <div
+   482→          className="absolute inset-0"
+   483→          style={{ background: `radial-gradient(ellipse at 80% 20%, ${withAlpha(color, 0.03)} 0%, transparent 50%)` }}
+   484→        />
+   485→        <div
+   486→          className="absolute inset-0"
+   487→          style={{ background: `radial-gradient(ellipse at 50% 100%, ${withAlpha(color, 0.04)} 0%, transparent 40%)` }}
+   488→        />
+   489→      </div>
+   490→
+   491→      <Particles color={color} />
+   492→
+   493→      {/* Left panel – brand showcase (desktop) */}
+   494→      <BrandPanel brand={activeBrand} />
+   495→
+   496→      {/* Right panel – login form */}
+   497→      <div className="flex-1 flex items-center justify-center p-6 sm:p-8 relative z-10">
+   498→        <motion.div
+   499→          initial={{ opacity: 0, y: 30 }}
+   500→          animate={{ opacity: 1, y: 0 }}
+   501→          transition={{ duration: 0.7, ease: 'easeOut' }}
+   502→          className="w-full max-w-md"
+   503→        >
+   504→          {/* Mobile brand header */}
+   505→          <MobileBrandHeader brand={activeBrand} />
+   506→
+   507→          {/* Form card */}
+   508→          <div
+   509→            className="bg-[#111] rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.3)] p-8 sm:p-10"
+   510→            style={{
+   511→              border: `1px solid ${withAlpha(color, 0.15)}`,
+   512→              boxShadow: `0 0 40px ${withAlpha(color, 0.05)}`,
+   513→            }}
+   514→          >
+   515→            {/* Desktop-only heading */}
+   516→            <div className="hidden lg:block mb-8">
+   517→              <motion.h2
+   518→                initial={{ opacity: 0, x: -10 }}
+   519→                animate={{ opacity: 1, x: 0 }}
+   520→                transition={{ duration: 0.5, delay: 0.3 }}
+   521→                className="text-2xl font-semibold text-foreground mb-2"
+   522→              >
+   523→                Welcome back
+   524→              </motion.h2>
+   525→              <motion.p
+   526→                initial={{ opacity: 0, x: -10 }}
+   527→                animate={{ opacity: 1, x: 0 }}
+   528→                transition={{ duration: 0.5, delay: 0.4 }}
+   529→                className="text-muted-foreground text-sm"
+   530→              >
+   531→                Sign in to your {activeBrand.name} dashboard
+   532→              </motion.p>
+   533→            </div>
+   534→
+   535→            {/* Mobile heading */}
+   536→            <div className="lg:hidden mb-8">
+   537→              <h2 className="text-xl font-semibold text-foreground mb-1">
+   538→                Sign in
+   539→              </h2>
+   540→              <p className="text-muted-foreground text-sm">
+   541→                Access your marketing dashboard
+   542→              </p>
+   543→            </div>
+   544→
+   545→            {/* Error message */}
+   546→            <AnimatePresence mode="wait">
+   547→              {error && (
+   548→                <motion.div
+   549→                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+   550→                  animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
+   551→                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+   552→                  transition={{ duration: 0.3 }}
+   553→                  className="overflow-hidden"
+   554→                >
+   555→                  <div className="bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.2)] rounded-lg px-4 py-3 text-sm text-red-400">
+   556→                    {error}
+   557→                  </div>
+   558→                </motion.div>
+   559→              )}
+   560→            </AnimatePresence>
+   561→
+   562→            <form onSubmit={handleSubmit} className="space-y-5">
+   563→              {/* Email field */}
+   564→              <motion.div
+   565→                initial={{ opacity: 0, y: 15 }}
+   566→                animate={{ opacity: 1, y: 0 }}
+   567→                transition={{ duration: 0.5, delay: 0.4 }}
+   568→                className="space-y-2"
+   569→              >
+   570→                <Label htmlFor="email" className="text-sm text-muted-foreground">
+   571→                  Email address
+   572→                </Label>
+   573→                <div className="relative group">
+   574→                  <Mail
+   575→                    className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-200"
+   576→                    style={{ color: withAlpha(color, 0.4) }}
+   577→                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = color; }}
+   578→                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = withAlpha(color, 0.4); }}
+   579→                  />
+   580→                  <Input
+   581→                    id="email"
+   582→                    type="email"
+   583→                    placeholder={`you@${brandSlug ? brandSlug : 'growthive'}.com`}
+   584→                    value={email}
+   585→                    onChange={(e) => setEmail(e.target.value)}
+   586→                    required
+   587→                    disabled={loading}
+   588→                    className="pl-11 h-12 bg-[#0a0a0a] rounded-xl text-foreground placeholder:text-[rgba(255,255,255,0.2)] focus:ring-0 focus-visible:ring-0 transition-all duration-200 disabled:opacity-50"
+   589→                    style={{
+   590→                      border: `1px solid #2a2520`,
+   591→                    }}
+   592→                    onFocus={(e) => {
+   593→                      e.currentTarget.style.borderColor = withAlpha(color, 0.5);
+   594→                      e.currentTarget.style.boxShadow = `0 0 0 3px ${withAlpha(color, 0.1)}`;
+   595→                    }}
+   596→                    onBlur={(e) => {
+   597→                      e.currentTarget.style.borderColor = '#2a2520';
+   598→                      e.currentTarget.style.boxShadow = 'none';
+   599→                    }}
+   600→                  />
+   601→                </div>
+   602→              </motion.div>
+   603→
+   604→              {/* Password field */}
+   605→              <motion.div
+   606→                initial={{ opacity: 0, y: 15 }}
+   607→                animate={{ opacity: 1, y: 0 }}
+   608→                transition={{ duration: 0.5, delay: 0.5 }}
+   609→                className="space-y-2"
+   610→              >
+   611→                <Label htmlFor="password" className="text-sm text-muted-foreground">
+   612→                  Password
+   613→                </Label>
+   614→                <div className="relative group">
+   615→                  <Lock
+   616→                    className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-200"
+   617→                    style={{ color: withAlpha(color, 0.4) }}
+   618→                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = color; }}
+   619→                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = withAlpha(color, 0.4); }}
+   620→                  />
+   621→                  <Input
+   622→                    id="password"
+   623→                    type={showPassword ? 'text' : 'password'}
+   624→                    placeholder="Enter your password"
+   625→                    value={password}
+   626→                    onChange={(e) => setPassword(e.target.value)}
+   627→                    required
+   628→                    disabled={loading}
+   629→                    className="pl-11 pr-11 h-12 bg-[#0a0a0a] rounded-xl text-foreground placeholder:text-[rgba(255,255,255,0.2)] focus:ring-0 focus-visible:ring-0 transition-all duration-200 disabled:opacity-50"
+   630→                    style={{
+   631→                      border: `1px solid #2a2520`,
+   632→                    }}
+   633→                    onFocus={(e) => {
+   634→                      e.currentTarget.style.borderColor = withAlpha(color, 0.5);
+   635→                      e.currentTarget.style.boxShadow = `0 0 0 3px ${withAlpha(color, 0.1)}`;
+   636→                    }}
+   637→                    onBlur={(e) => {
+   638→                      e.currentTarget.style.borderColor = '#2a2520';
+   639→                      e.currentTarget.style.boxShadow = 'none';
+   640→                    }}
+   641→                  />
+   642→                  <button
+   643→                    type="button"
+   644→                    onClick={() => setShowPassword(!showPassword)}
+   645→                    className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200 focus:outline-none"
+   646→                    style={{ color: withAlpha(color, 0.4) }}
+   647→                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = color; }}
+   648→                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = withAlpha(color, 0.4); }}
+   649→                    tabIndex={-1}
+   650→                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+   651→                  >
+   652→                    {showPassword ? (
+   653→                      <EyeOff className="w-4 h-4" />
+   654→                    ) : (
+   655→                      <Eye className="w-4 h-4" />
+   656→                    )}
+   657→                  </button>
+   658→                </div>
+   659→              </motion.div>
+   660→
+   661→                {/* Brand Code Toggle */}
+   662→              <motion.div
+   663→                initial={{ opacity: 0, y: 10 }}
+   664→                animate={{ opacity: 1, y: 0 }}
+   665→                transition={{ duration: 0.5, delay: 0.55 }}
+   666→                className="flex items-center justify-between"
+   667→              >
+   668→                <button
+   669→                  type="button"
+   670→                  onClick={handleToggleBrandInput}
+   671→                  className="flex items-center gap-1.5 text-sm transition-colors duration-200 focus:outline-none group"
+   672→                  style={{ color: withAlpha(color, 0.7) }}
+   673→                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = color; }}
+   674→                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = withAlpha(color, 0.7); }}
+   675→                >
+   676→                  <Building2 className="h-3.5 w-3.5" />
+   677→                  <span className="text-xs font-medium">{showBrandInput ? 'Hide brand login' : 'Login as a brand?'}</span>
+   678→                  {showBrandInput ? (
+   679→                    <ChevronUp className="h-3 w-3" />
+   680→                  ) : (
+   681→                    <ChevronDown className="h-3 w-3" />
+   682→                  )}
+   683→                </button>
+   684→              </motion.div>
+   685→
+   686→              {/* Brand Code Input */}
+   687→              <AnimatePresence>
+   688→                {showBrandInput && (
+   689→                  <motion.div
+   690→                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+   691→                    animate={{ opacity: 1, height: 'auto', marginBottom: 20 }}
+   692→                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+   693→                    transition={{ duration: 0.3 }}
+   694→                    className="overflow-hidden"
+   695→                  >
+   696→                    <div className="space-y-2">
+   697→                      <Label className="text-sm text-muted-foreground">
+   698→                        Brand Code
+   699→                      </Label>
+   700→                      <div className="relative group">
+   701→                        <Building2
+   702→                          className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-200"
+   703→                          style={{ color: withAlpha(color, 0.4) }}
+   704→                          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = color; }}
+   705→                          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = withAlpha(color, 0.4); }}
+   706→                        />
+   707→                        <Input
+   708→                          type="text"
+   709→                          placeholder="Enter your brand code (e.g. laxree)"
+   710→                          value={brandCode}
+   711→                          onChange={(e) => handleBrandCodeChange(e.target.value)}
+   712→                          disabled={loading || !!urlBrandSlug}
+   713→                          className="pl-11 pr-10 h-12 bg-[#0a0a0a] rounded-xl text-foreground placeholder:text-[rgba(255,255,255,0.2)] focus:ring-0 focus-visible:ring-0 transition-all duration-200 disabled:opacity-50 font-mono"
+   714→                          style={{
+   715→                            border: `1px solid ${brandCodeError ? 'rgba(239,68,68,0.4)' : '#2a2520'}`,
+   716→                          }}
+   717→                          onFocus={(e) => {
+   718→                            e.currentTarget.style.borderColor = withAlpha(color, 0.5);
+   719→                            e.currentTarget.style.boxShadow = `0 0 0 3px ${withAlpha(color, 0.1)}`;
+   720→                          }}
+   721→                          onBlur={(e) => {
+   722→                            e.currentTarget.style.borderColor = brandCodeError ? 'rgba(239,68,68,0.4)' : '#2a2520';
+   723→                            e.currentTarget.style.boxShadow = 'none';
+   724→                          }}
+   725→                        />
+   726→                        {brandCodeLoading && (
+   727→                          <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin" style={{ color: withAlpha(color, 0.5) }} />
+   728→                        )}
+   729→                        {!brandCodeLoading && brandCode && !brandCodeError && brand?.slug && brand.slug !== 'growthive' && (
+   730→                          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+   731→                            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+   732→                          </span>
+   733→                        )}
+   734→                        {!brandCodeLoading && brandCodeError && (
+   735→                          <X className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+   736→                        )}
+   737→                      </div>
+   738→                      {brandCodeError && (
+   739→                        <p className="text-[11px] text-red-400/80">{brandCodeError}</p>
+   740→                      )}
+   741→                      {brand?.slug && brand.slug !== 'growthive' && (
+   742→                        <p className="text-[11px] text-emerald-400/80">Connected to <strong>{brand.name}</strong></p>
+   743→                      )}
+   744→                    </div>
+   745→                  </motion.div>
+   746→                )}
+   747→              </AnimatePresence>
+   748→
+   749→            {/* Remember me + Forgot password */}
+   750→              <motion.div
+   751→                initial={{ opacity: 0, y: 10 }}
+   752→                animate={{ opacity: 1, y: 0 }}
+   753→                transition={{ duration: 0.5, delay: showBrandInput ? 0.75 : 0.6 }}
+   754→                className="flex items-center justify-between"
+   755→              >
+   756→                <div className="flex items-center gap-2.5">
+   757→                  <Checkbox
+   758→                    id="remember"
+   759→                    checked={remember}
+   760→                    onCheckedChange={(checked) => setRemember(checked === true)}
+   761→                    disabled={loading}
+   762→                    className="border-[#2a2520] h-4 w-4"
+   763→                    style={{
+   764→                      // Use CSS custom property approach - we handle checked state via the style prop
+   765→                    }}
+   766→                  />
+   767→                  <Label
+   768→                    htmlFor="remember"
+   769→                    className="text-sm text-muted-foreground cursor-pointer select-none"
+   770→                  >
+   771→                    Remember me
+   772→                  </Label>
+   773→                </div>
+   774→                <button
+   775→                  type="button"
+   776→                  className="text-sm transition-colors duration-200 focus:outline-none"
+   777→                  style={{ color: withAlpha(color, 0.7) }}
+   778→                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = color; }}
+   779→                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = withAlpha(color, 0.7); }}
+   780→                >
+   781→                  Forgot Password?
+   782→                </button>
+   783→              </motion.div>
+   784→
+   785→              {/* Submit button */}
+   786→              <motion.div
+   787→                initial={{ opacity: 0, y: 15 }}
+   788→                animate={{ opacity: 1, y: 0 }}
+   789→                transition={{ duration: 0.5, delay: showBrandInput ? 0.85 : 0.7 }}
+   790→                className="pt-2"
+   791→              >
+   792→                <Button
+   793→                  type="submit"
+   794→                  disabled={loading}
+   795→                  className="w-full h-12 rounded-xl font-semibold text-sm tracking-wide relative overflow-hidden group disabled:opacity-60 border-0 text-[#0a0a0a]"
+   796→                  style={{
+   797→                    background: `linear-gradient(135deg, ${color}, ${withAlpha(color, 0.75)})`,
+   798→                  }}
+   799→                  onMouseEnter={(e) => {
+   800→                    e.currentTarget.style.boxShadow = `0 0 30px ${withAlpha(color, 0.3)}`;
+   801→                  }}
+   802→                  onMouseLeave={(e) => {
+   803→                    e.currentTarget.style.boxShadow = 'none';
+   804→                  }}
+   805→                >
+   806→                  {/* Shimmer overlay */}
+   807→                  <span className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)] -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+   808→
+   809→                  <span className="relative flex items-center justify-center gap-2">
+   810→                    {loading ? (
+   811→                      <>
+   812→                        <Loader2 className="w-4 h-4 animate-spin" />
+   813→                        Signing in...
+   814→                      </>
+   815→                    ) : (
+   816→                      <>
+   817→                        Sign In
+   818→                        <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-200" />
+   819→                      </>
+   820→                    )}
+   821→                  </span>
+   822→                </Button>
+   823→              </motion.div>
+   824→            </form>
+   825→
+   826→            {/* Demo credentials hint */}
+   827→            <motion.div
+   828→              initial={{ opacity: 0, y: 10 }}
+   829→              animate={{ opacity: 1, y: 0 }}
+   830→              transition={{ duration: 0.5, delay: showBrandInput ? 1.05 : 0.9 }}
+   831→              className="mt-8 pt-6"
+   832→              style={{ borderTop: `1px solid ${withAlpha(color, 0.08)}` }}
+   833→            >
+   834→              <div
+   835→                className="flex items-start gap-3 rounded-xl p-4"
+   836→                style={{
+   837→                  background: withAlpha(color, 0.04),
+   838→                  border: `1px solid ${withAlpha(color, 0.08)}`,
+   839→                }}
+   840→              >
+   841→                <div
+   842→                  className="mt-0.5 w-5 h-5 rounded-md flex items-center justify-center shrink-0"
+   843→                  style={{ background: `linear-gradient(135deg, ${color}, ${withAlpha(color, 0.7)})` }}
+   844→                >
+   845→                  <Gem className="w-3 h-3 text-[#0a0a0a]" strokeWidth={2} />
+   846→                </div>
+   847→                <div>
+   848→                  <p className="text-xs font-medium mb-1.5" style={{ color: withAlpha(color, 0.8) }}>
+   849→                    Demo Credentials{demoNote ? ` (${demoNote})` : ''}
+   850→                  </p>
+   851→                  <div className="space-y-1">
+   852→                    <p className="text-xs text-muted-foreground font-mono">
+   853→                      <span style={{ color: withAlpha(color, 0.5) }}>Email:</span>{' '}
+   854→                      {demoEmail}
+   855→                    </p>
+   856→                    <p className="text-xs text-muted-foreground font-mono">
+   857→                      <span style={{ color: withAlpha(color, 0.5) }}>Pass:</span>{' '}
+   858→                      {demoPassword}
+   859→                    </p>
+   860→                  </div>
+   861→                </div>
+   862→              </div>
+   863→            </motion.div>
+   864→          </div>
+   865→
+   866→          {/* Bottom text */}
+   867→          <motion.p
+   868→            initial={{ opacity: 0 }}
+   869→            animate={{ opacity: 1 }}
+   870→            transition={{ duration: 0.5, delay: 1.1 }}
+   871→            className="text-center text-xs text-muted-foreground/40 mt-8"
+   872→          >
+   873→            &copy; {new Date().getFullYear()} {activeBrand.name}. All rights reserved.
+   874→          </motion.p>
+   875→        </motion.div>
+   876→      </div>
+   877→    </div>
+   878→  );
+   879→}

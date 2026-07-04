@@ -1,0 +1,1060 @@
+     1→'use client';
+     2→
+     3→import { useState, useEffect, useMemo, useCallback } from 'react';
+     4→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+     5→import { Badge } from '@/components/ui/badge';
+     6→import { Button } from '@/components/ui/button';
+     7→import { Input } from '@/components/ui/input';
+     8→import { Textarea } from '@/components/ui/textarea';
+     9→import { Skeleton } from '@/components/ui/skeleton';
+    10→import { Separator } from '@/components/ui/separator';
+    11→import { ScrollArea } from '@/components/ui/scroll-area';
+    12→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+    13→import {
+    14→  Table,
+    15→  TableBody,
+    16→  TableCell,
+    17→  TableHead,
+    18→  TableHeader,
+    19→  TableRow,
+    20→} from '@/components/ui/table';
+    21→import {
+    22→  Dialog,
+    23→  DialogContent,
+    24→  DialogHeader,
+    25→  DialogTitle,
+    26→  DialogTrigger,
+    27→} from '@/components/ui/dialog';
+    28→import {
+    29→  Select,
+    30→  SelectContent,
+    31→  SelectItem,
+    32→  SelectTrigger,
+    33→  SelectValue,
+    34→} from '@/components/ui/select';
+    35→import { toast } from 'sonner';
+    36→import {
+    37→  Plus,
+    38→  Users,
+    39→  Phone,
+    40→  Mail,
+    41→  MessageCircle,
+    42→  Video,
+    43→  Search,
+    44→  Download,
+    45→  Eye,
+    46→  CalendarClock,
+    47→  TrendingUp,
+    48→  IndianRupee,
+    49→  ArrowRight,
+    50→  GripVertical,
+    51→  Clock,
+    52→  CheckCircle2,
+    53→  Calendar,
+    54→  Target,
+    55→  UserPlus,
+    56→  Filter,
+    57→  ChevronRight,
+    58→  Sparkles,
+    59→  BarChart3,
+    60→} from 'lucide-react';
+    61→import {
+    62→  BarChart,
+    63→  Bar,
+    64→  XAxis,
+    65→  YAxis,
+    66→  CartesianGrid,
+    67→  Tooltip as RechartsTooltip,
+    68→  ResponsiveContainer,
+    69→  Legend,
+    70→} from 'recharts';
+    71→
+    72→/* ─── Types ─────────────────────────────────────────────── */
+    73→
+    74→interface PipelineStage {
+    75→  id: string;
+    76→  name: string;
+    77→  color: string;
+    78→  count: number;
+    79→  value: number;
+    80→}
+    81→
+    82→interface Lead {
+    83→  id: string;
+    84→  name: string;
+    85→  company: string;
+    86→  email: string;
+    87→  phone: string;
+    88→  value: number;
+    89→  stage: string;
+    90→  source: string;
+    91→  quality: string;
+    92→  assignedTo: string;
+    93→  createdAt: string;
+    94→  lastFollowUp: string | null;
+    95→  nextFollowUp: string | null;
+    96→  followUpCount: number;
+    97→  notes: string;
+    98→  tags: string[];
+    99→  country: string;
+   100→  city: string;
+   101→}
+   102→
+   103→interface FollowUp {
+   104→  id: string;
+   105→  leadName: string;
+   106→  leadId: string;
+   107→  type: string;
+   108→  subject: string;
+   109→  date: string;
+   110→  time: string;
+   111→  status: string;
+   112→  notes: string;
+   113→  assignedTo: string;
+   114→}
+   115→
+   116→interface Stats {
+   117→  totalLeads: number;
+   118→  thisMonth: number;
+   119→  conversionRate: number;
+   120→  avgDealSize: number;
+   121→  avgDaysToClose: number;
+   122→  totalRevenue: number;
+   123→  hotLeads: number;
+   124→  warmLeads: number;
+   125→  coldLeads: number;
+   126→}
+   127→
+   128→interface MonthlyTrend {
+   129→  month: string;
+   130→  new: number;
+   131→  won: number;
+   132→  revenue: number;
+   133→  conversionRate: number;
+   134→}
+   135→
+   136→interface SourceBreakdown {
+   137→  source: string;
+   138→  count: number;
+   139→  percentage: number;
+   140→  revenue: number;
+   141→}
+   142→
+   143→interface TeamPerformance {
+   144→  name: string;
+   145→  leads: number;
+   146→  won: number;
+   147→  revenue: number;
+   148→  avgDealDays: number;
+   149→}
+   150→
+   151→interface PipelineData {
+   152→  pipeline: { stages: PipelineStage[] };
+   153→  leads: Lead[];
+   154→  followUps: FollowUp[];
+   155→  stats: Stats;
+   156→  monthlyTrend: MonthlyTrend[];
+   157→  sourceBreakdown: SourceBreakdown[];
+   158→  teamPerformance: TeamPerformance[];
+   159→}
+   160→
+   161→/* ─── Helpers ───────────────────────────────────────────── */
+   162→
+   163→function formatINR(val: number): string {
+   164→  if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)}Cr`;
+   165→  if (val >= 100000) return `₹${(val / 100000).toFixed(2)}L`;
+   166→  if (val >= 1000) return `₹${(val / 1000).toFixed(1)}K`;
+   167→  return `₹${val.toLocaleString('en-IN')}`;
+   168→}
+   169→
+   170→function getInitials(name: string): string {
+   171→  return name
+   172→    .split(' ')
+   173→    .map((w) => w[0])
+   174→    .join('')
+   175→    .toUpperCase()
+   176→    .slice(0, 2);
+   177→}
+   178→
+   179→const qualityColor = (q: string) => {
+   180→  switch (q) {
+   181→    case 'hot': return { dot: 'bg-red-500', badge: 'badge-dot-red', label: 'Hot' };
+   182→    case 'warm': return { dot: 'bg-yellow-500', badge: 'badge-dot-yellow', label: 'Warm' };
+   183→    default: return { dot: 'bg-blue-500', badge: 'badge-dot-blue', label: 'Cold' };
+   184→  }
+   185→};
+   186→
+   187→const typeIcon = (t: string) => {
+   188→  switch (t) {
+   189→    case 'call': return <Phone className="h-3.5 w-3.5" />;
+   190→    case 'email': return <Mail className="h-3.5 w-3.5" />;
+   191→    case 'whatsapp': return <MessageCircle className="h-3.5 w-3.5" />;
+   192→    case 'meeting': return <Video className="h-3.5 w-3.5" />;
+   193→    default: return <Phone className="h-3.5 w-3.5" />;
+   194→  }
+   195→};
+   196→
+   197→const typeColor = (t: string) => {
+   198→  switch (t) {
+   199→    case 'call': return 'border-l-green-500';
+   200→    case 'email': return 'border-l-blue-500';
+   201→    case 'whatsapp': return 'border-l-emerald-400';
+   202→    case 'meeting': return 'border-l-purple-500';
+   203→    default: return 'border-l-gray-500';
+   204→  }
+   205→};
+   206→
+   207→const statusBadge = (s: string) => {
+   208→  switch (s) {
+   209→    case 'completed': return <Badge className="badge-dot-green text-[10px] px-2 py-0.5">Completed</Badge>;
+   210→    case 'pending': return <Badge className="badge-dot-yellow text-[10px] px-2 py-0.5">Pending</Badge>;
+   211→    case 'scheduled': return <Badge className="badge-dot-blue text-[10px] px-2 py-0.5">Scheduled</Badge>;
+   212→    default: return <Badge variant="outline" className="text-[10px] px-2 py-0.5">{s}</Badge>;
+   213→  }
+   214→};
+   215→
+   216→const sourceColor = (s: string) => {
+   217→  switch (s) {
+   218→    case 'Google Ads': return 'badge-gold';
+   219→    case 'Facebook': return 'badge-cyan';
+   220→    case 'Website': return 'badge-green';
+   221→    case 'Referral': return 'badge-orange';
+   222→    case 'Instagram': return 'badge-red';
+   223→    case 'Email': return 'badge-yellow';
+   224→    default: return '';
+   225→  }
+   226→};
+   227→
+   228→/* ─── Component ─────────────────────────────────────────── */
+   229→
+   230→export default function LeadPipelineTab() {
+   231→  const [data, setData] = useState<PipelineData | null>(null);
+   232→  const [loading, setLoading] = useState(true);
+   233→  const [subTab, setSubTab] = useState('pipeline');
+   234→
+   235→  // Filters for All Leads
+   236→  const [stageFilter, setStageFilter] = useState('all');
+   237→  const [sourceFilter, setSourceFilter] = useState('all');
+   238→  const [qualityFilter, setQualityFilter] = useState('all');
+   239→  const [searchQuery, setSearchQuery] = useState('');
+   240→
+   241→  // Dialogs
+   242→  const [leadDialogOpen, setLeadDialogOpen] = useState(false);
+   243→  const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
+   244→  const [viewLead, setViewLead] = useState<Lead | null>(null);
+   245→
+   246→  // Lead form
+   247→  const [leadForm, setLeadForm] = useState({
+   248→    name: '', company: '', email: '', phone: '', value: '', stage: 'new', source: 'Google Ads', quality: 'warm', assignedTo: 'Priya Sharma', tags: '', city: '', country: 'India', notes: '',
+   249→  });
+   250→
+   251→  // Follow-up form
+   252→  const [fuForm, setFuForm] = useState({
+   253→    leadId: '', type: 'call', subject: '', date: '', time: '', notes: '',
+   254→  });
+   255→
+   256→  const fetchData = useCallback(async () => {
+   257→    try {
+   258→      const res = await fetch('/api/marketing/lead-pipeline');
+   259→      const json = await res.json();
+   260→      setData(json);
+   261→    } catch {
+   262→      toast.error('Failed to load pipeline data');
+   263→    } finally {
+   264→      setLoading(false);
+   265→    }
+   266→  }, []);
+   267→
+   268→  useEffect(() => { fetchData(); }, [fetchData]);
+   269→
+   270→  const leadsByStage = useMemo(() => {
+   271→    if (!data) return {};
+   272→    const map: Record<string, Lead[]> = {};
+   273→    data.pipeline.stages.forEach((s) => { map[s.id] = []; });
+   274→    data.leads.forEach((l) => {
+   275→      if (map[l.stage]) map[l.stage].push(l);
+   276→    });
+   277→    return map;
+   278→  }, [data]);
+   279→
+   280→  const filteredLeads = useMemo(() => {
+   281→    if (!data) return [];
+   282→    return data.leads.filter((l) => {
+   283→      if (stageFilter !== 'all' && l.stage !== stageFilter) return false;
+   284→      if (sourceFilter !== 'all' && l.source !== sourceFilter) return false;
+   285→      if (qualityFilter !== 'all' && l.quality !== qualityFilter) return false;
+   286→      if (searchQuery) {
+   287→        const q = searchQuery.toLowerCase();
+   288→        return l.name.toLowerCase().includes(q) || l.company.toLowerCase().includes(q) || l.email.toLowerCase().includes(q);
+   289→      }
+   290→      return true;
+   291→    });
+   292→  }, [data, stageFilter, sourceFilter, qualityFilter, searchQuery]);
+   293→
+   294→  const fuStats = useMemo(() => {
+   295→    if (!data) return { today: 0, pending: 0, completed: 0 };
+   296→    const today = data.followUps.filter((f) => f.date === '2025-01-16').length;
+   297→    const pending = data.followUps.filter((f) => f.status === 'pending' || f.status === 'scheduled').length;
+   298→    const completed = data.followUps.filter((f) => f.status === 'completed').length;
+   299→    return { today, pending, completed };
+   300→  }, [data]);
+   301→
+   302→  const handleSaveLead = async () => {
+   303→    if (!leadForm.name.trim()) { toast.error('Name is required'); return; }
+   304→    try {
+   305→      await fetch('/api/marketing/lead-pipeline', {
+   306→        method: 'POST',
+   307→        headers: { 'Content-Type': 'application/json' },
+   308→        body: JSON.stringify(leadForm),
+   309→      });
+   310→      toast.success('Lead saved successfully');
+   311→      setLeadDialogOpen(false);
+   312→      setLeadForm({ name: '', company: '', email: '', phone: '', value: '', stage: 'new', source: 'Google Ads', quality: 'warm', assignedTo: 'Priya Sharma', tags: '', city: '', country: 'India', notes: '' });
+   313→    } catch {
+   314→      toast.error('Failed to save lead');
+   315→    }
+   316→  };
+   317→
+   318→  const handleSaveFollowUp = async () => {
+   319→    if (!fuForm.leadId || !fuForm.subject.trim()) { toast.error('Lead and subject are required'); return; }
+   320→    try {
+   321→      await fetch('/api/marketing/lead-pipeline', {
+   322→        method: 'POST',
+   323→        headers: { 'Content-Type': 'application/json' },
+   324→        body: JSON.stringify({ type: 'follow-up', data: fuForm }),
+   325→      });
+   326→      toast.success('Follow-up scheduled');
+   327→      setFollowUpDialogOpen(false);
+   328→      setFuForm({ leadId: '', type: 'call', subject: '', date: '', time: '', notes: '' });
+   329→    } catch {
+   330→      toast.error('Failed to schedule follow-up');
+   331→    }
+   332→  };
+   333→
+   334→  const handleMarkDone = (fuId: string) => {
+   335→    if (!data) return;
+   336→    const updated = data.followUps.map((f) => f.id === fuId ? { ...f, status: 'completed' } : f);
+   337→    setData({ ...data, followUps: updated as FollowUp[] });
+   338→    toast.success('Follow-up marked as completed');
+   339→  };
+   340→
+   341→  const handleExportCSV = () => {
+   342→    if (!data) return;
+   343→    const headers = ['Name', 'Company', 'Email', 'Phone', 'Value', 'Stage', 'Source', 'Quality', 'Assigned To', 'City', 'Country'];
+   344→    const rows = filteredLeads.map((l) => [l.name, l.company, l.email, l.phone, l.value, l.stage, l.source, l.quality, l.assignedTo, l.city, l.country]);
+   345→    const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+   346→    const blob = new Blob([csv], { type: 'text/csv' });
+   347→    const url = URL.createObjectURL(blob);
+   348→    const a = document.createElement('a');
+   349→    a.href = url;
+   350→    a.download = 'laxree-leads.csv';
+   351→    a.click();
+   352→    URL.revokeObjectURL(url);
+   353→    toast.success('CSV exported');
+   354→  };
+   355→
+   356→  if (loading) {
+   357→    return (
+   358→      <div className="space-y-6 p-1">
+   359→        <div className="flex items-center justify-between">
+   360→          <Skeleton className="h-8 w-48" />
+   361→          <Skeleton className="h-10 w-32" />
+   362→        </div>
+   363→        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+   364→          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+   365→        </div>
+   366→        <Skeleton className="h-96 rounded-xl" />
+   367→        <Skeleton className="h-60 rounded-xl" />
+   368→      </div>
+   369→    );
+   370→  }
+   371→
+   372→  if (!data) return null;
+   373→
+   374→  const { pipeline, stats, monthlyTrend } = data;
+   375→
+   376→  return (
+   377→    <div className="space-y-5 p-1 animate-fade-in-up">
+   378→      {/* ── Header ─────────────────────────────────────── */}
+   379→      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+   380→        <div className="flex items-center gap-3">
+   381→          <div className="flex h-10 w-10 items-center justify-center rounded-xl gold-gradient shadow-lg shadow-[#D4A843]/20">
+   382→            <Users className="h-5 w-5 text-primary-foreground" />
+   383→          </div>
+   384→          <div>
+   385→            <h2 className="section-heading text-lg">Lead Pipeline</h2>
+   386→            <p className="text-xs text-muted-foreground">Manage your complete sales pipeline</p>
+   387→          </div>
+   388→        </div>
+   389→        <Dialog open={leadDialogOpen} onOpenChange={setLeadDialogOpen}>
+   390→          <DialogTrigger asChild>
+   391→            <Button className="btn-gold gap-2">
+   392→              <UserPlus className="h-4 w-4" />
+   393→              Add Lead
+   394→            </Button>
+   395→          </DialogTrigger>
+   396→          <DialogContent className="bg-[#111] border-border max-w-lg max-h-[90vh] overflow-y-auto">
+   397→            <DialogHeader>
+   398→              <DialogTitle className="text-foreground">Add New Lead</DialogTitle>
+   399→            </DialogHeader>
+   400→            <div className="grid gap-4 py-2">
+   401→              <div className="grid grid-cols-2 gap-3">
+   402→                <div>
+   403→                  <label className="text-xs text-muted-foreground mb-1 block">Name *</label>
+   404→                  <Input className="focus-gold bg-[#0a0a0a] border-border" value={leadForm.name} onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })} placeholder="Full name" />
+   405→                </div>
+   406→                <div>
+   407→                  <label className="text-xs text-muted-foreground mb-1 block">Company</label>
+   408→                  <Input className="focus-gold bg-[#0a0a0a] border-border" value={leadForm.company} onChange={(e) => setLeadForm({ ...leadForm, company: e.target.value })} placeholder="Company" />
+   409→                </div>
+   410→              </div>
+   411→              <div className="grid grid-cols-2 gap-3">
+   412→                <div>
+   413→                  <label className="text-xs text-muted-foreground mb-1 block">Email</label>
+   414→                  <Input className="focus-gold bg-[#0a0a0a] border-border" type="email" value={leadForm.email} onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })} placeholder="email@example.com" />
+   415→                </div>
+   416→                <div>
+   417→                  <label className="text-xs text-muted-foreground mb-1 block">Phone</label>
+   418→                  <Input className="focus-gold bg-[#0a0a0a] border-border" value={leadForm.phone} onChange={(e) => setLeadForm({ ...leadForm, phone: e.target.value })} placeholder="+91 98765 43210" />
+   419→                </div>
+   420→              </div>
+   421→              <div className="grid grid-cols-2 gap-3">
+   422→                <div>
+   423→                  <label className="text-xs text-muted-foreground mb-1 block">Deal Value (₹)</label>
+   424→                  <Input className="focus-gold bg-[#0a0a0a] border-border" type="number" value={leadForm.value} onChange={(e) => setLeadForm({ ...leadForm, value: e.target.value })} placeholder="0" />
+   425→                </div>
+   426→                <div>
+   427→                  <label className="text-xs text-muted-foreground mb-1 block">Stage</label>
+   428→                  <Select value={leadForm.stage} onValueChange={(v) => setLeadForm({ ...leadForm, stage: v })}>
+   429→                    <SelectTrigger className="focus-gold bg-[#0a0a0a] border-border"><SelectValue /></SelectTrigger>
+   430→                    <SelectContent className="bg-[#111] border-border">
+   431→                      {pipeline.stages.filter((s) => s.id !== 'won' && s.id !== 'lost').map((s) => (
+   432→                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+   433→                      ))}
+   434→                    </SelectContent>
+   435→                  </Select>
+   436→                </div>
+   437→              </div>
+   438→              <div className="grid grid-cols-3 gap-3">
+   439→                <div>
+   440→                  <label className="text-xs text-muted-foreground mb-1 block">Source</label>
+   441→                  <Select value={leadForm.source} onValueChange={(v) => setLeadForm({ ...leadForm, source: v })}>
+   442→                    <SelectTrigger className="focus-gold bg-[#0a0a0a] border-border"><SelectValue /></SelectTrigger>
+   443→                    <SelectContent className="bg-[#111] border-border">
+   444→                      {['Google Ads', 'Facebook', 'Website', 'Referral', 'Instagram', 'Email'].map((s) => (
+   445→                        <SelectItem key={s} value={s}>{s}</SelectItem>
+   446→                      ))}
+   447→                    </SelectContent>
+   448→                  </Select>
+   449→                </div>
+   450→                <div>
+   451→                  <label className="text-xs text-muted-foreground mb-1 block">Quality</label>
+   452→                  <Select value={leadForm.quality} onValueChange={(v) => setLeadForm({ ...leadForm, quality: v })}>
+   453→                    <SelectTrigger className="focus-gold bg-[#0a0a0a] border-border"><SelectValue /></SelectTrigger>
+   454→                    <SelectContent className="bg-[#111] border-border">
+   455→                      <SelectItem value="hot">Hot</SelectItem>
+   456→                      <SelectItem value="warm">Warm</SelectItem>
+   457→                      <SelectItem value="cold">Cold</SelectItem>
+   458→                    </SelectContent>
+   459→                  </Select>
+   460→                </div>
+   461→                <div>
+   462→                  <label className="text-xs text-muted-foreground mb-1 block">Assigned To</label>
+   463→                  <Select value={leadForm.assignedTo} onValueChange={(v) => setLeadForm({ ...leadForm, assignedTo: v })}>
+   464→                    <SelectTrigger className="focus-gold bg-[#0a0a0a] border-border"><SelectValue /></SelectTrigger>
+   465→                    <SelectContent className="bg-[#111] border-border">
+   466→                      {data.teamPerformance.map((t) => (
+   467→                        <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>
+   468→                      ))}
+   469→                    </SelectContent>
+   470→                  </Select>
+   471→                </div>
+   472→              </div>
+   473→              <div className="grid grid-cols-2 gap-3">
+   474→                <div>
+   475→                  <label className="text-xs text-muted-foreground mb-1 block">Tags (comma-separated)</label>
+   476→                  <Input className="focus-gold bg-[#0a0a0a] border-border" value={leadForm.tags} onChange={(e) => setLeadForm({ ...leadForm, tags: e.target.value })} placeholder="VIP, Diamond" />
+   477→                </div>
+   478→                <div className="grid grid-cols-2 gap-3">
+   479→                  <div>
+   480→                    <label className="text-xs text-muted-foreground mb-1 block">City</label>
+   481→                    <Input className="focus-gold bg-[#0a0a0a] border-border" value={leadForm.city} onChange={(e) => setLeadForm({ ...leadForm, city: e.target.value })} placeholder="Mumbai" />
+   482→                  </div>
+   483→                  <div>
+   484→                    <label className="text-xs text-muted-foreground mb-1 block">Country</label>
+   485→                    <Input className="focus-gold bg-[#0a0a0a] border-border" value={leadForm.country} onChange={(e) => setLeadForm({ ...leadForm, country: e.target.value })} placeholder="India" />
+   486→                  </div>
+   487→                </div>
+   488→              </div>
+   489→              <div>
+   490→                <label className="text-xs text-muted-foreground mb-1 block">Notes</label>
+   491→                <Textarea className="focus-gold bg-[#0a0a0a] border-border resize-none" rows={3} value={leadForm.notes} onChange={(e) => setLeadForm({ ...leadForm, notes: e.target.value })} placeholder="Add notes..." />
+   492→              </div>
+   493→              <Button className="btn-gold w-full" onClick={handleSaveLead}>Save Lead</Button>
+   494→            </div>
+   495→          </DialogContent>
+   496→        </Dialog>
+   497→      </div>
+   498→
+   499→      {/* ── Inline Stats ───────────────────────────────── */}
+   500→      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+   501→        {[
+   502→          { label: 'Total Leads', value: stats.totalLeads, icon: Users, color: 'text-[#D4A843]' },
+   503→          { label: 'This Month', value: stats.thisMonth, icon: TrendingUp, color: 'text-green-400' },
+   504→          { label: 'Conversion', value: `${stats.conversionRate}%`, icon: Target, color: 'text-cyan-400' },
+   505→          { label: 'Revenue', value: formatINR(stats.totalRevenue), icon: IndianRupee, color: 'text-[#D4A843]' },
+   506→        ].map((s) => (
+   507→          <div key={s.label} className="premium-card p-3 flex items-center gap-3 group hover-scale-sm transition-transform duration-200">
+   508→            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#D4A843]/10">
+   509→              <s.icon className={`h-4 w-4 ${s.color}`} />
+   510→            </div>
+   511→            <div>
+   512→              <p className="text-[11px] text-muted-foreground">{s.label}</p>
+   513→              <p className={`text-sm font-bold ${s.color} count-up-smooth`}>{s.value}</p>
+   514→            </div>
+   515→          </div>
+   516→        ))}
+   517→      </div>
+   518→
+   519→      {/* ── Sub Tabs ───────────────────────────────────── */}
+   520→      <Tabs value={subTab} onValueChange={setSubTab}>
+   521→        <TabsList className="bg-[#111] border border-border/50 h-10">
+   522→          <TabsTrigger value="pipeline" className="text-xs data-[state=active]:bg-[#D4A843]/15 data-[state=active]:text-[#D4A843]">Pipeline</TabsTrigger>
+   523→          <TabsTrigger value="all-leads" className="text-xs data-[state=active]:bg-[#D4A843]/15 data-[state=active]:text-[#D4A843]">All Leads</TabsTrigger>
+   524→          <TabsTrigger value="follow-ups" className="text-xs data-[state=active]:bg-[#D4A843]/15 data-[state=active]:text-[#D4A843]">Follow-ups</TabsTrigger>
+   525→        </TabsList>
+   526→
+   527→        {/* ═══ PIPELINE VIEW ═══════════════════════════ */}
+   528→        <TabsContent value="pipeline" className="space-y-5 mt-4">
+   529→          {/* ── Kanban Board ──────────────────────────── */}
+   530→          <Card className="premium-card overflow-hidden">
+   531→            <CardHeader className="pb-3">
+   532→              <div className="flex items-center justify-between">
+   533→                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+   534→                  <Sparkles className="h-4 w-4 text-[#D4A843]" />
+   535→                  Sales Pipeline
+   536→                </CardTitle>
+   537→                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+   538→                  <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-green-500" /> Won: {pipeline.stages.find((s) => s.id === 'won')?.count}</span>
+   539→                  <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Lost: {pipeline.stages.find((s) => s.id === 'lost')?.count}</span>
+   540→                </div>
+   541→              </div>
+   542→            </CardHeader>
+   543→            <CardContent className="p-0">
+   544→              <ScrollArea className="w-full">
+   545→                <div className="flex gap-0 p-4 min-w-[900px]">
+   546→                  {pipeline.stages.map((stage, idx) => {
+   547→                    const stageLeads = leadsByStage[stage.id] || [];
+   548→                    const maxShow = 3;
+   549→                    const shown = stageLeads.slice(0, maxShow);
+   550→                    const overflow = stageLeads.length - maxShow;
+   551→                    const isWon = stage.id === 'won';
+   552→                    const isLost = stage.id === 'lost';
+   553→
+   554→                    return (
+   555→                      <div key={stage.id} className="flex items-stretch">
+   556→                        {/* Column */}
+   557→                        <div className={`flex flex-col w-[155px] shrink-0 rounded-xl ${isWon ? 'bg-green-500/5 border border-green-500/20' : isLost ? 'bg-red-500/5 border border-red-500/20' : 'bg-[#0a0a0a] border border-border/50'}`}>
+   558→                          {/* Stage Header */}
+   559→                          <div className="p-2.5 pb-2">
+   560→                            <div className="flex items-center justify-between mb-1">
+   561→                              <div className="flex items-center gap-1.5">
+   562→                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: stage.color }} />
+   563→                                <span className="text-[11px] font-semibold text-foreground truncate">{stage.name}</span>
+   564→                              </div>
+   565→                              <span
+   566→                                className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white"
+   567→                                style={{ backgroundColor: stage.color }}
+   568→                              >
+   569→                                {stage.count}
+   570→                              </span>
+   571→                            </div>
+   572→                            {stage.value > 0 && (
+   573→                              <p className="text-[10px] text-muted-foreground font-medium">{formatINR(stage.value)}</p>
+   574→                            )}
+   575→                          </div>
+   576→
+   577→                          {/* Lead Cards */}
+   578→                          <div className="flex-1 px-2 pb-2 space-y-1.5">
+   579→                            {shown.map((lead) => {
+   580→                              const qc = qualityColor(lead.quality);
+   581→                              return (
+   582→                                <div
+   583→                                  key={lead.id}
+   584→                                  className="p-2 rounded-lg bg-[#111]/80 border border-border/30 hover:border-[#D4A843]/30 transition-all duration-200 cursor-pointer group/card hover-scale-sm"
+   585→                                  onClick={() => setViewLead(lead)}
+   586→                                >
+   587→                                  <div className="flex items-start gap-1.5">
+   588→                                    <div className="h-6 w-6 shrink-0 rounded-full flex items-center justify-center text-[9px] font-bold text-white mt-0.5" style={{ backgroundColor: stage.color + '40', color: stage.color }}>
+   589→                                      {getInitials(lead.name)}
+   590→                                    </div>
+   591→                                    <div className="flex-1 min-w-0">
+   592→                                      <div className="flex items-center gap-1">
+   593→                                        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${qc.dot}`} />
+   594→                                        <p className="text-[10px] font-semibold text-foreground truncate">{lead.name}</p>
+   595→                                      </div>
+   596→                                      <p className="text-[9px] text-muted-foreground truncate">{lead.company}</p>
+   597→                                      {lead.value > 0 && (
+   598→                                        <p className="text-[9px] font-semibold text-[#D4A843] mt-0.5">{formatINR(lead.value)}</p>
+   599→                                      )}
+   600→                                      <Badge className={`${sourceColor(lead.source)} text-[8px] px-1 py-0 mt-1 h-3.5`}>
+   601→                                        {lead.source}
+   602→                                      </Badge>
+   603→                                    </div>
+   604→                                  </div>
+   605→                                  <div className="flex items-center gap-1 mt-1.5 opacity-0 group-hover/card:opacity-100 transition-opacity">
+   606→                                    <GripVertical className="h-3 w-3 text-muted-foreground/40" />
+   607→                                  </div>
+   608→                                </div>
+   609→                              );
+   610→                            })}
+   611→                            {overflow > 0 && (
+   612→                              <button className="w-full text-center py-1.5 text-[10px] text-muted-foreground hover:text-[#D4A843] transition-colors rounded-md hover:bg-[#D4A843]/5">
+   613→                                +{overflow} more
+   614→                              </button>
+   615→                            )}
+   616→                          </div>
+   617→                        </div>
+   618→
+   619→                        {/* Arrow connector */}
+   620→                        {idx < pipeline.stages.length - 1 && (
+   621→                          <div className="flex items-center px-1.5 shrink-0">
+   622→                            <div className="flex flex-col items-center gap-0.5">
+   623→                              <div className="w-4 h-px bg-gradient-to-r from-[#D4A843]/40 to-[#D4A843]/20" />
+   624→                              <ChevronRight className="h-3 w-3 text-[#D4A843]/40" />
+   625→                            </div>
+   626→                          </div>
+   627→                        )}
+   628→                      </div>
+   629→                    );
+   630→                  })}
+   631→                </div>
+   632→              </ScrollArea>
+   633→            </CardContent>
+   634→          </Card>
+   635→
+   636→          {/* ── Pipeline Value Funnel ──────────────────── */}
+   637→          <Card className="premium-card">
+   638→            <CardHeader className="pb-3">
+   639→              <CardTitle className="text-sm font-semibold">Pipeline Value Flow</CardTitle>
+   640→            </CardHeader>
+   641→            <CardContent>
+   642→              <div className="space-y-1.5">
+   643→                {pipeline.stages.filter((s) => s.id !== 'lost').map((stage) => {
+   644→                  const maxVal = pipeline.stages.reduce((m, s) => Math.max(m, s.value), 1);
+   645→                  const pct = maxVal > 0 ? (stage.value / maxVal) * 100 : 0;
+   646→                  return (
+   647→                    <div key={stage.id} className="flex items-center gap-3">
+   648→                      <span className="text-[10px] text-muted-foreground w-24 shrink-0 truncate">{stage.name}</span>
+   649→                      <div className="flex-1 h-5 bg-[#111] rounded-full overflow-hidden relative">
+   650→                        <div
+   651→                          className="h-full rounded-full transition-all duration-700 ease-out"
+   652→                          style={{
+   653→                            width: `${Math.max(pct, 4)}%`,
+   654→                            background: `linear-gradient(90deg, ${stage.color}40, ${stage.color})`,
+   655→                          }}
+   656→                        />
+   657→                        {stage.value > 0 && (
+   658→                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-foreground">{formatINR(stage.value)}</span>
+   659→                        )}
+   660→                      </div>
+   661→                      <span className="text-[10px] font-semibold w-8 text-right" style={{ color: stage.color }}>{stage.count}</span>
+   662→                    </div>
+   663→                  );
+   664→                })}
+   665→              </div>
+   666→            </CardContent>
+   667→          </Card>
+   668→
+   669→          {/* ── Revenue Chart ──────────────────────────── */}
+   670→          <Card className="premium-card">
+   671→            <CardHeader className="pb-3">
+   672→              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+   673→                <BarChart3 className="h-4 w-4 text-[#D4A843]" />
+   674→                Monthly Won vs Lost Trend
+   675→              </CardTitle>
+   676→            </CardHeader>
+   677→            <CardContent>
+   678→              <div className="chart-container h-52">
+   679→                <ResponsiveContainer width="100%" height="100%">
+   680→                  <BarChart data={monthlyTrend} barGap={2}>
+   681→                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+   682→                    <XAxis dataKey="month" tick={{ fill: '#888', fontSize: 11 }} axisLine={{ stroke: 'rgba(255,255,255,0.1)' }} />
+   683→                    <YAxis tick={{ fill: '#888', fontSize: 11 }} axisLine={{ stroke: 'rgba(255,255,255,0.1)' }} tickFormatter={(v: number) => `${v / 100000}L`} />
+   684→                    <RechartsTooltip
+   685→                      contentStyle={{ background: '#1a1a1a', border: '1px solid rgba(212,168,67,0.2)', borderRadius: 8, fontSize: 12 }}
+   686→                      formatter={(value: number) => [formatINR(value), '']}
+   687→                      labelStyle={{ color: '#D4A843' }}
+   688→                    />
+   689→                    <Legend wrapperStyle={{ fontSize: 11 }} />
+   690→                    <Bar dataKey="revenue" name="Won Revenue" fill="#22c55e" radius={[4, 4, 0, 0]} />
+   691→                    <Bar dataKey="new" name="New Leads" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+   692→                  </BarChart>
+   693→                </ResponsiveContainer>
+   694→              </div>
+   695→            </CardContent>
+   696→          </Card>
+   697→        </TabsContent>
+   698→
+   699→        {/* ═══ ALL LEADS ═══════════════════════════════ */}
+   700→        <TabsContent value="all-leads" className="space-y-4 mt-4">
+   701→          {/* ── Filters Row ───────────────────────────── */}
+   702→          <div className="flex flex-wrap items-center gap-2">
+   703→            <Select value={stageFilter} onValueChange={setStageFilter}>
+   704→              <SelectTrigger className="h-8 w-[130px] text-xs bg-[#111] border-border focus-gold">
+   705→                <SelectValue placeholder="Stage" />
+   706→              </SelectTrigger>
+   707→              <SelectContent className="bg-[#111] border-border">
+   708→                <SelectItem value="all">All Stages</SelectItem>
+   709→                {pipeline.stages.map((s) => (
+   710→                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+   711→                ))}
+   712→              </SelectContent>
+   713→            </Select>
+   714→            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+   715→              <SelectTrigger className="h-8 w-[120px] text-xs bg-[#111] border-border focus-gold">
+   716→                <SelectValue placeholder="Source" />
+   717→              </SelectTrigger>
+   718→              <SelectContent className="bg-[#111] border-border">
+   719→                <SelectItem value="all">All Sources</SelectItem>
+   720→                {['Google Ads', 'Facebook', 'Website', 'Referral', 'Instagram', 'Email'].map((s) => (
+   721→                  <SelectItem key={s} value={s}>{s}</SelectItem>
+   722→                ))}
+   723→              </SelectContent>
+   724→            </Select>
+   725→            <Select value={qualityFilter} onValueChange={setQualityFilter}>
+   726→              <SelectTrigger className="h-8 w-[110px] text-xs bg-[#111] border-border focus-gold">
+   727→                <SelectValue placeholder="Quality" />
+   728→              </SelectTrigger>
+   729→              <SelectContent className="bg-[#111] border-border">
+   730→                <SelectItem value="all">All Quality</SelectItem>
+   731→                <SelectItem value="hot">Hot</SelectItem>
+   732→                <SelectItem value="warm">Warm</SelectItem>
+   733→                <SelectItem value="cold">Cold</SelectItem>
+   734→              </SelectContent>
+   735→            </Select>
+   736→            <div className="relative flex-1 min-w-[180px]">
+   737→              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+   738→              <Input
+   739→                className="h-8 pl-8 text-xs bg-[#111] border-border focus-gold"
+   740→                placeholder="Search leads..."
+   741→                value={searchQuery}
+   742→                onChange={(e) => setSearchQuery(e.target.value)}
+   743→              />
+   744→            </div>
+   745→            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 border-border hover:border-[#D4A843]/40 hover:text-[#D4A843]" onClick={handleExportCSV}>
+   746→              <Download className="h-3 w-3" /> Export CSV
+   747→            </Button>
+   748→          </div>
+   749→
+   750→          {/* ── Leads Table ───────────────────────────── */}
+   751→          <Card className="premium-card overflow-hidden">
+   752→            <CardContent className="p-0">
+   753→              <ScrollArea className="max-h-[400px]">
+   754→                <Table>
+   755→                  <TableHeader>
+   756→                    <TableRow className="border-border/50 hover:bg-transparent">
+   757→                      <TableHead className="text-[10px] font-semibold text-muted-foreground">Name</TableHead>
+   758→                      <TableHead className="text-[10px] font-semibold text-muted-foreground hidden md:table-cell">Email</TableHead>
+   759→                      <TableHead className="text-[10px] font-semibold text-muted-foreground hidden lg:table-cell">Phone</TableHead>
+   760→                      <TableHead className="text-[10px] font-semibold text-muted-foreground">Value</TableHead>
+   761→                      <TableHead className="text-[10px] font-semibold text-muted-foreground">Stage</TableHead>
+   762→                      <TableHead className="text-[10px] font-semibold text-muted-foreground hidden sm:table-cell">Source</TableHead>
+   763→                      <TableHead className="text-[10px] font-semibold text-muted-foreground">Quality</TableHead>
+   764→                      <TableHead className="text-[10px] font-semibold text-muted-foreground hidden lg:table-cell">Assigned</TableHead>
+   765→                      <TableHead className="text-[10px] font-semibold text-muted-foreground hidden xl:table-cell">Last FU</TableHead>
+   766→                      <TableHead className="text-[10px] font-semibold text-muted-foreground hidden xl:table-cell">Tags</TableHead>
+   767→                      <TableHead className="text-[10px] font-semibold text-muted-foreground text-right">Actions</TableHead>
+   768→                    </TableRow>
+   769→                  </TableHeader>
+   770→                  <TableBody>
+   771→                    {filteredLeads.map((lead) => {
+   772→                      const qc = qualityColor(lead.quality);
+   773→                      const stageObj = pipeline.stages.find((s) => s.id === lead.stage);
+   774→                      return (
+   775→                        <TableRow key={lead.id} className="table-row-hover border-border/30">
+   776→                          <TableCell>
+   777→                            <div className="flex items-center gap-2">
+   778→                              <div className="h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: (stageObj?.color || '#888') + '30', color: stageObj?.color }}>
+   779→                                {getInitials(lead.name)}
+   780→                              </div>
+   781→                              <div>
+   782→                                <p className="text-xs font-medium text-foreground">{lead.name}</p>
+   783→                                <p className="text-[10px] text-muted-foreground">{lead.company}</p>
+   784→                              </div>
+   785→                            </div>
+   786→                          </TableCell>
+   787→                          <TableCell className="text-[11px] text-muted-foreground hidden md:table-cell">{lead.email}</TableCell>
+   788→                          <TableCell className="text-[11px] text-muted-foreground hidden lg:table-cell">{lead.phone}</TableCell>
+   789→                          <TableCell>
+   790→                            <span className="text-xs font-semibold text-[#D4A843]">
+   791→                              {lead.value > 0 ? formatINR(lead.value) : '—'}
+   792→                            </span>
+   793→                          </TableCell>
+   794→                          <TableCell>
+   795→                            <Badge
+   796→                              className="text-[9px] px-1.5 py-0 h-4 text-white"
+   797→                              style={{ backgroundColor: stageObj?.color || '#888' }}
+   798→                            >
+   799→                              {stageObj?.name || lead.stage}
+   800→                            </Badge>
+   801→                          </TableCell>
+   802→                          <TableCell className="hidden sm:table-cell">
+   803→                            <Badge className={`${sourceColor(lead.source)} text-[9px] px-1.5 py-0 h-4`}>
+   804→                              {lead.source}
+   805→                            </Badge>
+   806→                          </TableCell>
+   807→                          <TableCell>
+   808→                            <Badge className={`${qc.badge} text-[9px] px-1.5 py-0 h-4`}>
+   809→                              {qc.label}
+   810→                            </Badge>
+   811→                          </TableCell>
+   812→                          <TableCell className="text-[11px] text-muted-foreground hidden lg:table-cell">{lead.assignedTo}</TableCell>
+   813→                          <TableCell className="text-[11px] text-muted-foreground hidden xl:table-cell">{lead.lastFollowUp || '—'}</TableCell>
+   814→                          <TableCell className="hidden xl:table-cell">
+   815→                            <div className="flex flex-wrap gap-1">
+   816→                              {lead.tags.slice(0, 2).map((t) => (
+   817→                                <Badge key={t} variant="outline" className="text-[8px] px-1 py-0 h-3.5 text-muted-foreground">{t}</Badge>
+   818→                              ))}
+   819→                              {lead.tags.length > 2 && <span className="text-[8px] text-muted-foreground">+{lead.tags.length - 2}</span>}
+   820→                            </div>
+   821→                          </TableCell>
+   822→                          <TableCell className="text-right">
+   823→                            <div className="flex items-center justify-end gap-1">
+   824→                              <button className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-[#D4A843]/10 text-muted-foreground hover:text-[#D4A843] transition-colors" title="View" onClick={() => setViewLead(lead)}>
+   825→                                <Eye className="h-3.5 w-3.5" />
+   826→                              </button>
+   827→                              <button className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-[#D4A843]/10 text-muted-foreground hover:text-[#D4A843] transition-colors" title="Follow-up" onClick={() => { setFuForm({ ...fuForm, leadId: lead.id }); setFollowUpDialogOpen(true); }}>
+   828→                                <CalendarClock className="h-3.5 w-3.5" />
+   829→                              </button>
+   830→                              <button className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-[#D4A843]/10 text-muted-foreground hover:text-[#D4A843] transition-colors" title="Edit" onClick={() => { setLeadForm({ name: lead.name, company: lead.company, email: lead.email, phone: lead.phone, value: String(lead.value), stage: lead.stage, source: lead.source, quality: lead.quality, assignedTo: lead.assignedTo, tags: lead.tags.join(', '), city: lead.city, country: lead.country, notes: lead.notes }); setLeadDialogOpen(true); }}>
+   831→                                <Filter className="h-3.5 w-3.5" />
+   832→                              </button>
+   833→                            </div>
+   834→                          </TableCell>
+   835→                        </TableRow>
+   836→                      );
+   837→                    })}
+   838→                  </TableBody>
+   839→                </Table>
+   840→              </ScrollArea>
+   841→              {filteredLeads.length === 0 && (
+   842→                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+   843→                  <Users className="h-8 w-8 mb-2 opacity-30" />
+   844→                  <p className="text-sm">No leads match your filters</p>
+   845→                </div>
+   846→              )}
+   847→            </CardContent>
+   848→          </Card>
+   849→        </TabsContent>
+   850→
+   851→        {/* ═══ FOLLOW-UPS ══════════════════════════════ */}
+   852→        <TabsContent value="follow-ups" className="space-y-4 mt-4">
+   853→          {/* ── Follow-up Stats ───────────────────────── */}
+   854→          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+   855→            {[
+   856→              { label: "Today's Follow-ups", value: fuStats.today, icon: Calendar, color: 'text-[#D4A843]', bg: 'bg-[#D4A843]/10' },
+   857→              { label: 'Pending / Scheduled', value: fuStats.pending, icon: Clock, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
+   858→              { label: 'Completed This Week', value: fuStats.completed, icon: CheckCircle2, color: 'text-green-400', bg: 'bg-green-400/10' },
+   859→            ].map((s) => (
+   860→              <Card key={s.label} className="premium-card">
+   861→                <CardContent className="p-4 flex items-center gap-3">
+   862→                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${s.bg}`}>
+   863→                    <s.icon className={`h-5 w-5 ${s.color}`} />
+   864→                  </div>
+   865→                  <div>
+   866→                    <p className="text-[11px] text-muted-foreground">{s.label}</p>
+   867→                    <p className={`text-xl font-bold ${s.color} number-reveal`}>{s.value}</p>
+   868→                  </div>
+   869→                </CardContent>
+   870→              </Card>
+   871→            ))}
+   872→          </div>
+   873→
+   874→          {/* ── Schedule Follow-up Button ─────────────── */}
+   875→          <div className="flex justify-end">
+   876→            <Dialog open={followUpDialogOpen} onOpenChange={setFollowUpDialogOpen}>
+   877→              <DialogTrigger asChild>
+   878→                <Button className="btn-gold gap-2">
+   879→                  <CalendarClock className="h-4 w-4" />
+   880→                  Schedule Follow-up
+   881→                </Button>
+   882→              </DialogTrigger>
+   883→              <DialogContent className="bg-[#111] border-border max-w-md">
+   884→                <DialogHeader>
+   885→                  <DialogTitle className="text-foreground">Schedule Follow-up</DialogTitle>
+   886→                </DialogHeader>
+   887→                <div className="grid gap-4 py-2">
+   888→                  <div>
+   889→                    <label className="text-xs text-muted-foreground mb-1 block">Lead *</label>
+   890→                    <Select value={fuForm.leadId} onValueChange={(v) => setFuForm({ ...fuForm, leadId: v })}>
+   891→                      <SelectTrigger className="focus-gold bg-[#0a0a0a] border-border"><SelectValue placeholder="Select lead" /></SelectTrigger>
+   892→                      <SelectContent className="bg-[#111] border-border max-h-48">
+   893→                        {data.leads.filter((l) => l.stage !== 'won' && l.stage !== 'lost').map((l) => (
+   894→                          <SelectItem key={l.id} value={l.id}>{l.name} — {l.company}</SelectItem>
+   895→                        ))}
+   896→                      </SelectContent>
+   897→                    </Select>
+   898→                  </div>
+   899→                  <div>
+   900→                    <label className="text-xs text-muted-foreground mb-1 block">Type</label>
+   901→                    <Select value={fuForm.type} onValueChange={(v) => setFuForm({ ...fuForm, type: v })}>
+   902→                      <SelectTrigger className="focus-gold bg-[#0a0a0a] border-border"><SelectValue /></SelectTrigger>
+   903→                      <SelectContent className="bg-[#111] border-border">
+   904→                        <SelectItem value="call">Phone Call</SelectItem>
+   905→                        <SelectItem value="email">Email</SelectItem>
+   906→                        <SelectItem value="whatsapp">WhatsApp</SelectItem>
+   907→                        <SelectItem value="meeting">In-Person Meeting</SelectItem>
+   908→                      </SelectContent>
+   909→                    </Select>
+   910→                  </div>
+   911→                  <div>
+   912→                    <label className="text-xs text-muted-foreground mb-1 block">Subject *</label>
+   913→                    <Input className="focus-gold bg-[#0a0a0a] border-border" value={fuForm.subject} onChange={(e) => setFuForm({ ...fuForm, subject: e.target.value })} placeholder="Follow-up subject" />
+   914→                  </div>
+   915→                  <div className="grid grid-cols-2 gap-3">
+   916→                    <div>
+   917→                      <label className="text-xs text-muted-foreground mb-1 block">Date</label>
+   918→                      <Input className="focus-gold bg-[#0a0a0a] border-border" type="date" value={fuForm.date} onChange={(e) => setFuForm({ ...fuForm, date: e.target.value })} />
+   919→                    </div>
+   920→                    <div>
+   921→                      <label className="text-xs text-muted-foreground mb-1 block">Time</label>
+   922→                      <Input className="focus-gold bg-[#0a0a0a] border-border" type="time" value={fuForm.time} onChange={(e) => setFuForm({ ...fuForm, time: e.target.value })} />
+   923→                    </div>
+   924→                  </div>
+   925→                  <div>
+   926→                    <label className="text-xs text-muted-foreground mb-1 block">Notes</label>
+   927→                    <Textarea className="focus-gold bg-[#0a0a0a] border-border resize-none" rows={3} value={fuForm.notes} onChange={(e) => setFuForm({ ...fuForm, notes: e.target.value })} placeholder="Add notes..." />
+   928→                  </div>
+   929→                  <Button className="btn-gold w-full" onClick={handleSaveFollowUp}>Schedule Follow-up</Button>
+   930→                </div>
+   931→              </DialogContent>
+   932→            </Dialog>
+   933→          </div>
+   934→
+   935→          {/* ── Follow-up Timeline ────────────────────── */}
+   936→          <div className="space-y-2">
+   937→            {data.followUps.map((fu) => (
+   938→              <Card key={fu.id} className={`glass-gold overflow-hidden border-l-2 ${typeColor(fu.type)}`}>
+   939→                <CardContent className="p-4">
+   940→                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+   941→                    <div className="flex-1 min-w-0">
+   942→                      <div className="flex items-center gap-2 mb-1">
+   943→                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D4A843]/15 text-[#D4A843]">
+   944→                          {typeIcon(fu.type)}
+   945→                        </div>
+   946→                        <span className="text-sm font-semibold text-foreground">{fu.leadName}</span>
+   947→                        {statusBadge(fu.status)}
+   948→                      </div>
+   949→                      <p className="text-xs font-medium text-foreground/80 ml-8">{fu.subject}</p>
+   950→                      <p className="text-[11px] text-muted-foreground ml-8 mt-0.5">{fu.notes}</p>
+   951→                      <div className="flex items-center gap-3 ml-8 mt-1.5">
+   952→                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+   953→                          <Calendar className="h-3 w-3" /> {fu.date}
+   954→                        </span>
+   955→                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+   956→                          <Clock className="h-3 w-3" /> {fu.time}
+   957→                        </span>
+   958→                        <span className="text-[10px] text-muted-foreground">{fu.assignedTo}</span>
+   959→                      </div>
+   960→                    </div>
+   961→                    <div className="flex items-center gap-1.5 shrink-0 ml-8 sm:ml-0">
+   962→                      {fu.status !== 'completed' && (
+   963→                        <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1 border-green-500/30 text-green-400 hover:bg-green-500/10" onClick={() => handleMarkDone(fu.id)}>
+   964→                          <CheckCircle2 className="h-3 w-3" /> Mark Done
+   965→                        </Button>
+   966→                      )}
+   967→                      <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1 border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/10" onClick={() => { setFuForm({ leadId: fu.leadId, type: fu.type, subject: fu.subject, date: fu.date, time: fu.time, notes: fu.notes }); setFollowUpDialogOpen(true); }}>
+   968→                        <ArrowRight className="h-3 w-3" /> Reschedule
+   969→                      </Button>
+   970→                    </div>
+   971→                  </div>
+   972→                </CardContent>
+   973→              </Card>
+   974→            ))}
+   975→          </div>
+   976→        </TabsContent>
+   977→      </Tabs>
+   978→
+   979→      {/* ── View Lead Dialog ──────────────────────────── */}
+   980→      <Dialog open={!!viewLead} onOpenChange={() => setViewLead(null)}>
+   981→        <DialogContent className="bg-[#111] border-border max-w-md">
+   982→          <DialogHeader>
+   983→            <DialogTitle className="text-foreground">Lead Details</DialogTitle>
+   984→          </DialogHeader>
+   985→          {viewLead && (
+   986→            <div className="space-y-4 py-2">
+   987→              <div className="flex items-center gap-3">
+   988→                <div className="h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold gold-gradient text-primary-foreground">
+   989→                  {getInitials(viewLead.name)}
+   990→                </div>
+   991→                <div>
+   992→                  <h3 className="text-sm font-bold text-foreground">{viewLead.name}</h3>
+   993→                  <p className="text-xs text-muted-foreground">{viewLead.company}</p>
+   994→                </div>
+   995→              </div>
+   996→              <Separator className="bg-border/50" />
+   997→              <div className="grid grid-cols-2 gap-3 text-xs">
+   998→                <div>
+   999→                  <p className="text-muted-foreground text-[10px]">Email</p>
+  1000→                  <p className="text-foreground">{viewLead.email}</p>
+  1001→                </div>
+  1002→                <div>
+  1003→                  <p className="text-muted-foreground text-[10px]">Phone</p>
+  1004→                  <p className="text-foreground">{viewLead.phone}</p>
+  1005→                </div>
+  1006→                <div>
+  1007→                  <p className="text-muted-foreground text-[10px]">Deal Value</p>
+  1008→                  <p className="text-[#D4A843] font-semibold">{viewLead.value > 0 ? formatINR(viewLead.value) : '—'}</p>
+  1009→                </div>
+  1010→                <div>
+  1011→                  <p className="text-muted-foreground text-[10px]">Stage</p>
+  1012→                  <Badge className="text-[9px] text-white px-1.5 py-0" style={{ backgroundColor: pipeline.stages.find((s) => s.id === viewLead.stage)?.color || '#888' }}>
+  1013→                    {pipeline.stages.find((s) => s.id === viewLead.stage)?.name || viewLead.stage}
+  1014→                  </Badge>
+  1015→                </div>
+  1016→                <div>
+  1017→                  <p className="text-muted-foreground text-[10px]">Source</p>
+  1018→                  <Badge className={`${sourceColor(viewLead.source)} text-[9px] px-1.5 py-0`}>{viewLead.source}</Badge>
+  1019→                </div>
+  1020→                <div>
+  1021→                  <p className="text-muted-foreground text-[10px]">Quality</p>
+  1022→                  <Badge className={`${qualityColor(viewLead.quality).badge} text-[9px] px-1.5 py-0`}>{qualityColor(viewLead.quality).label}</Badge>
+  1023→                </div>
+  1024→                <div>
+  1025→                  <p className="text-muted-foreground text-[10px]">Assigned To</p>
+  1026→                  <p className="text-foreground">{viewLead.assignedTo}</p>
+  1027→                </div>
+  1028→                <div>
+  1029→                  <p className="text-muted-foreground text-[10px]">Location</p>
+  1030→                  <p className="text-foreground">{viewLead.city}, {viewLead.country}</p>
+  1031→                </div>
+  1032→                <div>
+  1033→                  <p className="text-muted-foreground text-[10px]">Follow-ups</p>
+  1034→                  <p className="text-foreground">{viewLead.followUpCount}</p>
+  1035→                </div>
+  1036→                <div>
+  1037→                  <p className="text-muted-foreground text-[10px]">Next Follow-up</p>
+  1038→                  <p className="text-foreground">{viewLead.nextFollowUp || '—'}</p>
+  1039→                </div>
+  1040→              </div>
+  1041→              {viewLead.tags.length > 0 && (
+  1042→                <div className="flex flex-wrap gap-1.5">
+  1043→                  {viewLead.tags.map((t) => (
+  1044→                    <Badge key={t} variant="outline" className="text-[9px] px-1.5 py-0 text-muted-foreground">{t}</Badge>
+  1045→                  ))}
+  1046→                </div>
+  1047→              )}
+  1048→              {viewLead.notes && (
+  1049→                <div className="bg-[#0a0a0a] rounded-lg p-3 border border-border/30">
+  1050→                  <p className="text-[10px] text-muted-foreground mb-1">Notes</p>
+  1051→                  <p className="text-xs text-foreground/80">{viewLead.notes}</p>
+  1052→                </div>
+  1053→              )}
+  1054→            </div>
+  1055→          )}
+  1056→        </DialogContent>
+  1057→      </Dialog>
+  1058→    </div>
+  1059→  );
+  1060→}

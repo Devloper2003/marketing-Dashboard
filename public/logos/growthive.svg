@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40" fill="none">
+  <defs>
+    <linearGradient id="gGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <text x="0" y="30" font-family="Georgia, 'Times New Roman', serif" font-size="28" font-weight="bold" font-style="italic" fill="url(#gGrad)">Growthive</text>
+</svg>

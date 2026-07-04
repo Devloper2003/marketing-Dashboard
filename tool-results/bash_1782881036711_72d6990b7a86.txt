@@ -1,0 +1,302 @@
+Waiting for server...
+Server ready in 2s
+=== LOGIN ===
+✓ Laxree Marketing Dashboard
+  http://localhost:3000/
+✗ Unknown ref: e7
+✗ Unknown ref: e8
+✗ Unknown ref: e10
+❌ LOGIN FAILED - checking network...
+[FC87B2569A6F5AA85C8ADDDDA95F773B] GET http://localhost:3000/ (Document) 200
+[2670.2] GET http://localhost:3000/_next/static/media/797e433ab948586e-s.p.29207c2f.woff2 (Font) 200
+[2670.3] GET http://localhost:3000/_next/static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2 (Font) 200
+[2670.4] GET http://localhost:3000/_next/static/chunks/%5Broot-of-the-server%5D__0f0ba101._.css (Stylesheet) 200
+[2670.5] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_956a0d3a._.js (Script) 200
+[2670.6] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js (Script) 200
+[2670.7] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_9212ccad._.js (Script) 200
+[2670.8] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_1dd7fb59.js (Script) 200
+[2670.9] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_a0e4c7b4._.js (Script) 200
+[2670.10] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_17643121._.js (Script) 200
+[2670.11] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js (Script) 200
+[2670.12] GET http://localhost:3000/_next/static/chunks/node_modules_%40swc_helpers_cjs_d80fb378._.js (Script) 200
+[2670.13] GET http://localhost:3000/_next/static/chunks/_a0ff3932._.js (Script) 200
+[2670.14] GET http://localhost:3000/_next/static/chunks/turbopack-_23a915ee._.js (Script) 200
+[2670.15] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_be32b49c._.js (Script) 200
+[2670.16] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_components_builtin_global-error_1cf6b850.js (Script) 200
+[2670.17] GET http://localhost:3000/_next/static/chunks/node_modules_394613a2._.js (Script) 200
+[2670.18] GET http://localhost:3000/_next/static/chunks/src_2bc135c0._.js (Script) 200
+[2670.19] GET http://localhost:3000/_next/static/chunks/src_app_layout_tsx_1cf6b850._.js (Script) 200
+[2670.20] GET http://localhost:3000/_next/static/chunks/src_components_dashboard_8f159556._.js (Script) 200
+[2670.21] GET http://localhost:3000/_next/static/chunks/src_c6df13c2._.js (Script) 200
+[2670.22] GET http://localhost:3000/_next/static/chunks/node_modules_framer-motion_dist_es_134bd0a7._.js (Script) 200
+[2670.23] GET http://localhost:3000/_next/static/chunks/node_modules_motion-dom_dist_es_c5d9af39._.js (Script) 200
+[2670.24] GET http://localhost:3000/_next/static/chunks/node_modules_a23b37be._.js (Script) 200
+[2670.25] GET http://localhost:3000/_next/static/chunks/src_app_page_tsx_fd8e7853._.js (Script) 200
+[2670.61] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_c8c997ce._.js (Script) 200
+[2670.62] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_c7192189._.js (Script) 200
+[2670.70] GET https://z-cdn.chatglm.cn/z-ai/static/logo.svg (Other) 200
+[2670.68] GET http://localhost:3000/__nextjs_font/geist-latin.woff2 (Font) 200
+[93E5C8F8ADD17F48C3215CA4E5C645AA] GET http://localhost:3000/ (Document)
+[2727.2] GET data:image/png;base64,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 (Image) 200
+[2727.3] GET data:image/png;base64,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 (Image) 200
+[2727.4] GET data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABIAQMAAABvIyEEAAAABlBMVEUAAABTU1OoaSf/AAAAAXRSTlMAQObYZgAAAENJREFUeF7tzbEJACEQRNGBLeAasBCza2lLEGx0CxFGG9hBMDDxRy/72O9FMnIFapGylsu1fgoBdkXfUHLrQgdfrlJN1BdYBjQQm3UAAAAASUVORK5CYII= (Image) 200
+[54854F3E9421129EBD6D48440F976934] GET http://localhost:3000/ (Document)
+[259CA8E6C18AF773C00EDE0CF3339354] GET http://localhost:3000/ (Document)
+[121E7226BF359D4BA7E1D48F3EDE8FF3] GET http://localhost:3000/ (Document) 200
+[2850.2] GET http://localhost:3000/_next/static/media/797e433ab948586e-s.p.29207c2f.woff2 (Font) 200
+[2850.3] GET http://localhost:3000/_next/static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2 (Font) 200
+[2850.4] GET http://localhost:3000/_next/static/chunks/%5Broot-of-the-server%5D__0f0ba101._.css (Stylesheet) 200
+[2850.5] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_956a0d3a._.js (Script) 200
+[2850.6] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js (Script) 200
+[2850.7] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_9212ccad._.js (Script) 200
+[2850.8] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_1dd7fb59.js (Script) 200
+[2850.9] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_a0e4c7b4._.js (Script) 200
+[2850.10] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_17643121._.js (Script) 200
+[2850.11] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js (Script) 200
+[2850.12] GET http://localhost:3000/_next/static/chunks/node_modules_%40swc_helpers_cjs_d80fb378._.js (Script) 200
+[2850.13] GET http://localhost:3000/_next/static/chunks/_a0ff3932._.js (Script) 200
+[2850.14] GET http://localhost:3000/_next/static/chunks/turbopack-_23a915ee._.js (Script) 200
+[2850.15] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_be32b49c._.js (Script) 200
+[2850.16] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_components_builtin_global-error_1cf6b850.js (Script) 200
+[2850.17] GET http://localhost:3000/_next/static/chunks/node_modules_394613a2._.js (Script) 200
+[2850.18] GET http://localhost:3000/_next/static/chunks/src_2bc135c0._.js (Script) 200
+[2850.19] GET http://localhost:3000/_next/static/chunks/src_app_layout_tsx_1cf6b850._.js (Script) 200
+[2850.20] GET http://localhost:3000/_next/static/chunks/src_components_dashboard_8f159556._.js (Script) 200
+[2850.21] GET http://localhost:3000/_next/static/chunks/src_c6df13c2._.js (Script) 200
+[2850.22] GET http://localhost:3000/_next/static/chunks/node_modules_framer-motion_dist_es_134bd0a7._.js (Script) 200
+[2850.23] GET http://localhost:3000/_next/static/chunks/node_modules_motion-dom_dist_es_c5d9af39._.js (Script) 200
+[2850.24] GET http://localhost:3000/_next/static/chunks/node_modules_a23b37be._.js (Script) 200
+[2850.25] GET http://localhost:3000/_next/static/chunks/src_app_page_tsx_fd8e7853._.js (Script) 200
+[2850.61] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_c8c997ce._.js (Script) 200
+[2850.62] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_c7192189._.js (Script) 200
+[2850.70] GET https://z-cdn.chatglm.cn/z-ai/static/logo.svg (Other) 200
+[A76C2D980493C3074B03D595E5C9866F] GET http://localhost:3000/ (Document)
+[2858.2] GET data:image/png;base64,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 (Image) 200
+[2858.3] GET data:image/png;base64,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 (Image) 200
+[2858.4] GET data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABIAQMAAABvIyEEAAAABlBMVEUAAABTU1OoaSf/AAAAAXRSTlMAQObYZgAAAENJREFUeF7tzbEJACEQRNGBLeAasBCza2lLEGx0CxFGG9hBMDDxRy/72O9FMnIFapGylsu1fgoBdkXfUHLrQgdfrlJN1BdYBjQQm3UAAAAASUVORK5CYII= (Image) 200
+[C4952E5AEDABA1C8416EF0E33CEE1E7B] GET http://localhost:3000/ (Document)
+[10F714B2A286B4AF3BDCE9FAEA292586] GET http://localhost:3000/ (Document)
+[516FF7A039C6D2EB5F4EED438965F9D8] GET http://localhost:3000/ (Document)
+[510DFFFDB54A2931E30B7068ADA9D1B5] GET http://localhost:3000/ (Document) 200
+[3044.2] GET http://localhost:3000/_next/static/media/797e433ab948586e-s.p.29207c2f.woff2 (Font) 200
+[3044.3] GET http://localhost:3000/_next/static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2 (Font) 200
+[3044.4] GET http://localhost:3000/_next/static/chunks/%5Broot-of-the-server%5D__0f0ba101._.css (Stylesheet) 200
+[3044.5] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_956a0d3a._.js (Script) 200
+[3044.6] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js (Script) 200
+[3044.7] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_9212ccad._.js (Script) 200
+[3044.8] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_1dd7fb59.js (Script) 200
+[3044.9] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_a0e4c7b4._.js (Script) 200
+[3044.10] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_17643121._.js (Script) 200
+[3044.11] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js (Script) 200
+[3044.12] GET http://localhost:3000/_next/static/chunks/node_modules_%40swc_helpers_cjs_d80fb378._.js (Script) 200
+[3044.13] GET http://localhost:3000/_next/static/chunks/_a0ff3932._.js (Script) 200
+[3044.14] GET http://localhost:3000/_next/static/chunks/turbopack-_23a915ee._.js (Script) 200
+[3044.15] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_be32b49c._.js (Script) 200
+[3044.16] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_components_builtin_global-error_1cf6b850.js (Script) 200
+[3044.17] GET http://localhost:3000/_next/static/chunks/node_modules_394613a2._.js (Script) 200
+[3044.18] GET http://localhost:3000/_next/static/chunks/src_2bc135c0._.js (Script) 200
+[3044.19] GET http://localhost:3000/_next/static/chunks/src_app_layout_tsx_1cf6b850._.js (Script) 200
+[3044.20] GET http://localhost:3000/_next/static/chunks/src_components_dashboard_8f159556._.js (Script) 200
+[3044.21] GET http://localhost:3000/_next/static/chunks/src_c6df13c2._.js (Script) 200
+[3044.22] GET http://localhost:3000/_next/static/chunks/node_modules_framer-motion_dist_es_134bd0a7._.js (Script) 200
+[3044.23] GET http://localhost:3000/_next/static/chunks/node_modules_motion-dom_dist_es_c5d9af39._.js (Script) 200
+[3044.24] GET http://localhost:3000/_next/static/chunks/node_modules_a23b37be._.js (Script) 200
+[3044.25] GET http://localhost:3000/_next/static/chunks/src_app_page_tsx_fd8e7853._.js (Script) 200
+[3044.61] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_c8c997ce._.js (Script) 200
+[3044.62] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_c7192189._.js (Script) 200
+[3044.70] GET https://z-cdn.chatglm.cn/z-ai/static/logo.svg (Other) 200
+[3044.68] GET http://localhost:3000/__nextjs_font/geist-latin.woff2 (Font) 200
+[A6BB6D43D8E26423CD1092B006DE3820] GET http://localhost:3000/ (Document) 200
+[3044.75] GET http://localhost:3000/_next/static/media/797e433ab948586e-s.p.29207c2f.woff2 (Font) 200
+[3044.76] GET http://localhost:3000/_next/static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2 (Font) 200
+[3044.77] GET http://localhost:3000/_next/static/chunks/%5Broot-of-the-server%5D__0f0ba101._.css (Stylesheet) 200
+[3044.78] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_956a0d3a._.js (Script) 200
+[3044.79] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js (Script)
+[3044.80] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_9212ccad._.js (Script) 200
+[3044.81] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_1dd7fb59.js (Script)
+[3044.82] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_a0e4c7b4._.js (Script) 200
+[3044.83] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_17643121._.js (Script)
+[3044.84] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js (Script) 200
+[3044.85] GET http://localhost:3000/_next/static/chunks/node_modules_%40swc_helpers_cjs_d80fb378._.js (Script) 200
+[3044.86] GET http://localhost:3000/_next/static/chunks/_a0ff3932._.js (Script) 200
+[3044.87] GET http://localhost:3000/_next/static/chunks/turbopack-_23a915ee._.js (Script) 200
+[3044.88] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_be32b49c._.js (Script)
+[3044.89] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_components_builtin_global-error_1cf6b850.js (Script)
+[3044.90] GET http://localhost:3000/_next/static/chunks/node_modules_394613a2._.js (Script)
+[3044.91] GET http://localhost:3000/_next/static/chunks/src_2bc135c0._.js (Script)
+[3044.92] GET http://localhost:3000/_next/static/chunks/src_app_layout_tsx_1cf6b850._.js (Script)
+[3044.93] GET http://localhost:3000/_next/static/chunks/src_components_dashboard_8f159556._.js (Script)
+[3044.94] GET http://localhost:3000/_next/static/chunks/src_c6df13c2._.js (Script)
+[3044.95] GET http://localhost:3000/_next/static/chunks/node_modules_framer-motion_dist_es_134bd0a7._.js (Script)
+[3044.96] GET http://localhost:3000/_next/static/chunks/node_modules_motion-dom_dist_es_c5d9af39._.js (Script)
+[3044.97] GET http://localhost:3000/_next/static/chunks/node_modules_a23b37be._.js (Script)
+[3044.98] GET http://localhost:3000/_next/static/chunks/src_app_page_tsx_fd8e7853._.js (Script)
+[F9E73A9362106FD15BAAF1D585BD6C8E] GET http://localhost:3000/ (Document) 200
+[3044.135] GET http://localhost:3000/_next/static/media/797e433ab948586e-s.p.29207c2f.woff2 (Font) 200
+[3044.136] GET http://localhost:3000/_next/static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2 (Font) 200
+[3044.137] GET http://localhost:3000/_next/static/chunks/%5Broot-of-the-server%5D__0f0ba101._.css (Stylesheet) 200
+[3044.138] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_956a0d3a._.js (Script) 200
+[3044.139] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js (Script) 200
+[3044.140] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_9212ccad._.js (Script) 200
+[3044.141] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_1dd7fb59.js (Script) 200
+[3044.142] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_a0e4c7b4._.js (Script) 200
+[3044.143] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_17643121._.js (Script) 200
+[3044.144] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js (Script) 200
+[3044.145] GET http://localhost:3000/_next/static/chunks/node_modules_%40swc_helpers_cjs_d80fb378._.js (Script) 200
+[3044.146] GET http://localhost:3000/_next/static/chunks/_a0ff3932._.js (Script) 200
+[3044.147] GET http://localhost:3000/_next/static/chunks/turbopack-_23a915ee._.js (Script) 200
+[3044.148] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_be32b49c._.js (Script) 200
+[3044.149] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_components_builtin_global-error_1cf6b850.js (Script) 200
+[3044.150] GET http://localhost:3000/_next/static/chunks/node_modules_394613a2._.js (Script) 200
+[3044.151] GET http://localhost:3000/_next/static/chunks/src_2bc135c0._.js (Script) 200
+[3044.152] GET http://localhost:3000/_next/static/chunks/src_app_layout_tsx_1cf6b850._.js (Script) 200
+[3044.153] GET http://localhost:3000/_next/static/chunks/src_components_dashboard_8f159556._.js (Script) 200
+[3044.154] GET http://localhost:3000/_next/static/chunks/src_c6df13c2._.js (Script) 200
+[3044.155] GET http://localhost:3000/_next/static/chunks/node_modules_framer-motion_dist_es_134bd0a7._.js (Script) 200
+[3044.156] GET http://localhost:3000/_next/static/chunks/node_modules_motion-dom_dist_es_c5d9af39._.js (Script) 200
+[3044.157] GET http://localhost:3000/_next/static/chunks/node_modules_a23b37be._.js (Script) 200
+[3044.158] GET http://localhost:3000/_next/static/chunks/src_app_page_tsx_fd8e7853._.js (Script) 200
+[3044.194] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_c8c997ce._.js (Script) 200
+[3044.195] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_c7192189._.js (Script) 200
+[3044.201] GET http://localhost:3000/__nextjs_font/geist-latin.woff2 (Font) 200
+[3044.203] GET https://z-cdn.chatglm.cn/z-ai/static/logo.svg (Other) 200
+[7783ABD6FD238E0FD68FBC6FF7D7DFBE] GET http://localhost:3000/ (Document) 200
+[3044.208] GET http://localhost:3000/_next/static/media/797e433ab948586e-s.p.29207c2f.woff2 (Font) 200
+[3044.209] GET http://localhost:3000/_next/static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2 (Font) 200
+[3044.210] GET http://localhost:3000/_next/static/chunks/%5Broot-of-the-server%5D__0f0ba101._.css (Stylesheet) 200
+[3044.211] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_956a0d3a._.js (Script) 200
+[3044.212] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js (Script)
+[3044.213] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_9212ccad._.js (Script) 200
+[3044.214] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_1dd7fb59.js (Script)
+[3044.215] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_a0e4c7b4._.js (Script) 200
+[3044.216] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_17643121._.js (Script)
+[3044.217] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js (Script) 200
+[3044.218] GET http://localhost:3000/_next/static/chunks/node_modules_%40swc_helpers_cjs_d80fb378._.js (Script) 200
+[3044.219] GET http://localhost:3000/_next/static/chunks/_a0ff3932._.js (Script) 200
+[3044.220] GET http://localhost:3000/_next/static/chunks/turbopack-_23a915ee._.js (Script)
+[3044.221] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_be32b49c._.js (Script)
+[3044.222] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_components_builtin_global-error_1cf6b850.js (Script)
+[3044.223] GET http://localhost:3000/_next/static/chunks/node_modules_394613a2._.js (Script)
+[3044.224] GET http://localhost:3000/_next/static/chunks/src_2bc135c0._.js (Script)
+[3044.225] GET http://localhost:3000/_next/static/chunks/src_app_layout_tsx_1cf6b850._.js (Script)
+[3044.226] GET http://localhost:3000/_next/static/chunks/src_components_dashboard_8f159556._.js (Script)
+[3044.227] GET http://localhost:3000/_next/static/chunks/src_c6df13c2._.js (Script)
+[3044.228] GET http://localhost:3000/_next/static/chunks/node_modules_framer-motion_dist_es_134bd0a7._.js (Script)
+[3044.229] GET http://localhost:3000/_next/static/chunks/node_modules_motion-dom_dist_es_c5d9af39._.js (Script)
+[3044.230] GET http://localhost:3000/_next/static/chunks/node_modules_a23b37be._.js (Script)
+[3044.231] GET http://localhost:3000/_next/static/chunks/src_app_page_tsx_fd8e7853._.js (Script)
+[23DBB527FEFBCA59E6BD0136A8BD6AB4] GET http://localhost:3000/ (Document) 200
+[3044.268] GET http://localhost:3000/_next/static/media/797e433ab948586e-s.p.29207c2f.woff2 (Font) 200
+[3044.269] GET http://localhost:3000/_next/static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2 (Font) 200
+[3044.270] GET http://localhost:3000/_next/static/chunks/%5Broot-of-the-server%5D__0f0ba101._.css (Stylesheet) 200
+[3044.271] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_956a0d3a._.js (Script) 200
+[3044.272] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js (Script) 200
+[3044.273] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_9212ccad._.js (Script) 200
+[3044.274] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_1dd7fb59.js (Script) 200
+[3044.275] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_a0e4c7b4._.js (Script) 200
+[3044.276] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_17643121._.js (Script) 200
+[3044.277] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js (Script) 200
+[3044.278] GET http://localhost:3000/_next/static/chunks/node_modules_%40swc_helpers_cjs_d80fb378._.js (Script) 200
+[3044.279] GET http://localhost:3000/_next/static/chunks/_a0ff3932._.js (Script) 200
+[3044.280] GET http://localhost:3000/_next/static/chunks/turbopack-_23a915ee._.js (Script) 200
+[3044.281] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_be32b49c._.js (Script) 200
+[3044.282] GET http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_components_builtin_global-error_1cf6b850.js (Script) 200
+[3044.283] GET http://localhost:3000/_next/static/chunks/node_modules_394613a2._.js (Script) 200
+[3044.284] GET http://localhost:3000/_next/static/chunks/src_2bc135c0._.js (Script) 200
+[3044.285] GET http://localhost:3000/_next/static/chunks/src_app_layout_tsx_1cf6b850._.js (Script) 200
+[3044.286] GET http://localhost:3000/_next/static/chunks/src_components_dashboard_8f159556._.js (Script) 200
+[3044.287] GET http://localhost:3000/_next/static/chunks/src_c6df13c2._.js (Script) 200
+[3044.288] GET http://localhost:3000/_next/static/chunks/node_modules_framer-motion_dist_es_134bd0a7._.js (Script) 200
+[3044.289] GET http://localhost:3000/_next/static/chunks/node_modules_motion-dom_dist_es_c5d9af39._.js (Script) 200
+[3044.290] GET http://localhost:3000/_next/static/chunks/node_modules_a23b37be._.js (Script) 200
+[3044.291] GET http://localhost:3000/_next/static/chunks/src_app_page_tsx_fd8e7853._.js (Script) 200
+[3044.327] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_c8c997ce._.js (Script) 200
+[3044.328] GET http://localhost:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_c7192189._.js (Script) 200
+[3044.334] GET http://localhost:3000/__nextjs_font/geist-latin.woff2 (Font) 200
+[3044.336] GET https://z-cdn.chatglm.cn/z-ai/static/logo.svg (Other) 200
+
+Trying different approach - fill via eval...
+"filled"
+✓ Done
+✅ LOGIN SUCCESS (via eval)
+
+=== CLICK INTEGRATIONS TAB ===
+null
+Integrations button ref: e32
+✓ Done
+=== CHECK INTEGRATIONS TAB ===
+- heading "LAXREE" [level=1, ref=e16]
+- button "Overview 1" [ref=e49]
+- button "Content Calendar 2" [ref=e50]
+- button "Blog Planner 3 3" [ref=e51]
+- button "Social Planner 4" [ref=e52]
+- button "Idea Researcher AI 5" [ref=e53]
+- button "SEO Dashboard 6" [ref=e54]
+- button "Campaigns 5 7" [ref=e55]
+- button "Social Analytics 8" [ref=e56]
+- button "Leads & Revenue 12 9" [ref=e57]
+- button "Report Builder 0" [ref=e58]
+- button "Budget Planner" [ref=e59]
+- button "Competitor Analysis" [ref=e60]
+- button "Attribution" [ref=e61]
+- button "Funnel" [ref=e62]
+- button "Email Campaigns" [ref=e63]
+- button "Reports 2" [ref=e64]
+- button "A/B Testing" [ref=e65]
+- button "Social Accounts" [ref=e66]
+- button "AI SEO Master AI" [ref=e67]
+- button "Lead Pipeline 8" [ref=e68]
+- button "Integrations NEW" [ref=e69]
+- button "LT Laxree Team Administrator ADMIN" [ref=e17]
+- button [ref=e2]
+- heading "Integrations" [level=2, ref=e3]
+- button "Search... ⌘K" [ref=e4]
+- combobox [expanded=false, ref=e5]: Last 30 days
+  - generic "Last 30 days" [ref=e18] clickable [onclick]
+- button [expanded=false, ref=e6]
+- heading "Account Integrations" [level=2, ref=e7]
+- button "All Platforms" [ref=e8]
+- button "Advertising" [ref=e9]
+- button "Social Media" [ref=e10]
+- button "Analytics" [ref=e11]
+- button "Email" [ref=e12]
+- button "SEO" [ref=e13]
+- button "E-Commerce" [ref=e14]
+- heading "Google Ads" [level=3, ref=e19]
+- button "Connect Account" [ref=e20]
+- link [ref=e21]
+- heading "Meta (Facebook)" [level=3, ref=e22]
+- button "Connect Account" [ref=e23]
+- link [ref=e24]
+- heading "Instagram Business" [level=3, ref=e25]
+- button "Connect Account" [ref=e26]
+- link [ref=e27]
+- heading "Google Analytics 4" [level=3, ref=e28]
+- button "Connect Account" [ref=e29]
+- link [ref=e30]
+- heading "YouTube" [level=3, ref=e31]
+
+✅ INTEGRATIONS TAB LOADED SUCCESSFULLY
+
+=== TEST CONNECT DIALOG ===
+✓ Done
+- button "Open Next.js Dev Tools" [expanded=false, ref=e15]
+- heading "Connect Google Ads" [level=2, ref=e10]
+- textbox "xxxxxx.apps.googleusercontent.com" [ref=e11]
+- textbox "GOCSPX-xxxxxxxx" [ref=e12]
+- button [ref=e13]
+- textbox "123-456-7890" [ref=e14]
+- textbox "e.g., \"Laxree Google Ads\"" [ref=e1]
+- button "15 min" [ref=e2]
+- button "1 hour" [ref=e3]
+- button "6 hours" [ref=e4]
+- button "24 hours" [ref=e5]
+- link "View API Documentation" [ref=e6]
+- button "Cancel" [ref=e7]
+- button "Connect" [disabled, ref=e8]
+- button "Close" [ref=e9]
+✅ CONNECT DIALOG OPENED
+
+=== ERRORS CHECK ===
+
+=== DONE ===

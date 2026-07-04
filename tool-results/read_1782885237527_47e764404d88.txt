@@ -1,0 +1,810 @@
+     1→'use client';
+     2→
+     3→import React, { useState, useEffect, useMemo, useCallback } from 'react';
+     4→import { format, parseISO } from 'date-fns';
+     5→import {
+     6→  Plus,
+     7→  Heart,
+     8→  MessageCircle,
+     9→  Share2,
+    10→  Bookmark,
+    11→  Edit3,
+    12→  Trash2,
+    13→  Copy,
+    14→  Instagram,
+    15→  Facebook,
+    16→  Twitter,
+    17→  Megaphone,
+    18→  Users,
+    19→  ThumbsUp,
+    20→  TrendingUp,
+    21→  Sparkles,
+    22→  Wand2,
+    23→} from 'lucide-react';
+    24→import { Card, CardContent } from '@/components/ui/card';
+    25→import { Badge } from '@/components/ui/badge';
+    26→import { Button } from '@/components/ui/button';
+    27→import {
+    28→  Dialog,
+    29→  DialogContent,
+    30→  DialogHeader,
+    31→  DialogTitle,
+    32→  DialogFooter,
+    33→  DialogDescription,
+    34→} from '@/components/ui/dialog';
+    35→import {
+    36→  Select,
+    37→  SelectContent,
+    38→  SelectItem,
+    39→  SelectTrigger,
+    40→  SelectValue,
+    41→} from '@/components/ui/select';
+    42→import {
+    43→  Table,
+    44→  TableBody,
+    45→  TableCell,
+    46→  TableHead,
+    47→  TableHeader,
+    48→  TableRow,
+    49→} from '@/components/ui/table';
+    50→import { Input } from '@/components/ui/input';
+    51→import { Textarea } from '@/components/ui/textarea';
+    52→import { Label } from '@/components/ui/label';
+    53→import { Skeleton } from '@/components/ui/skeleton';
+    54→import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+    55→import { toast } from 'sonner';
+    56→import {
+    57→  BarChart,
+    58→  Bar,
+    59→  XAxis,
+    60→  YAxis,
+    61→  Tooltip,
+    62→  ResponsiveContainer,
+    63→  Cell,
+    64→} from 'recharts';
+    65→import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+    66→
+    67→// ─── Types ───────────────────────────────────────────────────────────
+    68→interface SocialPost {
+    69→  id: string;
+    70→  platform: string;
+    71→  content: string | null;
+    72→  status: string;
+    73→  scheduledAt: string | null;
+    74→  likes: number;
+    75→  comments: number;
+    76→  shares: number;
+    77→  saves: number;
+    78→  createdAt: string;
+    79→  updatedAt: string;
+    80→}
+    81→
+    82→interface SocialData {
+    83→  posts: SocialPost[];
+    84→  platforms: string[];
+    85→  statusCounts: {
+    86→    published: number;
+    87→    scheduled: number;
+    88→    draft: number;
+    89→  };
+    90→  totalEngagement: number;
+    91→}
+    92→
+    93→// ─── Constants ───────────────────────────────────────────────────────
+    94→const PLATFORM_TABS = ['all', 'instagram', 'facebook', 'twitter', 'pinterest'];
+    95→const STATUS_FILTERS = ['all', 'published', 'scheduled', 'draft'];
+    96→
+    97→const PLATFORM_CONFIG: Record<
+    98→  string,
+    99→  { icon: React.ReactNode; color: string; bgClass: string; followers: string; handle: string }
+   100→> = {
+   101→  instagram: {
+   102→    icon: <Instagram className="size-4" />,
+   103→    color: '#E1306C',
+   104→    bgClass: 'bg-gradient-to-br from-[#f09433] via-[#e6683c] to-[#bc1888] text-white',
+   105→    followers: '135K',
+   106→    handle: '@laxree.jewels',
+   107→  },
+   108→  facebook: {
+   109→    icon: <Facebook className="size-4" />,
+   110→    color: '#1877F2',
+   111→    bgClass: 'bg-[#1877F2] text-white',
+   112→    followers: '28.9K',
+   113→    handle: 'Laxree Jewels',
+   114→  },
+   115→  twitter: {
+   116→    icon: <Twitter className="size-4" />,
+   117→    color: '#D4A843',
+   118→    bgClass: 'bg-[#1a1a1a] border border-[#D4A843] text-[#D4A843]',
+   119→    followers: '45K',
+   120→    handle: '@laxree',
+   121→  },
+   122→  pinterest: {
+   123→    icon: <Megaphone className="size-4" />,
+   124→    color: '#E60023',
+   125→    bgClass: 'bg-[#E60023] text-white',
+   126→    followers: '12.8K',
+   127→    handle: 'LaxreeJewels',
+   128→  },
+   129→};
+   130→
+   131→const PLATFORM_STATUS_BADGE: Record<string, string> = {
+   132→  instagram: 'bg-gradient-to-r from-[#f09433] via-[#e6683c] to-[#bc1888] text-white border-none',
+   133→  facebook: 'bg-[#1877F2] text-white border-none',
+   134→  twitter: 'bg-[#1a1a1a] text-[#D4A843] border border-[#D4A843]',
+   135→  pinterest: 'bg-[#E60023] text-white border-none',
+   136→};
+   137→
+   138→const POST_STATUS_BADGE: Record<string, string> = {
+   139→  published: 'badge-green',
+   140→  scheduled: 'badge-blue',
+   141→  draft: 'badge-red',
+   142→};
+   143→
+   144→const MAX_CHAR = 280;
+   145→
+   146→// ─── Main Component ──────────────────────────────────────────────────
+   147→export default function SocialPlannerTab() {
+   148→  const [data, setData] = useState<SocialData | null>(null);
+   149→  const [loading, setLoading] = useState(true);
+   150→  const [platformTab, setPlatformTab] = useState('all');
+   151→  const [statusFilter, setStatusFilter] = useState('all');
+   152→  const [dialogOpen, setDialogOpen] = useState(false);
+   153→  const [submitting, setSubmitting] = useState(false);
+   154→
+   155→  // Form state
+   156→  const [formPlatform, setFormPlatform] = useState('instagram');
+   157→  const [formContent, setFormContent] = useState('');
+   158→  const [formScheduleDate, setFormScheduleDate] = useState('');
+   159→  const [formScheduleTime, setFormScheduleTime] = useState('12:00');
+   160→  const [formStatus, setFormStatus] = useState('draft');
+   161→
+   162→  // AI Generator state
+   163→  const [aiTopic, setAiTopic] = useState('');
+   164→  const [aiTone, setAiTone] = useState('');
+   165→  const [aiGenerating, setAiGenerating] = useState(false);
+   166→  const [aiResult, setAiResult] = useState('');
+   167→  const [aiPlatform, setAiPlatform] = useState('Instagram');
+   168→
+   169→  const fetchData = useCallback(async () => {
+   170→    try {
+   171→      setLoading(true);
+   172→      const res = await fetch('/api/marketing/social-posts');
+   173→      if (!res.ok) throw new Error('Failed');
+   174→      const json = await res.json();
+   175→      setData(json);
+   176→    } catch {
+   177→      toast.error('Failed to load social posts');
+   178→    } finally {
+   179→      setLoading(false);
+   180→    }
+   181→  }, []);
+   182→
+   183→  useEffect(() => {
+   184→    fetchData();
+   185→  }, [fetchData]);
+   186→
+   187→  // Filtered posts
+   188→  const filteredPosts = useMemo(() => {
+   189→    if (!data) return [];
+   190→    return data.posts.filter((post) => {
+   191→      if (platformTab !== 'all' && post.platform.toLowerCase() !== platformTab) return false;
+   192→      if (statusFilter !== 'all' && post.status !== statusFilter) return false;
+   193→      return true;
+   194→    });
+   195→  }, [data, platformTab, statusFilter]);
+   196→
+   197→  // Platform stats computed from data
+   198→  const platformStats = useMemo(() => {
+   199→    if (!data) return {};
+   200→    const stats: Record<string, { posts: number; engagement: number; rate: string }> = {};
+   201→    const keys = ['instagram', 'facebook', 'twitter', 'pinterest'];
+   202→    const followers: Record<string, number> = {
+   203→      instagram: 135000,
+   204→      facebook: 28900,
+   205→      twitter: 45000,
+   206→      pinterest: 12800,
+   207→    };
+   208→
+   209→    keys.forEach((key) => {
+   210→      const posts = data.posts.filter((p) => p.platform.toLowerCase() === key);
+   211→      const published = posts.filter((p) => p.status === 'published');
+   212→      const totalEng = published.reduce((s, p) => s + p.likes + p.comments + p.shares + p.saves, 0);
+   213→      const avgRate =
+   214→        published.length > 0
+   215→          ? ((totalEng / published.length / followers[key]) * 100).toFixed(2)
+   216→          : '0.00';
+   217→      stats[key] = { posts: posts.length, engagement: totalEng, rate: avgRate };
+   218→    });
+   219→
+   220→    return stats;
+   221→  }, [data]);
+   222→
+   223→  // Engagement chart data
+   224→  const engagementChartData = useMemo(() => {
+   225→    return ['instagram', 'facebook', 'twitter', 'pinterest'].map((key) => ({
+   226→      platform: key.charAt(0).toUpperCase() + key.slice(1),
+   227→      engagement: platformStats[key]?.engagement || 0,
+   228→    }));
+   229→  }, [platformStats]);
+   230→
+   231→  const chartConfig = {
+   232→    engagement: { label: 'Engagement', color: '#D4A843' },
+   233→  };
+   234→
+   235→  // ─── Handlers ──────────────────────────────────────────────────────
+   236→  const handleSubmit = async () => {
+   237→    if (!formContent.trim()) {
+   238→      toast.error('Please enter post content');
+   239→      return;
+   240→    }
+   241→    try {
+   242→      setSubmitting(true);
+   243→      const scheduledAt =
+   244→        formScheduleDate && formScheduleTime
+   245→          ? `${formScheduleDate}T${formScheduleTime}:00`
+   246→          : null;
+   247→
+   248→      const res = await fetch('/api/marketing/social-posts', {
+   249→        method: 'POST',
+   250→        headers: { 'Content-Type': 'application/json' },
+   251→        body: JSON.stringify({
+   252→          platform: formPlatform,
+   253→          content: formContent,
+   254→          status: formStatus,
+   255→          scheduledAt,
+   256→        }),
+   257→      });
+   258→      if (!res.ok) throw new Error('Failed');
+   259→      toast.success('Post created successfully');
+   260→      setDialogOpen(false);
+   261→      resetForm();
+   262→      fetchData();
+   263→    } catch {
+   264→      toast.error('Failed to create post');
+   265→    } finally {
+   266→      setSubmitting(false);
+   267→    }
+   268→  };
+   269→
+   270→  const resetForm = () => {
+   271→    setFormPlatform('instagram');
+   272→    setFormContent('');
+   273→    setFormScheduleDate('');
+   274→    setFormScheduleTime('12:00');
+   275→    setFormStatus('draft');
+   276→  };
+   277→
+   278→  const handleAiGenerate = async () => {
+   279→    if (!aiTopic.trim()) { toast.error('Enter a topic for the AI'); return; }
+   280→    try {
+   281→      setAiGenerating(true);
+   282→      setAiResult('');
+   283→      const res = await fetch('/api/marketing/ai-social', {
+   284→        method: 'POST',
+   285→        headers: { 'Content-Type': 'application/json' },
+   286→        body: JSON.stringify({ platform: aiPlatform, topic: aiTopic, tone: aiTone || undefined }),
+   287→      });
+   288→      if (!res.ok) throw new Error();
+   289→      const json = await res.json();
+   290→      setAiResult(json.posts);
+   291→      toast.success('Posts generated!');
+   292→    } catch {
+   293→      toast.error('Failed to generate posts');
+   294→    } finally {
+   295→      setAiGenerating(false);
+   296→    }
+   297→  };
+   298→
+   299→  const handleDuplicate = (post: SocialPost) => {
+   300→    setFormPlatform(post.platform);
+   301→    setFormContent(post.content || '');
+   302→    setFormStatus('draft');
+   303→    setFormScheduleDate('');
+   304→    setFormScheduleTime('12:00');
+   305→    setDialogOpen(true);
+   306→  };
+   307→
+   308→  const formatEngagement = (n: number) => {
+   309→    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+   310→    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+   311→    return n.toString();
+   312→  };
+   313→
+   314→  // ─── Render ────────────────────────────────────────────────────────
+   315→  return (
+   316→    <div className="space-y-6">
+   317→      {/* Header */}
+   318→      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+   319→        <div>
+   320→          <h2 className="text-2xl font-bold gold-gradient-text">Social Media Planner</h2>
+   321→          <p className="text-sm text-muted-foreground mt-1">
+   322→            Plan, schedule and track your jewellery brand social content
+   323→          </p>
+   324→        </div>
+   325→        <Button
+   326→          onClick={() => {
+   327→            resetForm();
+   328→            setDialogOpen(true);
+   329→          }}
+   330→          className="gap-2 bg-[#D4A843] text-[#0a0a0a] hover:bg-[#E8C46A] font-semibold"
+   331→        >
+   332→          <Plus className="size-4" />
+   333→          Create Post
+   334→        </Button>
+   335→      </div>
+   336→
+   337→      {/* Platform Tabs */}
+   338→      <Tabs value={platformTab} onValueChange={setPlatformTab}>
+   339→        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+   340→          <TabsList className="bg-[#1a1a1a] border border-[#2a2520]">
+   341→            {PLATFORM_TABS.map((p) => (
+   342→              <TabsTrigger
+   343→                key={p}
+   344→                value={p}
+   345→                className="capitalize data-[state=active]:bg-[#D4A843] data-[state=active]:text-[#0a0a0a] transition-colors"
+   346→              >
+   347→                {p}
+   348→              </TabsTrigger>
+   349→            ))}
+   350→          </TabsList>
+   351→
+   352→          {/* Status filter */}
+   353→          <div className="flex items-center gap-2">
+   354→            {STATUS_FILTERS.map((s) => (
+   355→              <Button
+   356→                key={s}
+   357→                variant={statusFilter === s ? 'default' : 'outline'}
+   358→                size="sm"
+   359→                className={
+   360→                  statusFilter === s
+   361→                    ? 'bg-[#D4A843] text-[#0a0a0a] hover:bg-[#E8C46A] capitalize'
+   362→                    : 'border-[#2a2520] text-muted-foreground hover:text-[#D4A843] hover:border-[#D4A843] capitalize'
+   363→                }
+   364→                onClick={() => setStatusFilter(s)}
+   365→              >
+   366→                {s}
+   367→              </Button>
+   368→            ))}
+   369→          </div>
+   370→        </div>
+   371→
+   372→        {/* Platform Stats Cards */}
+   373→        {loading ? (
+   374→          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+   375→            {Array.from({ length: 4 }).map((_, i) => (
+   376→              <Skeleton key={i} className="h-32 rounded-xl" />
+   377→            ))}
+   378→          </div>
+   379→        ) : (
+   380→          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+   381→            {(['instagram', 'facebook', 'twitter', 'pinterest'] as const).map((key) => {
+   382→              const cfg = PLATFORM_CONFIG[key];
+   383→              const stat = platformStats[key];
+   384→              if (!cfg || !stat) return null;
+   385→              return (
+   386→                <div key={key} className="gold-card gold-shimmer rounded-xl p-4">
+   387→                  <div className="flex items-center gap-3 mb-3">
+   388→                    <div
+   389→                      className={`w-9 h-9 rounded-lg flex items-center justify-center ${cfg.bgClass}`}
+   390→                    >
+   391→                      {cfg.icon}
+   392→                    </div>
+   393→                    <div>
+   394→                      <div className="font-semibold text-sm capitalize">{key}</div>
+   395→                      <div className="text-xs text-muted-foreground">{cfg.followers} followers</div>
+   396→                    </div>
+   397→                  </div>
+   398→                  <div className="grid grid-cols-3 gap-2 text-center">
+   399→                    <div>
+   400→                      <div className="text-lg font-bold gold-glow">{stat.posts}</div>
+   401→                      <div className="text-[10px] text-muted-foreground">Posts</div>
+   402→                    </div>
+   403→                    <div>
+   404→                      <div className="text-lg font-bold gold-glow">
+   405→                        {formatEngagement(stat.engagement)}
+   406→                      </div>
+   407→                      <div className="text-[10px] text-muted-foreground">Engage</div>
+   408→                    </div>
+   409→                    <div>
+   410→                      <div className="text-lg font-bold gold-glow">{stat.rate}%</div>
+   411→                      <div className="text-[10px] text-muted-foreground">Avg Rate</div>
+   412→                    </div>
+   413→                  </div>
+   414→                </div>
+   415→              );
+   416→            })}
+   417→          </div>
+   418→        )}
+   419→
+   420→        {/* Engagement Overview Chart */}
+   421→        {!loading && engagementChartData.some((d) => d.engagement > 0) && (
+   422→          <Card className="gold-card overflow-hidden mt-4">
+   423→            <CardContent className="p-4">
+   424→              <h3 className="text-sm font-semibold mb-3 text-muted-foreground">
+   425→                Engagement Overview by Platform
+   426→              </h3>
+   427→              <ChartContainer config={chartConfig} className="h-[140px] w-full">
+   428→                <BarChart data={engagementChartData} margin={{ left: 0, right: 20, top: 5, bottom: 5 }}>
+   429→                  <XAxis
+   430→                    dataKey="platform"
+   431→                    tick={{ fontSize: 11, fill: '#9a9080' }}
+   432→                    axisLine={false}
+   433→                    tickLine={false}
+   434→                  />
+   435→                  <YAxis hide />
+   436→                  <Tooltip
+   437→                    content={<ChartTooltipContent />}
+   438→                    cursor={{ fill: 'rgba(212,168,67,0.05)' }}
+   439→                  />
+   440→                  <Bar dataKey="engagement" radius={[6, 6, 0, 0]} barSize={40}>
+   441→                    {engagementChartData.map((entry, index) => (
+   442→                      <Cell
+   443→                        key={index}
+   444→                        fill={
+   445→                          PLATFORM_CONFIG[entry.platform.toLowerCase()]?.color || '#D4A843'
+   446→                        }
+   447→                      />
+   448→                    ))}
+   449→                  </Bar>
+   450→                </BarChart>
+   451→              </ChartContainer>
+   452→            </CardContent>
+   453→          </Card>
+   454→        )}
+   455→
+   456→        {/* Posts List */}
+   457→        {loading ? (
+   458→          <div className="space-y-3 mt-4">
+   459→            {Array.from({ length: 4 }).map((_, i) => (
+   460→              <Skeleton key={i} className="h-40 rounded-xl" />
+   461→            ))}
+   462→          </div>
+   463→        ) : (
+   464→          <div className="space-y-3 mt-4">
+   465→            {filteredPosts.length === 0 ? (
+   466→              <div className="text-center py-16 text-muted-foreground">
+   467→                No social posts found
+   468→              </div>
+   469→            ) : (
+   470→              filteredPosts.map((post) => {
+   471→                const cfg = PLATFORM_CONFIG[post.platform.toLowerCase()];
+   472→                const isPublished = post.status === 'published';
+   473→                const totalEng = post.likes + post.comments + post.shares + post.saves;
+   474→
+   475→                return (
+   476→                  <div
+   477→                    key={post.id}
+   478→                    className="gold-card gold-shimmer rounded-xl p-4 sm:p-5 flex flex-col gap-3"
+   479→                  >
+   480→                    {/* Top row */}
+   481→                    <div className="flex items-center justify-between">
+   482→                      <div className="flex items-center gap-2">
+   483→                        {cfg && (
+   484→                          <span
+   485→                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${PLATFORM_STATUS_BADGE[post.platform.toLowerCase()] || 'badge-gold'}`}
+   486→                          >
+   487→                            {cfg.icon}
+   488→                            {post.platform}
+   489→                          </span>
+   490→                        )}
+   491→                        <span
+   492→                          className={`text-xs px-2 py-0.5 rounded-md border font-medium capitalize ${POST_STATUS_BADGE[post.status] || 'badge-gold'}`}
+   493→                        >
+   494→                          {post.status}
+   495→                        </span>
+   496→                      </div>
+   497→
+   498→                      {/* Date */}
+   499→                      <div className="text-xs text-muted-foreground">
+   500→                        {post.scheduledAt
+   501→                          ? format(parseISO(post.scheduledAt), 'MMM dd, yyyy HH:mm')
+   502→                          : format(parseISO(post.createdAt), 'MMM dd, yyyy')}
+   503→                      </div>
+   504→                    </div>
+   505→
+   506→                    {/* Content */}
+   507→                    <p className="text-sm text-foreground/90 leading-relaxed line-clamp-3">
+   508→                      {post.content || 'No content'}
+   509→                    </p>
+   510→
+   511→                    {/* Engagement metrics (published only) */}
+   512→                    {isPublished && (
+   513→                      <div className="flex items-center gap-4 sm:gap-6 py-2 px-3 rounded-lg bg-[#0a0a0a] border border-[#2a2520]">
+   514→                        <div className="flex items-center gap-1.5 text-xs">
+   515→                          <Heart className="size-3.5 text-red-400" />
+   516→                          <span className="text-muted-foreground">{post.likes.toLocaleString()}</span>
+   517→                        </div>
+   518→                        <div className="flex items-center gap-1.5 text-xs">
+   519→                          <MessageCircle className="size-3.5 text-[#D4A843]" />
+   520→                          <span className="text-muted-foreground">{post.comments.toLocaleString()}</span>
+   521→                        </div>
+   522→                        <div className="flex items-center gap-1.5 text-xs">
+   523→                          <Share2 className="size-3.5 text-green-500" />
+   524→                          <span className="text-muted-foreground">{post.shares.toLocaleString()}</span>
+   525→                        </div>
+   526→                        <div className="flex items-center gap-1.5 text-xs">
+   527→                          <Bookmark className="size-3.5 text-purple-400" />
+   528→                          <span className="text-muted-foreground">{post.saves.toLocaleString()}</span>
+   529→                        </div>
+   530→                        <div className="ml-auto flex items-center gap-1.5 text-xs">
+   531→                          <TrendingUp className="size-3.5 text-[#D4A843]" />
+   532→                          <span className="text-[#D4A843] font-medium">
+   533→                            {totalEng.toLocaleString()} total
+   534→                          </span>
+   535→                        </div>
+   536→                      </div>
+   537→                    )}
+   538→
+   539→                    {/* Actions */}
+   540→                    <div className="flex items-center gap-2 pt-1">
+   541→                      <Button
+   542→                        variant="ghost"
+   543→                        size="sm"
+   544→                        className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-[#D4A843]"
+   545→                        onClick={() => {
+   546→                          setFormPlatform(post.platform);
+   547→                          setFormContent(post.content || '');
+   548→                          setFormStatus(post.status);
+   549→                          setFormScheduleDate(
+   550→                            post.scheduledAt
+   551→                              ? format(parseISO(post.scheduledAt), 'yyyy-MM-dd')
+   552→                              : ''
+   553→                          );
+   554→                          setDialogOpen(true);
+   555→                        }}
+   556→                      >
+   557→                        <Edit3 className="size-3" /> Edit
+   558→                      </Button>
+   559→                      <Button
+   560→                        variant="ghost"
+   561→                        size="sm"
+   562→                        className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-[#D4A843]"
+   563→                        onClick={() => handleDuplicate(post)}
+   564→                      >
+   565→                        <Copy className="size-3" /> Duplicate
+   566→                      </Button>
+   567→                      <Button
+   568→                        variant="ghost"
+   569→                        size="sm"
+   570→                        className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-red-400 ml-auto"
+   571→                        onClick={() => toast.info('Delete is not available in this demo')}
+   572→                      >
+   573→                        <Trash2 className="size-3" /> Delete
+   574→                      </Button>
+   575→                    </div>
+   576→                  </div>
+   577→                );
+   578→              })
+   579→            )}
+   580→          </div>
+   581→        )}
+   582→      </Tabs>
+   583→
+   584→      {/* ─── AI Post Generator ────────────────────────────────────── */}
+   585→      <Card className="gold-card border-0 mt-6 overflow-hidden">
+   586→        <CardContent className="p-5">
+   587→          <div className="flex items-center gap-2.5 mb-4">
+   588→            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#D4A843]/15">
+   589→              <Wand2 className="h-4.5 w-4.5 text-[#D4A843]" />
+   590→            </div>
+   591→            <div>
+   592→              <h3 className="text-sm font-semibold text-foreground">AI Post Generator</h3>
+   593→              <p className="text-[11px] text-muted-foreground">Generate engaging social media content with AI</p>
+   594→            </div>
+   595→          </div>
+   596→
+   597→          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+   598→            <Input
+   599→              value={aiTopic}
+   600→              onChange={(e) => setAiTopic(e.target.value)}
+   601→              placeholder="e.g., Diwali collection launch"
+   602→              className="border-[#2a2520] bg-[#0a0a0a] focus-visible:border-[#D4A843] h-9 text-sm"
+   603→            />
+   604→            <Select value={aiPlatform} onValueChange={setAiPlatform}>
+   605→              <SelectTrigger className="border-[#2a2520] bg-[#0a0a0a] h-9 text-sm">
+   606→                <SelectValue />
+   607→              </SelectTrigger>
+   608→              <SelectContent className="bg-[#111] border-border">
+   609→                {['Instagram', 'Facebook', 'Twitter', 'Pinterest'].map((p) => (
+   610→                  <SelectItem key={p} value={p}>{p}</SelectItem>
+   611→                ))}
+   612→              </SelectContent>
+   613→            </Select>
+   614→            <div className="flex gap-2">
+   615→              <Input
+   616→                value={aiTone}
+   617→                onChange={(e) => setAiTone(e.target.value)}
+   618→                placeholder="Tone (optional)"
+   619→                className="border-[#2a2520] bg-[#0a0a0a] focus-visible:border-[#D4A843] h-9 text-sm flex-1"
+   620→              />
+   621→              <Button
+   622→                onClick={handleAiGenerate}
+   623→                disabled={aiGenerating || !aiTopic.trim()}
+   624→                className="h-9 px-4 bg-gradient-to-r from-[#B8922F] to-[#D4A843] text-[#0a0a0a] hover:from-[#D4A843] hover:to-[#E8C46A] font-semibold text-xs shrink-0"
+   625→              >
+   626→                {aiGenerating ? (
+   627→                  <span className="flex items-center gap-1.5">
+   628→                    <span className="h-1.5 w-1.5 rounded-full bg-[#0a0a0a] animate-pulse" />
+   629→                    Generating
+   630→                  </span>
+   631→                ) : (
+   632→                  <span className="flex items-center gap-1.5">
+   633→                    <Sparkles className="h-3.5 w-3.5" />
+   634→                    Generate
+   635→                  </span>
+   636→                )}
+   637→              </Button>
+   638→            </div>
+   639→          </div>
+   640→
+   641→          {aiResult && (
+   642→            <div className="mt-3 rounded-xl border border-[#D4A843]/15 bg-[#0a0a0a] p-4 animate-fade-in">
+   643→              <div className="flex items-center justify-between mb-2">
+   644→                <span className="text-xs font-semibold text-[#D4A843]">Generated Posts</span>
+   645→                <div className="flex gap-2">
+   646→                  {aiResult.split('---').filter((s: string) => s.includes('POST')).map((post: string, i: number) => {
+   647→                    const content = post.replace(/POST \d+:\s*/g, '').trim();
+   648→                    if (!content) return null;
+   649→                    return (
+   650→                      <button
+   651→                        key={i}
+   652→                        onClick={() => { setFormContent(content); setFormPlatform(aiPlatform.toLowerCase()); setDialogOpen(true); }}
+   653→                        className="text-[11px] text-[#D4A843] hover:underline flex items-center gap-1"
+   654→                      >
+   655→                        <Copy className="h-3 w-3" />
+   656→                        Use Post {i + 1}
+   657→                      </button>
+   658→                    );
+   659→                  })}
+   660→                </div>
+   661→              </div>
+   662→              <div className="text-sm text-foreground/85 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
+   663→                {aiResult}
+   664→              </div>
+   665→            </div>
+   666→          )}
+   667→        </CardContent>
+   668→      </Card>
+   669→
+   670→      {/* ─── Create Post Dialog ─────────────────────────────────────── */}
+   671→      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+   672→        <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto bg-[#111] border-[#2a2520]">
+   673→          <DialogHeader>
+   674→            <DialogTitle className="gold-gradient-text">Create Social Post</DialogTitle>
+   675→            <DialogDescription>
+   676→              Compose and schedule your social media content
+   677→            </DialogDescription>
+   678→          </DialogHeader>
+   679→
+   680→          <div className="space-y-4 py-2">
+   681→            <div className="grid grid-cols-2 gap-4">
+   682→              <div className="space-y-2">
+   683→                <Label className="text-foreground/80">Platform</Label>
+   684→                <Select value={formPlatform} onValueChange={setFormPlatform}>
+   685→                  <SelectTrigger className="border-[#2a2520] bg-[#0a0a0a] w-full">
+   686→                    <SelectValue />
+   687→                  </SelectTrigger>
+   688→                  <SelectContent>
+   689→                    {['instagram', 'facebook', 'twitter', 'pinterest'].map((p) => (
+   690→                      <SelectItem key={p} value={p} className="capitalize">
+   691→                        {p}
+   692→                      </SelectItem>
+   693→                    ))}
+   694→                  </SelectContent>
+   695→                </Select>
+   696→              </div>
+   697→
+   698→              <div className="space-y-2">
+   699→                <Label className="text-foreground/80">Status</Label>
+   700→                <Select value={formStatus} onValueChange={setFormStatus}>
+   701→                  <SelectTrigger className="border-[#2a2520] bg-[#0a0a0a] w-full">
+   702→                    <SelectValue />
+   703→                  </SelectTrigger>
+   704→                  <SelectContent>
+   705→                    {STATUS_FILTERS.filter((s) => s !== 'all').map((s) => (
+   706→                      <SelectItem key={s} value={s} className="capitalize">
+   707→                        {s}
+   708→                      </SelectItem>
+   709→                    ))}
+   710→                  </SelectContent>
+   711→                </Select>
+   712→              </div>
+   713→            </div>
+   714→
+   715→            <div className="space-y-2">
+   716→              <div className="flex items-center justify-between">
+   717→                <Label className="text-foreground/80">Content</Label>
+   718→                <span
+   719→                  className={`text-xs ${
+   720→                    formContent.length > MAX_CHAR ? 'text-red-400' : 'text-muted-foreground'
+   721→                  }`}
+   722→                >
+   723→                  {formContent.length}/{MAX_CHAR}
+   724→                </span>
+   725→              </div>
+   726→              <Textarea
+   727→                value={formContent}
+   728→                onChange={(e) => setFormContent(e.target.value)}
+   729→                placeholder="What's on your mind? Share your luxury jewellery content..."
+   730→                rows={4}
+   731→                className={`border-[#2a2520] bg-[#0a0a0a] focus-visible:border-[#D4A843] ${
+   732→                  formContent.length > MAX_CHAR ? 'border-red-400/50' : ''
+   733→                }`}
+   734→              />
+   735→            </div>
+   736→
+   737→            <div className="grid grid-cols-2 gap-4">
+   738→              <div className="space-y-2">
+   739→                <Label className="text-foreground/80">Schedule Date</Label>
+   740→                <Input
+   741→                  type="date"
+   742→                  value={formScheduleDate}
+   743→                  onChange={(e) => setFormScheduleDate(e.target.value)}
+   744→                  className="border-[#2a2520] bg-[#0a0a0a] focus-visible:border-[#D4A843]"
+   745→                />
+   746→              </div>
+   747→              <div className="space-y-2">
+   748→                <Label className="text-foreground/80">Schedule Time</Label>
+   749→                <Input
+   750→                  type="time"
+   751→                  value={formScheduleTime}
+   752→                  onChange={(e) => setFormScheduleTime(e.target.value)}
+   753→                  className="border-[#2a2520] bg-[#0a0a0a] focus-visible:border-[#D4A843]"
+   754→                />
+   755→              </div>
+   756→            </div>
+   757→
+   758→            {/* Preview Panel */}
+   759→            {formContent.trim() && (
+   760→              <div className="space-y-2">
+   761→                <Label className="text-foreground/80">Preview</Label>
+   762→                <div className="rounded-xl border border-[#2a2520] bg-[#0a0a0a] p-4 space-y-3">
+   763→                  <div className="flex items-center gap-3">
+   764→                    {PLATFORM_CONFIG[formPlatform] && (
+   765→                      <div
+   766→                        className={`w-8 h-8 rounded-full flex items-center justify-center ${PLATFORM_CONFIG[formPlatform].bgClass}`}
+   767→                      >
+   768→                        {PLATFORM_CONFIG[formPlatform].icon}
+   769→                      </div>
+   770→                    )}
+   771→                    <div>
+   772→                      <div className="text-sm font-semibold">Laxree Jewels</div>
+   773→                      <div className="text-xs text-muted-foreground">
+   774→                        {PLATFORM_CONFIG[formPlatform]?.handle || ''}
+   775→                      </div>
+   776→                    </div>
+   777→                  </div>
+   778→                  <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+   779→                    {formContent}
+   780→                  </p>
+   781→                  <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t border-[#2a2520]">
+   782→                    <Heart className="size-3.5" /> <MessageCircle className="size-3.5" />{' '}
+   783→                    <Share2 className="size-3.5" /> <Bookmark className="size-3.5" />
+   784→                  </div>
+   785→                </div>
+   786→              </div>
+   787→            )}
+   788→          </div>
+   789→
+   790→          <DialogFooter>
+   791→            <Button
+   792→              variant="outline"
+   793→              onClick={() => setDialogOpen(false)}
+   794→              className="border-[#2a2520] hover:border-[#D4A843]"
+   795→            >
+   796→              Cancel
+   797→            </Button>
+   798→            <Button
+   799→              onClick={handleSubmit}
+   800→              disabled={submitting || formContent.length > MAX_CHAR || !formContent.trim()}
+   801→              className="bg-[#D4A843] text-[#0a0a0a] hover:bg-[#E8C46A] font-semibold"
+   802→            >
+   803→              {submitting ? 'Creating...' : 'Create Post'}
+   804→            </Button>
+   805→          </DialogFooter>
+   806→        </DialogContent>
+   807→      </Dialog>
+   808→    </div>
+   809→  );
+   810→}

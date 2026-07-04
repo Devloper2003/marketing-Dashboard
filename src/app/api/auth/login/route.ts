@@ -1,37 +1,14 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 interface LoginRequest {
   email: string;
   password: string;
 }
 
-interface DemoUser {
-  email: string;
-  password: string;
-  role: 'admin' | 'manager' | 'viewer';
-  name: string;
-}
-
-const DEMO_USERS: DemoUser[] = [
-  {
-    email: 'admin@laxree.com',
-    password: 'laxree2024',
-    role: 'admin',
-    name: 'Laxree Team',
-  },
-  {
-    email: 'manager@laxree.com',
-    password: 'laxree2024',
-    role: 'manager',
-    name: 'Marketing Manager',
-  },
-  {
-    email: 'viewer@laxree.com',
-    password: 'laxree2024',
-    role: 'viewer',
-    name: 'Analytics Viewer',
-  },
-];
+// Admin credentials — change these for production
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@laxree.com';
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || crypto.createHash('sha256').update('laxree2024').digest('hex');
 
 export async function POST(request: Request) {
   try {
@@ -45,27 +22,22 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = DEMO_USERS.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
+    const inputHash = crypto.createHash('sha256').update(password).digest('hex');
 
-    if (!user) {
+    if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase() || inputHash !== ADMIN_PASSWORD_HASH) {
       return NextResponse.json(
         { success: false, error: 'Invalid credentials' },
         { status: 401 }
       );
     }
 
-    const token = `demo-token-${user.role}-${Date.now()}`;
-
     return NextResponse.json({
       success: true,
       user: {
-        email: user.email,
-        name: user.name,
-        role: user.role,
+        email: ADMIN_EMAIL,
+        name: 'Admin',
+        role: 'admin',
       },
-      token,
     });
   } catch {
     return NextResponse.json(
