@@ -40,6 +40,7 @@ import {
   Contact,
   LogOut,
   Plug,
+  ShieldX,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -232,12 +233,15 @@ function SidebarContent({
       {/* Logo */}
       <div className="flex h-16 items-center gap-3 px-4 border-b border-border/50 relative">
         <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-[#D4A843]/20 via-[#D4A843]/10 to-transparent" />
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg gold-gradient shadow-md shadow-[#D4A843]/15">
-          <Gem className="h-5 w-5 text-primary-foreground" />
+        <div className="flex h-9 shrink-0 items-center justify-center">
+          <img
+            src="/logos/laxree-logo.png"
+            alt="Laxree"
+            className={`object-contain transition-all duration-300 ${collapsed ? 'h-7 w-7' : 'h-9 w-28'}`}
+          />
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-lg font-bold gold-gradient-text tracking-wider text-glow-gold-sm">LAXREE</h1>
             <p className="text-[9px] text-muted-foreground/70 -mt-0.5 tracking-[0.25em] uppercase">Marketing Suite</p>
           </div>
         )}
@@ -371,10 +375,10 @@ function SidebarContent({
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-white/5 transition-all duration-200 cursor-pointer group w-full text-left"
             >
               <Avatar className="h-8 w-8 border border-[#D4A843]/30 group-hover:border-[#D4A843]/50 transition-colors">
-                <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">{user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'LT'}</AvatarFallback>
+                <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">{user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'AD'}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{user?.name || 'Laxree Team'}</p>
+                <p className="text-sm font-medium text-foreground truncate">{user?.name || 'Admin'}</p>
                 <div className="flex items-center gap-1.5">
                   <p className="text-[11px] text-muted-foreground/70 truncate">{user?.role === 'admin' ? 'Administrator' : user?.role === 'manager' ? 'Marketing Manager' : 'Analytics Viewer'}</p>
                   {user?.role === 'admin' && (
@@ -419,12 +423,12 @@ function SidebarContent({
                   className="flex justify-center"
                 >
                   <Avatar className="h-8 w-8 border border-[#D4A843]/30 cursor-pointer hover:border-red-500/50 hover:opacity-80 transition-all">
-                    <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">{user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'LT'}</AvatarFallback>
+                    <AvatarFallback className="bg-[#D4A843]/20 text-[#D4A843] text-xs font-bold">{user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'AD'}</AvatarFallback>
                   </Avatar>
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right" className="bg-card border-border text-foreground">
-                {user?.name || 'Laxree Team'} — Click to sign out
+                {user?.name || 'Admin'} — Click to sign out
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -532,9 +536,34 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  // Admin-only access gate
+  const isAdmin = user?.role === 'admin';
+
   // Show login if not authenticated
-  if (!isLoggedIn) {
+  if (!isLoggedIn || !user) {
     return <LoginPage onLogin={handleLogin} />;
+  }
+
+  // Block non-admin users — show access denied
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+            <ShieldX className="w-10 h-10 text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Access Denied</h2>
+          <p className="text-muted-foreground mb-6">You do not have permission to access this dashboard. Please contact your administrator.</p>
+          <Button
+            variant="outline"
+            onClick={handleLogout}
+            className="border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/10"
+          >
+            Sign Out
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const renderTab = () => {
@@ -728,7 +757,7 @@ export default function Home() {
 
             {/* User Avatar (mobile) */}
             <Avatar className="h-7 w-7 border border-[#D4A843]/20 lg:hidden">
-              <AvatarFallback className="bg-[#D4A843]/15 text-[#D4A843] text-[10px] font-bold">{user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'LT'}</AvatarFallback>
+              <AvatarFallback className="bg-[#D4A843]/15 text-[#D4A843] text-[10px] font-bold">{user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'AD'}</AvatarFallback>
             </Avatar>
           </div>
         </header>
@@ -744,7 +773,7 @@ export default function Home() {
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#D4A843]/15 to-transparent" />
             <div className="mx-auto max-w-[1440px] flex h-10 items-center justify-between px-4 lg:px-6">
               <p className="text-[11px] text-muted-foreground/60">
-                © {new Date().getFullYear()} <span className="text-[#D4A843]/50 font-medium">Laxree</span> Jewellery — Marketing Analytics Platform
+                © {new Date().getFullYear()} <span className="text-[#D4A843]/50 font-medium">Laxree</span> — Marketing Analytics Platform
               </p>
               <div className="flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500 dot-pulse shadow-sm shadow-green-500/30" />
