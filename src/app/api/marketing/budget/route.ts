@@ -26,15 +26,8 @@ export async function GET() {
       utilization: data.allocated > 0 ? Math.round((data.spent / data.allocated) * 100) : 0,
     }));
 
-    // Monthly trend mock data (last 6 months)
-    const monthlyTrend = [
-      { month: 'Jan 2026', allocated: 580000, spent: 492000 },
-      { month: 'Feb 2026', allocated: 610000, spent: 518000 },
-      { month: 'Mar 2026', allocated: 640000, spent: 576000 },
-      { month: 'Apr 2026', allocated: 690000, spent: 586000 },
-      { month: 'May 2026', allocated: 720000, spent: 648000 },
-      { month: 'Jun 2026', allocated: 815000, spent: 670000 },
-    ];
+    // Monthly trend
+    const monthlyTrend: { month: string; allocated: number; spent: number }[] = [];
 
     // Budget alerts (at_risk or over_budget)
     const alerts = items

@@ -25,26 +25,14 @@ export async function GET() {
     // Social media stats
     const socialPosts = await db.socialPost.findMany();
     const instagramPosts = socialPosts.filter(p => p.platform === 'Instagram');
-    const totalFollowers = 135145 + 45015; // Instagram + Twitter
+    const totalFollowers = 0;
     const totalInteractions = socialPosts.reduce((sum, p) => sum + p.likes + p.comments + p.shares + p.saves, 0);
 
-    // Traffic data (mock monthly data)
-    const trafficData = [
-      { month: 'Oct', paid: 28000, organic: 35000 },
-      { month: 'Nov', paid: 32000, organic: 38000 },
-      { month: 'Dec', paid: 41000, organic: 42000 },
-      { month: 'Jan', paid: 36500, organic: 45000 },
-      { month: 'Feb', paid: 39000, organic: 48000 },
-    ];
+    // Traffic data
+    const trafficData: { month: string; paid: number; organic: number }[] = [];
 
     // Funnel data
-    const funnelData = [
-      { stage: 'Impressions', value: 185256, dropRate: 0 },
-      { stage: 'Clicks', value: 112125, dropRate: 39.5 },
-      { stage: 'Page Views', value: 65256, dropRate: 41.8 },
-      { stage: 'Add to Cart', value: 18420, dropRate: 71.8 },
-      { stage: 'Signups', value: 41527, dropRate: 0 },
-    ];
+    const funnelData: { stage: string; value: number; dropRate: number }[] = [];
 
     return NextResponse.json({
       kpis: {
@@ -55,8 +43,8 @@ export async function GET() {
         totalCampaigns: campaigns.length,
         totalFollowers,
         totalInteractions,
-        pageViews: 12450,
-        bounceRate: 86.5,
+        pageViews: 0,
+        bounceRate: 0,
       },
       goalTracking: {
         onTrack,
@@ -69,10 +57,10 @@ export async function GET() {
       trafficData,
       funnelData,
       socialMedia: {
-        instagram: { followers: 135145, posts: instagramPosts.length, engagement: 4.8 },
-        twitter: { followers: 45015, posts: socialPosts.filter(p => p.platform === 'Twitter').length, engagement: 2.1 },
-        facebook: { followers: 28900, posts: socialPosts.filter(p => p.platform === 'Facebook').length, engagement: 3.2 },
-        pinterest: { followers: 12800, posts: socialPosts.filter(p => p.platform === 'Pinterest').length, engagement: 5.6 },
+        instagram: { followers: 0, posts: instagramPosts.length, engagement: 0 },
+        twitter: { followers: 0, posts: socialPosts.filter(p => p.platform === 'Twitter').length, engagement: 0 },
+        facebook: { followers: 0, posts: socialPosts.filter(p => p.platform === 'Facebook').length, engagement: 0 },
+        pinterest: { followers: 0, posts: socialPosts.filter(p => p.platform === 'Pinterest').length, engagement: 0 },
       },
     });
   } catch (error) {

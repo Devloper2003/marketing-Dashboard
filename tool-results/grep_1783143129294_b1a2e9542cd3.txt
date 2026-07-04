@@ -1,0 +1,252 @@
+/home/z/my-project/src/components/dashboard/lead-pipeline-tab.tsx:350:    a.download = 'laxree-leads.csv';
+/home/z/my-project/src/components/dashboard/seo-master-tab.tsx:392:                      <td className="py-2.5 px-4"><Badge className={a.type === 'brand' ? 'badge-gold' : 'badge-cyan'}>{a.type}</Badge></td>
+/home/z/my-project/src/components/dashboard/leads-tab.tsx:206:    link.download = `laxree-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+/home/z/my-project/src/app/layout.tsx:17:  title: "Laxree Marketing Dashboard",
+/home/z/my-project/src/app/layout.tsx:18:  description: "Comprehensive marketing analytics dashboard for Laxree - Content Calendar, Blog Planner, Social Media, SEO & more",
+/home/z/my-project/src/app/layout.tsx:19:  keywords: ["Laxree", "Marketing", "Dashboard", "Analytics", "SEO", "Content Calendar"],
+/home/z/my-project/src/app/layout.tsx:20:  authors: [{ name: "Laxree Team" }],
+/home/z/my-project/src/app/layout.tsx:22:    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+/home/z/my-project/src/components/dashboard/integrations-tab.tsx:214:      { key: 'apiKey', label: 'Site URL', placeholder: 'https://www.laxree.com', type: 'text', required: true },
+/home/z/my-project/src/components/dashboard/integrations-tab.tsx:734:                    placeholder={`e.g., "Laxree ${connectDialog.name}"`}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:64:  logo: string | null;
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:201:  const [brands, setBrands] = useState<Brand[]>([]);
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:218:    logo: '',
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:227:    logo: '',
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:230:    brandId: '',
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:243:      const [dashRes, brandsRes] = await Promise.all([
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:245:        fetch(`/api/tenant/brands?userId=${session.id}`),
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:249:      const brandsData = brandsRes.ok ? await brandsRes.json() : null;
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:255:      if (brandsData?.success) {
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:256:        setBrands(brandsData.brands || []);
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:259:      console.error('Failed to fetch brand data:', err);
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:278:      const res = await fetch('/api/tenant/brands', {
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:285:          logo: form.logo || null,
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:292:      if (!res.ok) throw new Error(data.error || 'Failed to create brand');
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:294:      setForm({ name: '', slug: '', primaryColor: '#D4A843', logo: '', ownerEmail: '', ownerName: '', ownerPassword: '', plan: 'pro' });
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:299:      setError(err instanceof Error ? err.message : 'Failed to create brand');
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:306:  const openEdit = (brand: Brand) => {
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:307:    setSelectedBrand(brand);
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:308:    setEditForm({ name: brand.name, primaryColor: brand.primaryColor, logo: brand.logo || '' });
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:321:      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}`, {
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:327:          logo: editForm.logo || undefined,
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:331:      if (!res.ok) throw new Error(data.error || 'Failed to update brand');
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:337:      setError(err instanceof Error ? err.message : 'Failed to update brand');
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:344:  const handleToggleActive = async (brand: Brand) => {
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:345:    setActionLoading(`toggle-${brand.id}`);
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:347:      const res = await fetch(`/api/tenant/brands/${brand.id}`, {
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:350:        body: JSON.stringify({ isActive: !brand.isActive }),
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:354:        throw new Error(data.error || 'Failed to toggle brand status');
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:358:      setError(err instanceof Error ? err.message : 'Failed to toggle brand');
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:366:  const openDelete = (brand: Brand) => {
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:367:    setSelectedBrand(brand);
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:375:      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}`, {
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:380:      if (!res.ok) throw new Error(data.error || 'Failed to delete brand');
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:386:      setError(err instanceof Error ? err.message : 'Failed to delete brand');
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:396:    if (!inviteForm.brandId || !inviteForm.email) {
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:402:      const res = await fetch(`/api/tenant/brands/${inviteForm.brandId}/invite`, {
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:414:      setInviteForm({ brandId: '', email: '', role: 'staff', designation: '' });
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:469:            <p className="text-xs text-muted-foreground/60">Create and manage brands on the Laxree platform</p>
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:477:            onClick={() => { setInviteForm({ brandId: '', email: '', role: 'staff', designation: '' }); setInviteOpen(true); setError(''); }}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:485:            onClick={() => { setForm({ name: '', slug: '', primaryColor: '#D4A843', logo: '', ownerEmail: '', ownerName: '', ownerPassword: '', plan: 'pro' }); setCreateOpen(true); setError(''); }}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:533:          sub="Across all brands"
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:559:                  {brands.length}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:589:                  {brands.length === 0 ? (
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:593:                        <p className="text-sm text-muted-foreground/60">No brands created yet</p>
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:597:                          onClick={() => { setForm({ name: '', slug: '', primaryColor: '#D4A843', logo: '', ownerEmail: '', ownerName: '', ownerPassword: '', plan: 'pro' }); setCreateOpen(true); setError(''); }}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:600:                          Create your first brand
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:605:                    brands.map((brand, idx) => (
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:607:                        key={brand.id}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:618:                                background: `linear-gradient(135deg, ${brand.primaryColor}, ${brand.primaryColor}99)`,
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:621:                              {brand.logo ? (
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:623:                                  src={brand.logo}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:624:                                  alt={brand.name}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:632:                                <span className="hidden">{brand.name[0]}</span>
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:634:                              {!brand.logo && <span>{brand.name[0]}</span>}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:637:                              <p className="text-sm font-medium text-foreground">{brand.name}</p>
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:638:                              <p className="text-[11px] text-muted-foreground/50 md:hidden">{brand.slug}</p>
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:643:                          <code className="text-xs text-muted-foreground/60 bg-[#1a1a1a] px-2 py-0.5 rounded">{brand.slug}</code>
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:646:                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${PLAN_COLORS[brand.plan] || PLAN_COLORS.free}`}>
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:647:                            {brand.plan}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:653:                            {brand.userCount}/{brand.maxUsers}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:657:                          <span className="text-xs text-muted-foreground/60">{formatDate(brand.createdAt)}</span>
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:662:                              brand.isActive
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:667:                            <span className={`h-1.5 w-1.5 rounded-full ${brand.isActive ? 'bg-emerald-400' : 'bg-red-400'}`} />
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:668:                            {brand.isActive ? 'Active' : 'Inactive'}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:674:                              onClick={() => openEdit(brand)}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:681:                              onClick={() => handleToggleActive(brand)}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:682:                              disabled={actionLoading === `toggle-${brand.id}`}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:684:                              title={brand.isActive ? 'Deactivate' : 'Activate'}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:686:                              {actionLoading === `toggle-${brand.id}` ? (
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:688:                              ) : brand.isActive ? (
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:695:                              onClick={() => openDelete(brand)}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:787:                Set up a new brand on the Laxree platform. The owner will receive full access.
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:813:                  placeholder="brand-slug"
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:835:                <label className="text-xs text-muted-foreground font-medium">Logo URL</label>
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:837:                  value={form.logo}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:838:                  onChange={(e) => setForm((p) => ({ ...p, logo: e.target.value }))}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:839:                  placeholder="https://example.com/logo.svg"
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:869:                  placeholder="owner@brand.com"
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:966:              <label className="text-xs text-muted-foreground font-medium">Logo URL</label>
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:968:                value={editForm.logo}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:969:                onChange={(e) => setEditForm((p) => ({ ...p, logo: e.target.value }))}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:1008:                Send an invitation to join a brand team
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:1021:                value={inviteForm.brandId}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:1022:                onValueChange={(v) => setInviteForm((p) => ({ ...p, brandId: v }))}
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:1025:                  <SelectValue placeholder="Select a brand" />
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:1028:                  {brands.filter((b) => b.isActive).map((b) => (
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:1048:                placeholder="staff@brand.com"
+/home/z/my-project/src/components/dashboard/brand-management-tab.tsx:1114:                This will permanently remove the brand and all its data. This action cannot be undone.
+/home/z/my-project/src/components/dashboard/social-planner-tab.tsx:106:    handle: '@laxree.jewels',
+/home/z/my-project/src/components/dashboard/social-planner-tab.tsx:113:    handle: 'Laxree Jewels',
+/home/z/my-project/src/components/dashboard/social-planner-tab.tsx:120:    handle: '@laxree',
+/home/z/my-project/src/components/dashboard/social-planner-tab.tsx:127:    handle: 'LaxreeJewels',
+/home/z/my-project/src/components/dashboard/social-planner-tab.tsx:322:            Plan, schedule and track your jewellery brand social content
+/home/z/my-project/src/components/dashboard/social-planner-tab.tsx:772:                      <div className="text-sm font-semibold">Laxree Jewels</div>
+/home/z/my-project/src/components/dashboard/social-accounts-tab.tsx:874:            <p className="text-sm text-muted-foreground">Choose a platform to connect to your Laxree marketing dashboard.</p>
+/home/z/my-project/src/app/api/marketing/report-builder/route.ts:57:  const { templateId, dateRange, format, brandSettings } = body as {
+/home/z/my-project/src/app/api/marketing/report-builder/route.ts:61:    brandSettings?: {
+/home/z/my-project/src/app/api/marketing/report-builder/route.ts:65:      includeLogo?: boolean;
+/home/z/my-project/src/components/dashboard/overview-tab.tsx:353:                <h2 className="text-xl font-bold gold-gradient-text text-glow-gold-sm">{getGreeting()}, Laxree Team</h2>
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:267:  includeLogo,
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:275:  includeLogo: boolean;
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:300:          {/* Logo area */}
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:301:          {includeLogo && (
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:336:          <span className="text-[8px] text-gray-300 tracking-wider uppercase">Generated by Laxree Marketing Suite</span>
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:363:  const [brandingOn, setBrandingOn] = useState(true);
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:364:  const [companyName, setCompanyName] = useState('Laxree Jewellery');
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:367:  const [includeLogo, setIncludeLogo] = useState(true);
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:406:          brandSettings: brandingOn
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:407:            ? { companyName, tagline, accentColor, includeLogo, includeFooter }
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:701:                    {/* Branding Toggle */}
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:705:                        <Label className="text-sm text-foreground">Include Laxree branding</Label>
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:708:                        onClick={() => setBrandingOn(!brandingOn)}
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:709:                        className={`relative h-6 w-11 rounded-full transition-colors duration-300 ${brandingOn ? 'bg-[#D4A843]' : 'bg-border'}`}
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:713:                          animate={{ left: brandingOn ? '22px' : '2px' }}
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:721:                      {brandingOn && (
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:776:                              <ImageIcon className="h-3 w-3" /> Include Logo
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:779:                              onClick={() => setIncludeLogo(!includeLogo)}
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:780:                              className={`relative h-5 w-9 rounded-full transition-colors duration-300 ${includeLogo ? 'bg-[#D4A843]' : 'bg-border'}`}
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:784:                                animate={{ left: includeLogo ? '18px' : '2px' }}
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:842:                      companyName={brandingOn ? companyName : 'Custom Brand'}
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:843:                      tagline={brandingOn ? tagline : ''}
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:844:                      accentColor={brandingOn ? accentColor : '#888888'}
+/home/z/my-project/src/components/dashboard/report-builder-tab.tsx:845:                      includeLogo={brandingOn && includeLogo}
+/home/z/my-project/src/components/login-page.tsx:66:/* ─── Left brand panel (desktop only) ─────────────────────────── */
+/home/z/my-project/src/components/login-page.tsx:105:        LAXREE
+/home/z/my-project/src/components/login-page.tsx:200:      {/* Left panel – brand showcase (desktop) */}
+/home/z/my-project/src/components/login-page.tsx:211:          {/* Mobile brand header */}
+/home/z/my-project/src/components/login-page.tsx:222:              LAXREE
+/home/z/my-project/src/components/login-page.tsx:248:                Sign in to your Laxree dashboard
+/home/z/my-project/src/components/login-page.tsx:295:                    placeholder="you@laxree.com"
+/home/z/my-project/src/components/login-page.tsx:423:                      admin@laxree.com
+/home/z/my-project/src/components/login-page.tsx:427:                      laxree2024
+/home/z/my-project/src/components/login-page.tsx:442:            &copy; {new Date().getFullYear()} Laxree Jewellery. All rights reserved.
+/home/z/my-project/src/app/api/marketing/ai-social/route.ts:25:          content: `You are a social media content writer for Laxree, a luxury jewellery brand known for exquisite gold, diamond, and Kundan jewellery. Your tone should be elegant yet approachable. Always highlight craftsmanship, quality, and the emotional value of jewellery.`,
+/home/z/my-project/src/components/dashboard/staff-management-tab.tsx:54:    logo: string | null;
+/home/z/my-project/src/components/dashboard/staff-management-tab.tsx:181:      const res = await fetch(`/api/tenant/brands/${tenantId}`);
+/home/z/my-project/src/components/dashboard/staff-management-tab.tsx:184:        if (data.success && data.brand?.users) {
+/home/z/my-project/src/components/dashboard/staff-management-tab.tsx:186:            data.brand.users.map((u: TeamMember & { role: string }) => ({
+/home/z/my-project/src/components/dashboard/staff-management-tab.tsx:213:      const res = await fetch(`/api/tenant/brands/${tenantId}/invite`, {
+/home/z/my-project/src/components/dashboard/staff-management-tab.tsx:249:      const res = await fetch(`/api/tenant/brands/${tenantId}/users/${selectedMember.id}`, {
+/home/z/my-project/src/components/dashboard/staff-management-tab.tsx:275:      const res = await fetch(`/api/tenant/brands/${tenantId}/users/${member.id}`, {
+/home/z/my-project/src/components/dashboard/staff-management-tab.tsx:303:      const res = await fetch(`/api/tenant/brands/${tenantId}/users/${selectedMember.id}`, {
+/home/z/my-project/src/components/dashboard/staff-management-tab.tsx:370:              Manage team members for {session?.tenant?.name || 'your brand'}
+/home/z/my-project/src/components/dashboard/staff-management-tab.tsx:658:                Send an invitation to join {session?.tenant?.name || 'your brand'}
+/home/z/my-project/src/app/api/marketing/lead-pipeline/route.ts:46:  { id: 'FU005', leadName: 'Vikram Malhotra', leadId: 'L001', type: 'call', subject: 'Diamond Necklace — Initial Introduction', date: '2025-01-16', time: '4:00 PM', status: 'pending', notes: 'First call with lead. Present brand story and diamond expertise.', assignedTo: 'Priya Sharma' },
+/home/z/my-project/src/app/api/marketing/ai-idea/route.ts:14:    const systemPrompt = `You are a marketing idea researcher and strategist for Laxree, a luxury jewellery brand. 
+/home/z/my-project/src/app/api/marketing/ai-idea/route.ts:16:Focus on: content marketing, social media campaigns, SEO strategies, influencer collaborations, seasonal promotions, and brand growth.
+/home/z/my-project/src/app/api/marketing/ai-idea/route.ts:18:Be specific, practical, and aligned with luxury jewellery branding.`;
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:79:  logo?: string;
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:87:  logo: string | null;
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:152:        ? { id: parsed.tenant.id, name: parsed.tenant.name, slug: parsed.tenant.slug, logo: parsed.tenant.logo, primaryColor: parsed.tenant.primaryColor }
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:255:  const [brands, setBrands] = useState<Brand[]>([]);
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:260:  const [brandDetail, setBrandDetail] = useState<Brand | null>(null);
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:261:  const [brandLoading, setBrandLoading] = useState(false);
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:270:  const [editBrandingOpen, setEditBrandingOpen] = useState(false);
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:274:    name: '', slug: '', primaryColor: '#D4A843', logo: '',
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:280:  const [editBrandingForm, setEditBrandingForm] = useState({ name: '', primaryColor: '#D4A843', logo: '' });
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:289:      const res = await fetch(`/api/tenant/brands?userId=${userId}`);
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:292:        setBrands(data.brands || []);
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:294:        setError(data.error || 'Failed to load brands');
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:316:  const fetchBrandDetail = useCallback(async (brandId: string) => {
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:319:      const res = await fetch(`/api/tenant/brands/${brandId}`);
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:322:        setBrandDetail(data.brand);
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:323:        setSelectedBrand(data.brand);
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:337:  // Filter brands
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:339:    if (!search) return brands;
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:341:    return brands.filter(
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:347:  }, [brands, search]);
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:353:      const res = await fetch('/api/tenant/brands', {
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:361:        setAddBrandForm({ name: '', slug: '', primaryColor: '#D4A843', logo: '', ownerName: '', ownerEmail: '', ownerPassword: '' });
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:365:        alert(data.error || 'Failed to create brand');
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:378:      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}/invite`, {
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:402:      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}/users`, {
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:427:      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}/users/${editUserForm.userId}`, {
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:449:      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}/users/${targetUserId}`, {
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:468:    if (!confirm('Remove this user from the brand? They can be re-invited later.')) return;
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:470:      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}/users/${targetUserId}`, {
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:486:  const handleEditBranding = async () => {
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:490:      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}`, {
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:493:        body: JSON.stringify(editBrandingForm),
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:497:        setEditBrandingOpen(false);
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:501:        alert(data.error || 'Failed to update branding');
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:515:  const openEditBranding = (brand: Brand) => {
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:516:    setEditBrandingForm({ name: brand.name, primaryColor: brand.primaryColor || '#D4A843', logo: brand.logo || '' });
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:517:    setEditBrandingOpen(true);
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:533:  if (brandDetail || brandLoading) {
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:548:        {brandLoading ? (
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:553:        ) : brandDetail ? (
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:563:                        style={{ backgroundColor: brandDetail.primaryColor || '#D4A843' }}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:565:                        {brandDetail.logo ? (
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:566:                          <img src={brandDetail.logo} alt={brandDetail.name} className="h-10 w-10 rounded-lg object-cover" />
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:568:                          brandDetail.name.slice(0, 2).toUpperCase()
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:572:                        <h2 className="text-xl font-bold text-foreground">{brandDetail.name}</h2>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:574:                          <span className="text-sm text-muted-foreground">@{brandDetail.slug}</span>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:575:                          <span className={PLAN_COLORS[brandDetail.plan] || 'bg-zinc-500/15 text-zinc-400'}>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:576:                            <Badge variant="outline" className={PLAN_COLORS[brandDetail.plan] || 'bg-zinc-500/15 text-zinc-400 border-transparent text-[10px] font-semibold uppercase tracking-wider'}>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:577:                              {brandDetail.plan}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:580:                          <Badge variant="outline" className={brandDetail.isActive ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-[10px] font-semibold' : 'bg-red-500/15 text-red-400 border-red-500/20 text-[10px] font-semibold'}>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:581:                            {brandDetail.isActive ? 'Active' : 'Inactive'}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:583:                          <span className="text-[11px] text-muted-foreground">{brandDetail.userCount}/{brandDetail.maxUsers} users</span>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:588:                      onClick={() => openEditBranding(brandDetail)}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:592:                      Edit Branding
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:606:                      Team Members ({brandDetail.users?.length || 0})
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:630:                  {!brandDetail.users?.length ? (
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:649:                          {brandDetail.users.map((u) => (
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:724:          <p className="text-sm text-muted-foreground mt-1">Manage all brands and their teams on the platform</p>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:749:          placeholder="Search brands..."
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:779:            {filteredBrands.map((brand, i) => (
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:781:                key={brand.id}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:789:                  onClick={() => fetchBrandDetail(brand.id)}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:795:                        style={{ backgroundColor: brand.primaryColor || '#D4A843' }}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:797:                        {brand.logo ? (
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:798:                          <img src={brand.logo} alt={brand.name} className="h-9 w-9 rounded-lg object-cover" />
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:800:                          brand.name.slice(0, 2).toUpperCase()
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:805:                          <h3 className="text-sm font-semibold text-foreground truncate">{brand.name}</h3>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:808:                        <p className="text-xs text-muted-foreground mt-0.5">@{brand.slug}</p>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:810:                          <Badge variant="outline" className={`${PLAN_COLORS[brand.plan] || 'bg-zinc-500/15 text-zinc-400 border-transparent'} text-[9px] font-semibold uppercase tracking-wider`}>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:811:                            {brand.plan}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:815:                            {brand.userCount}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:817:                          {!brand.isActive && (
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:835:            {search ? 'No brands match your search' : 'No brands created yet'}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:843:              Create your first brand
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:857:            <DialogDescription>Create a new brand and its owner account</DialogDescription>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:896:                <Label className="text-xs text-muted-foreground">Logo URL</Label>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:898:                  value={addBrandForm.logo}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:899:                  onChange={(e) => setAddBrandForm((f) => ({ ...f, logo: e.target.value }))}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:922:                placeholder="owner@brand.com"
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:962:              {inviteLink ? 'Copy this invitation link and share it with the user.' : `Send an invitation to join ${selectedBrand?.name || 'the brand'}`}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:1065:                placeholder="jane@brand.com"
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:1170:      {/* ── Edit Branding Dialog ── */}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:1171:      <Dialog open={editBrandingOpen} onOpenChange={setEditBrandingOpen}>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:1176:              Edit Branding
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:1178:            <DialogDescription>Update brand visual identity</DialogDescription>
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:1184:                value={editBrandingForm.name}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:1185:                onChange={(e) => setEditBrandingForm((f) => ({ ...f, name: e.target.value }))}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:1194:                  value={editBrandingForm.primaryColor}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:1195:                  onChange={(e) => setEditBrandingForm((f) => ({ ...f, primaryColor: e.target.value }))}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:1199:                  value={editBrandingForm.primaryColor}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:1200:                  onChange={(e) => setEditBrandingForm((f) => ({ ...f, primaryColor: e.target.value }))}
+/home/z/my-project/src/components/dashboard/admin-panel.tsx:1206:              <Label className="text-xs text-muted-foreground">Logo URL</Label>
+
+[Showing results with pagination = limit: 250]

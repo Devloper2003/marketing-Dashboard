@@ -13,29 +13,11 @@ export async function GET() {
     const sources = [...new Set(leads.map(l => l.utmSource).filter(Boolean))] as string[];
     const countries = [...new Set(leads.map(l => l.country).filter(Boolean))] as string[];
 
-    // Trend data (mock)
-    const trendData = [
-      { date: 'Week 1', traffic: 12500, roi: 4200, conversions: 180 },
-      { date: 'Week 2', traffic: 13200, roi: 4500, conversions: 195 },
-      { date: 'Week 3', traffic: 12800, roi: 4100, conversions: 172 },
-      { date: 'Week 4', traffic: 14100, roi: 4800, conversions: 210 },
-      { date: 'Week 5', traffic: 14800, roi: 5200, conversions: 225 },
-      { date: 'Week 6', traffic: 15200, roi: 5500, conversions: 240 },
-    ];
+    // Trend data
+    const trendData: { date: string; traffic: number; roi: number; conversions: number }[] = [];
 
-    // Revenue data (mock)
-    const revenueData = {
-      total: 363950,
-      online: 245600,
-      inStore: 118350,
-      monthly: [
-        { month: 'Sep', online: 182000, inStore: 95000 },
-        { month: 'Oct', online: 215000, inStore: 108000 },
-        { month: 'Nov', online: 248000, inStore: 132000 },
-        { month: 'Dec', online: 295000, inStore: 156000 },
-        { month: 'Jan', online: 245600, inStore: 118350 },
-      ],
-    };
+    // Revenue data
+    const revenueData = { total: 0, online: 0, inStore: 0, monthlyTrend: [] as { month: string; online: number; inStore: number }[] };
 
     return NextResponse.json({ leads, qualityCounts, sources, countries, trendData, revenueData });
   } catch (error) {

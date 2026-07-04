@@ -121,28 +121,28 @@ const PLATFORM_CONFIG: Record<
 const TOP_STATS = [
   {
     label: 'Total Followers',
-    value: '180,160',
-    change: '+2.3K this month',
+    value: '0',
+    change: '+0 this month',
     positive: true,
     icon: <Users className="size-5" />,
   },
   {
     label: 'Total Engagement',
-    value: '5,942',
-    change: '+12.4%',
+    value: '0',
+    change: '+0%',
     positive: true,
     icon: <Heart className="size-5" />,
   },
   {
     label: 'Avg. Engagement Rate',
-    value: '3.9%',
-    change: '+0.5%',
+    value: '0%',
+    change: '+0%',
     positive: true,
     icon: <TrendingUp className="size-5" />,
   },
   {
     label: 'Total Posts',
-    value: '4',
+    value: '0',
     change: 'published this month',
     positive: null,
     icon: <BarChart3 className="size-5" />,
@@ -152,61 +152,54 @@ const TOP_STATS = [
 const PLATFORM_STATS = [
   {
     platform: 'Instagram',
-    followers: 135145,
-    posts: 5,
-    engagementRate: 4.8,
+    followers: 0,
+    posts: 0,
+    engagementRate: 0,
   },
   {
     platform: 'Twitter',
-    followers: 45015,
-    posts: 1,
-    engagementRate: 2.1,
+    followers: 0,
+    posts: 0,
+    engagementRate: 0,
   },
   {
     platform: 'Facebook',
-    followers: 28900,
-    posts: 1,
-    engagementRate: 3.2,
+    followers: 0,
+    posts: 0,
+    engagementRate: 0,
   },
   {
     platform: 'Pinterest',
-    followers: 12800,
-    posts: 1,
-    engagementRate: 5.6,
+    followers: 0,
+    posts: 0,
+    engagementRate: 0,
   },
 ];
 
-const FOLLOWER_GROWTH_DATA = [
-  { month: 'Sep', Instagram: 120500, Twitter: 40200, Facebook: 25000, Pinterest: 10200 },
-  { month: 'Oct', Instagram: 123800, Twitter: 41500, Facebook: 25800, Pinterest: 10700 },
-  { month: 'Nov', Instagram: 127200, Twitter: 42400, Facebook: 26600, Pinterest: 11200 },
-  { month: 'Dec', Instagram: 129800, Twitter: 43200, Facebook: 27400, Pinterest: 11600 },
-  { month: 'Jan', Instagram: 132600, Twitter: 44100, Facebook: 28100, Pinterest: 12200 },
-  { month: 'Feb', Instagram: 135145, Twitter: 45015, Facebook: 28900, Pinterest: 12800 },
-];
+const FOLLOWER_GROWTH_DATA: { month: string; Instagram: number; Twitter: number; Facebook: number; Pinterest: number }[] = [];
 
 const BEST_TIMES = [
   {
     platform: 'Instagram',
-    times: ['10 AM – 1 PM', '7 PM – 9 PM'],
+    times: ['N/A'],
     badgeClass: PLATFORM_CONFIG.Instagram.badgeClass,
     icon: PLATFORM_CONFIG.Instagram.icon,
   },
   {
     platform: 'Facebook',
-    times: ['9 AM – 11 AM'],
+    times: ['N/A'],
     badgeClass: PLATFORM_CONFIG.Facebook.badgeClass,
     icon: PLATFORM_CONFIG.Facebook.icon,
   },
   {
     platform: 'Twitter',
-    times: ['12 PM – 3 PM'],
+    times: ['N/A'],
     badgeClass: PLATFORM_CONFIG.Twitter.badgeClass,
     icon: PLATFORM_CONFIG.Twitter.icon,
   },
   {
     platform: 'Pinterest',
-    times: ['8 PM – 11 PM'],
+    times: ['N/A'],
     badgeClass: PLATFORM_CONFIG.Pinterest.badgeClass,
     icon: PLATFORM_CONFIG.Pinterest.icon,
   },
@@ -408,12 +401,12 @@ export default function SocialAnalyticsTab() {
         };
       });
     }
-    // Fallback mock data
+    // Fallback: no data
     return [
-      { platform: 'Instagram', Likes: 1942, Comments: 111, Shares: 227, Saves: 1458 },
-      { platform: 'Twitter', Likes: 156, Comments: 12, Shares: 89, Saves: 34 },
-      { platform: 'Facebook', Likes: 432, Comments: 67, Shares: 234, Saves: 178 },
-      { platform: 'Pinterest', Likes: 89, Comments: 5, Shares: 345, Saves: 1234 },
+      { platform: 'Instagram', Likes: 0, Comments: 0, Shares: 0, Saves: 0 },
+      { platform: 'Twitter', Likes: 0, Comments: 0, Shares: 0, Saves: 0 },
+      { platform: 'Facebook', Likes: 0, Comments: 0, Shares: 0, Saves: 0 },
+      { platform: 'Pinterest', Likes: 0, Comments: 0, Shares: 0, Saves: 0 },
     ];
   }, [data]);
 

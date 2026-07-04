@@ -1,0 +1,1139 @@
+     1→'use client';
+     2→
+     3→import { useState, useEffect, useCallback } from 'react';
+     4→import {
+     5→  Building2,
+     6→  Plus,
+     7→  Users,
+     8→  Mail,
+     9→  Crown,
+    10→  MoreHorizontal,
+    11→  Pencil,
+    12→  Trash2,
+    13→  Power,
+    14→  PowerOff,
+    15→  Send,
+    16→  XCircle,
+    17→  RefreshCw,
+    18→  ChevronDown,
+    19→  Check,
+    20→  Loader2,
+    21→  Eye,
+    22→  UserPlus,
+    23→  TrendingUp,
+    24→  DollarSign,
+    25→  Clock,
+    26→  Shield,
+    27→  Copy,
+    28→} from 'lucide-react';
+    29→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+    30→import { Button } from '@/components/ui/button';
+    31→import { Input } from '@/components/ui/input';
+    32→import { Badge } from '@/components/ui/badge';
+    33→import {
+    34→  Dialog,
+    35→  DialogContent,
+    36→  DialogHeader,
+    37→  DialogTitle,
+    38→  DialogDescription,
+    39→  DialogFooter,
+    40→} from '@/components/ui/dialog';
+    41→import {
+    42→  Select,
+    43→  SelectContent,
+    44→  SelectItem,
+    45→  SelectTrigger,
+    46→  SelectValue,
+    47→} from '@/components/ui/select';
+    48→import { Separator } from '@/components/ui/separator';
+    49→import { motion, AnimatePresence } from 'framer-motion';
+    50→
+    51→/* ─── Types ──────────────────────────────────────────────────── */
+    52→interface SessionUser {
+    53→  id: string;
+    54→  email: string;
+    55→  name: string;
+    56→  role: string;
+    57→  tenant: { id: string; slug: string; primaryColor: string };
+    58→}
+    59→
+    60→interface Brand {
+    61→  id: string;
+    62→  name: string;
+    63→  slug: string;
+    64→  logo: string | null;
+    65→  primaryColor: string;
+    66→  secondaryColor: string | null;
+    67→  bgAccent: string | null;
+    68→  isActive: boolean;
+    69→  plan: string;
+    70→  maxUsers: number;
+    71→  userCount: number;
+    72→  createdAt: string;
+    73→}
+    74→
+    75→interface Invitation {
+    76→  id: string;
+    77→  email: string;
+    78→  role: string;
+    79→  designation: string | null;
+    80→  tenantName: string;
+    81→  tenantSlug: string;
+    82→  expiresAt: string;
+    83→  createdAt: string;
+    84→}
+    85→
+    86→interface DashboardStats {
+    87→  totalBrands: number;
+    88→  totalUsers: number;
+    89→  activeBrands: number;
+    90→  inactiveBrands: number;
+    91→}
+    92→
+    93→/* ─── Helpers ────────────────────────────────────────────────── */
+    94→function getSession(): SessionUser | null {
+    95→  if (typeof window === 'undefined') return null;
+    96→  try {
+    97→    const s = sessionStorage.getItem('dashboard_session');
+    98→    if (!s) return null;
+    99→    return JSON.parse(s);
+   100→  } catch {
+   101→    return null;
+   102→  }
+   103→}
+   104→
+   105→function formatDate(d: string) {
+   106→  return new Date(d).toLocaleDateString('en-US', {
+   107→    month: 'short',
+   108→    day: 'numeric',
+   109→    year: 'numeric',
+   110→  });
+   111→}
+   112→
+   113→function slugify(name: string): string {
+   114→  return name
+   115→    .toLowerCase()
+   116→    .replace(/[^a-z0-9]+/g, '-')
+   117→    .replace(/^-|-$/g, '');
+   118→}
+   119→
+   120→const PLAN_COLORS: Record<string, string> = {
+   121→  free: 'bg-gray-500/15 text-gray-400 border-gray-500/20',
+   122→  pro: 'bg-[#D4A843]/15 text-[#D4A843] border-[#D4A843]/20',
+   123→  enterprise: 'bg-purple-500/15 text-purple-400 border-purple-500/20',
+   124→};
+   125→
+   126→const ROLE_COLORS: Record<string, string> = {
+   127→  owner: 'bg-[#D4A843]/15 text-[#D4A843]',
+   128→  admin: 'bg-blue-500/15 text-blue-400',
+   129→  manager: 'bg-emerald-500/15 text-emerald-400',
+   130→  analyst: 'bg-orange-500/15 text-orange-400',
+   131→  viewer: 'bg-gray-500/15 text-gray-400',
+   132→  staff: 'bg-gray-500/15 text-gray-400',
+   133→};
+   134→
+   135→const ROLE_LABELS: Record<string, string> = {
+   136→  owner: 'Owner',
+   137→  admin: 'Admin',
+   138→  manager: 'Manager',
+   139→  analyst: 'Analyst',
+   140→  viewer: 'Viewer',
+   141→  staff: 'Staff',
+   142→};
+   143→
+   144→/* ─── Animation variants ─────────────────────────────────────── */
+   145→const fadeIn = {
+   146→  initial: { opacity: 0, y: 16 },
+   147→  animate: { opacity: 1, y: 0 },
+   148→  exit: { opacity: 0, y: -8 },
+   149→  transition: { duration: 0.3 },
+   150→};
+   151→
+   152→const stagger = {
+   153→  animate: { transition: { staggerChildren: 0.05 } },
+   154→};
+   155→
+   156→/* ─── Stat Card ──────────────────────────────────────────────── */
+   157→function StatCard({
+   158→  label,
+   159→  value,
+   160→  icon: Icon,
+   161→  color,
+   162→  sub,
+   163→}: {
+   164→  label: string;
+   165→  value: string | number;
+   166→  icon: React.ComponentType<{ className?: string }>;
+   167→  color: string;
+   168→  sub?: string;
+   169→}) {
+   170→  return (
+   171→    <motion.div {...fadeIn}>
+   172→      <Card className="gold-card border-border/50 overflow-hidden relative">
+   173→        <div
+   174→          className="absolute top-0 left-0 right-0 h-[2px]"
+   175→          style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }}
+   176→        />
+   177→        <CardContent className="p-5">
+   178→          <div className="flex items-start justify-between">
+   179→            <div>
+   180→              <p className="text-xs text-muted-foreground/70 font-medium uppercase tracking-wider">{label}</p>
+   181→              <p className="text-2xl font-bold text-foreground mt-1.5">{value}</p>
+   182→              {sub && <p className="text-[11px] text-muted-foreground/60 mt-1">{sub}</p>}
+   183→            </div>
+   184→            <div
+   185→              className="h-10 w-10 rounded-xl flex items-center justify-center"
+   186→              style={{ background: `${color}15` }}
+   187→            >
+   188→              <Icon className="h-5 w-5" style={{ color }} />
+   189→            </div>
+   190→          </div>
+   191→        </CardContent>
+   192→      </Card>
+   193→    </motion.div>
+   194→  );
+   195→}
+   196→
+   197→/* ─── Main Component ─────────────────────────────────────────── */
+   198→export default function BrandManagementTab() {
+   199→  const [session] = useState<SessionUser | null>(() => getSession());
+   200→  const [stats, setStats] = useState<DashboardStats | null>(null);
+   201→  const [brands, setBrands] = useState<Brand[]>([]);
+   202→  const [invitations, setInvitations] = useState<Invitation[]>([]);
+   203→  const [loading, setLoading] = useState(true);
+   204→  const [actionLoading, setActionLoading] = useState('');
+   205→
+   206→  // Dialog states
+   207→  const [createOpen, setCreateOpen] = useState(false);
+   208→  const [editOpen, setEditOpen] = useState(false);
+   209→  const [inviteOpen, setInviteOpen] = useState(false);
+   210→  const [deleteOpen, setDeleteOpen] = useState(false);
+   211→  const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
+   212→
+   213→  // Form states
+   214→  const [form, setForm] = useState({
+   215→    name: '',
+   216→    slug: '',
+   217→    primaryColor: '#D4A843',
+   218→    logo: '',
+   219→    ownerEmail: '',
+   220→    ownerName: '',
+   221→    ownerPassword: '',
+   222→    plan: 'pro',
+   223→  });
+   224→  const [editForm, setEditForm] = useState({
+   225→    name: '',
+   226→    primaryColor: '',
+   227→    logo: '',
+   228→  });
+   229→  const [inviteForm, setInviteForm] = useState({
+   230→    brandId: '',
+   231→    email: '',
+   232→    role: 'staff',
+   233→    designation: '',
+   234→  });
+   235→  const [error, setError] = useState('');
+   236→  const [success, setSuccess] = useState('');
+   237→
+   238→  /* ── Data fetching ─────────────────────────────────────────── */
+   239→  const fetchAll = useCallback(async () => {
+   240→    if (!session?.id) return;
+   241→    setLoading(true);
+   242→    try {
+   243→      const [dashRes, brandsRes] = await Promise.all([
+   244→        fetch(`/api/tenant/admin/dashboard?userId=${session.id}`),
+   245→        fetch(`/api/tenant/brands?userId=${session.id}`),
+   246→      ]);
+   247→
+   248→      const dashData = dashRes.ok ? await dashRes.json() : null;
+   249→      const brandsData = brandsRes.ok ? await brandsRes.json() : null;
+   250→
+   251→      if (dashData?.success) {
+   252→        setStats(dashData.stats);
+   253→        setInvitations(dashData.recentInvitations || []);
+   254→      }
+   255→      if (brandsData?.success) {
+   256→        setBrands(brandsData.brands || []);
+   257→      }
+   258→    } catch (err) {
+   259→      console.error('Failed to fetch brand data:', err);
+   260→    } finally {
+   261→      setLoading(false);
+   262→    }
+   263→  }, [session?.id]);
+   264→
+   265→  useEffect(() => {
+   266→    fetchAll();
+   267→  }, [fetchAll]);
+   268→
+   269→  /* ── Create Brand ──────────────────────────────────────────── */
+   270→  const handleCreate = async () => {
+   271→    setError('');
+   272→    if (!form.name || !form.slug || !form.ownerEmail || !form.ownerName || !form.ownerPassword) {
+   273→      setError('All fields are required');
+   274→      return;
+   275→    }
+   276→    setActionLoading('create');
+   277→    try {
+   278→      const res = await fetch('/api/tenant/brands', {
+   279→        method: 'POST',
+   280→        headers: { 'Content-Type': 'application/json', 'x-user-id': session?.id || '' },
+   281→        body: JSON.stringify({
+   282→          name: form.name,
+   283→          slug: form.slug,
+   284→          primaryColor: form.primaryColor,
+   285→          logo: form.logo || null,
+   286→          email: form.ownerEmail,
+   287→          userName: form.ownerName,
+   288→          password: form.ownerPassword,
+   289→        }),
+   290→      });
+   291→      const data = await res.json();
+   292→      if (!res.ok) throw new Error(data.error || 'Failed to create brand');
+   293→      setCreateOpen(false);
+   294→      setForm({ name: '', slug: '', primaryColor: '#D4A843', logo: '', ownerEmail: '', ownerName: '', ownerPassword: '', plan: 'pro' });
+   295→      setSuccess('Brand created successfully!');
+   296→      setTimeout(() => setSuccess(''), 3000);
+   297→      fetchAll();
+   298→    } catch (err) {
+   299→      setError(err instanceof Error ? err.message : 'Failed to create brand');
+   300→    } finally {
+   301→      setActionLoading('');
+   302→    }
+   303→  };
+   304→
+   305→  /* ── Edit Brand ────────────────────────────────────────────── */
+   306→  const openEdit = (brand: Brand) => {
+   307→    setSelectedBrand(brand);
+   308→    setEditForm({ name: brand.name, primaryColor: brand.primaryColor, logo: brand.logo || '' });
+   309→    setEditOpen(true);
+   310→    setError('');
+   311→  };
+   312→
+   313→  const handleEdit = async () => {
+   314→    setError('');
+   315→    if (!selectedBrand || !editForm.name) {
+   316→      setError('Name is required');
+   317→      return;
+   318→    }
+   319→    setActionLoading('edit');
+   320→    try {
+   321→      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}`, {
+   322→        method: 'PATCH',
+   323→        headers: { 'Content-Type': 'application/json', 'x-user-id': session?.id || '' },
+   324→        body: JSON.stringify({
+   325→          name: editForm.name,
+   326→          primaryColor: editForm.primaryColor || undefined,
+   327→          logo: editForm.logo || undefined,
+   328→        }),
+   329→      });
+   330→      const data = await res.json();
+   331→      if (!res.ok) throw new Error(data.error || 'Failed to update brand');
+   332→      setEditOpen(false);
+   333→      setSuccess('Brand updated successfully!');
+   334→      setTimeout(() => setSuccess(''), 3000);
+   335→      fetchAll();
+   336→    } catch (err) {
+   337→      setError(err instanceof Error ? err.message : 'Failed to update brand');
+   338→    } finally {
+   339→      setActionLoading('');
+   340→    }
+   341→  };
+   342→
+   343→  /* ── Toggle Active ─────────────────────────────────────────── */
+   344→  const handleToggleActive = async (brand: Brand) => {
+   345→    setActionLoading(`toggle-${brand.id}`);
+   346→    try {
+   347→      const res = await fetch(`/api/tenant/brands/${brand.id}`, {
+   348→        method: 'PATCH',
+   349→        headers: { 'Content-Type': 'application/json', 'x-user-id': session?.id || '' },
+   350→        body: JSON.stringify({ isActive: !brand.isActive }),
+   351→      });
+   352→      if (!res.ok) {
+   353→        const data = await res.json().catch(() => ({}));
+   354→        throw new Error(data.error || 'Failed to toggle brand status');
+   355→      }
+   356→      fetchAll();
+   357→    } catch (err) {
+   358→      setError(err instanceof Error ? err.message : 'Failed to toggle brand');
+   359→      setTimeout(() => setError(''), 3000);
+   360→    } finally {
+   361→      setActionLoading('');
+   362→    }
+   363→  };
+   364→
+   365→  /* ── Delete Brand ──────────────────────────────────────────── */
+   366→  const openDelete = (brand: Brand) => {
+   367→    setSelectedBrand(brand);
+   368→    setDeleteOpen(true);
+   369→  };
+   370→
+   371→  const handleDelete = async () => {
+   372→    if (!selectedBrand) return;
+   373→    setActionLoading('delete');
+   374→    try {
+   375→      const res = await fetch(`/api/tenant/brands/${selectedBrand.id}`, {
+   376→        method: 'DELETE',
+   377→        headers: { 'Content-Type': 'application/json', 'x-user-id': session?.id || '' },
+   378→      });
+   379→      const data = await res.json();
+   380→      if (!res.ok) throw new Error(data.error || 'Failed to delete brand');
+   381→      setDeleteOpen(false);
+   382→      setSuccess('Brand deleted successfully!');
+   383→      setTimeout(() => setSuccess(''), 3000);
+   384→      fetchAll();
+   385→    } catch (err) {
+   386→      setError(err instanceof Error ? err.message : 'Failed to delete brand');
+   387→      setTimeout(() => setError(''), 3000);
+   388→    } finally {
+   389→      setActionLoading('');
+   390→    }
+   391→  };
+   392→
+   393→  /* ── Invite Staff ──────────────────────────────────────────── */
+   394→  const handleInvite = async () => {
+   395→    setError('');
+   396→    if (!inviteForm.brandId || !inviteForm.email) {
+   397→      setError('Brand and email are required');
+   398→      return;
+   399→    }
+   400→    setActionLoading('invite');
+   401→    try {
+   402→      const res = await fetch(`/api/tenant/brands/${inviteForm.brandId}/invite`, {
+   403→        method: 'POST',
+   404→        headers: { 'Content-Type': 'application/json', 'x-user-id': session?.id || '' },
+   405→        body: JSON.stringify({
+   406→          email: inviteForm.email,
+   407→          role: inviteForm.role,
+   408→          designation: inviteForm.designation || undefined,
+   409→        }),
+   410→      });
+   411→      const data = await res.json();
+   412→      if (!res.ok) throw new Error(data.error || 'Failed to send invitation');
+   413→      setInviteOpen(false);
+   414→      setInviteForm({ brandId: '', email: '', role: 'staff', designation: '' });
+   415→      setSuccess('Invitation sent successfully!');
+   416→      setTimeout(() => setSuccess(''), 3000);
+   417→      fetchAll();
+   418→    } catch (err) {
+   419→      setError(err instanceof Error ? err.message : 'Failed to send invitation');
+   420→    } finally {
+   421→      setActionLoading('');
+   422→    }
+   423→  };
+   424→
+   425→  /* ── Auto-slug from name ───────────────────────────────────── */
+   426→  const handleNameChange = (name: string) => {
+   427→    setForm((prev) => ({ ...prev, name, slug: slugify(name) }));
+   428→  };
+   429→
+   430→  /* ── Loading State ─────────────────────────────────────────── */
+   431→  if (loading) {
+   432→    return (
+   433→      <div className="space-y-6">
+   434→        <div className="flex items-center gap-3">
+   435→          <div className="h-8 w-8 rounded-lg bg-[#D4A843]/10 flex items-center justify-center">
+   436→            <Building2 className="h-4 w-4 text-[#D4A843] animate-pulse" />
+   437→          </div>
+   438→          <div>
+   439→            <div className="h-5 w-40 bg-[#1a1a1a] rounded animate-pulse" />
+   440→            <div className="h-3 w-56 bg-[#1a1a1a] rounded animate-pulse mt-1" />
+   441→          </div>
+   442→        </div>
+   443→        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   444→          {[...Array(4)].map((_, i) => (
+   445→            <div key={i} className="h-28 rounded-xl bg-[#1a1a1a] animate-pulse" />
+   446→          ))}
+   447→        </div>
+   448→        <div className="h-80 rounded-xl bg-[#1a1a1a] animate-pulse" />
+   449→      </div>
+   450→    );
+   451→  }
+   452→
+   453→  /* ── Render ────────────────────────────────────────────────── */
+   454→  return (
+   455→    <motion.div
+   456→      variants={stagger}
+   457→      initial="initial"
+   458→      animate="animate"
+   459→      className="space-y-6"
+   460→    >
+   461→      {/* Header */}
+   462→      <motion.div {...fadeIn} className="flex items-center justify-between">
+   463→        <div className="flex items-center gap-3">
+   464→          <div className="h-10 w-10 rounded-xl bg-[#D4A843]/10 flex items-center justify-center">
+   465→            <Building2 className="h-5 w-5 text-[#D4A843]" />
+   466→          </div>
+   467→          <div>
+   468→            <h2 className="text-lg font-bold text-foreground">Brand Management</h2>
+   469→            <p className="text-xs text-muted-foreground/60">Create and manage brands on the Laxree platform</p>
+   470→          </div>
+   471→        </div>
+   472→        <div className="flex items-center gap-2">
+   473→          <Button
+   474→            variant="outline"
+   475→            size="sm"
+   476→            className="border-border/50 text-muted-foreground hover:text-[#D4A843] hover:border-[#D4A843]/30 gap-2"
+   477→            onClick={() => { setInviteForm({ brandId: '', email: '', role: 'staff', designation: '' }); setInviteOpen(true); setError(''); }}
+   478→          >
+   479→            <UserPlus className="h-3.5 w-3.5" />
+   480→            <span className="hidden sm:inline">Invite Staff</span>
+   481→          </Button>
+   482→          <Button
+   483→            size="sm"
+   484→            className="gap-2 gold-gradient text-[#0a0a0a] font-semibold border-0"
+   485→            onClick={() => { setForm({ name: '', slug: '', primaryColor: '#D4A843', logo: '', ownerEmail: '', ownerName: '', ownerPassword: '', plan: 'pro' }); setCreateOpen(true); setError(''); }}
+   486→          >
+   487→            <Plus className="h-4 w-4" />
+   488→            <span className="hidden sm:inline">Create Brand</span>
+   489→          </Button>
+   490→        </div>
+   491→      </motion.div>
+   492→
+   493→      {/* Success / Error Toast */}
+   494→      <AnimatePresence>
+   495→        {success && (
+   496→          <motion.div
+   497→            initial={{ opacity: 0, y: -10, height: 0 }}
+   498→            animate={{ opacity: 1, y: 0, height: 'auto' }}
+   499→            exit={{ opacity: 0, y: -10, height: 0 }}
+   500→            className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-4 py-3 text-sm text-emerald-400 flex items-center gap-2"
+   501→          >
+   502→            <Check className="h-4 w-4 shrink-0" />
+   503→            {success}
+   504→          </motion.div>
+   505→        )}
+   506→        {error && !createOpen && !editOpen && !inviteOpen && (
+   507→          <motion.div
+   508→            initial={{ opacity: 0, y: -10, height: 0 }}
+   509→            animate={{ opacity: 1, y: 0, height: 'auto' }}
+   510→            exit={{ opacity: 0, y: -10, height: 0 }}
+   511→            className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-sm text-red-400 flex items-center gap-2"
+   512→          >
+   513→            <XCircle className="h-4 w-4 shrink-0" />
+   514→            {error}
+   515→          </motion.div>
+   516→        )}
+   517→      </AnimatePresence>
+   518→
+   519→      {/* Stats Cards */}
+   520→      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   521→        <StatCard
+   522→          label="Total Brands"
+   523→          value={stats?.totalBrands ?? 0}
+   524→          icon={Building2}
+   525→          color="#D4A843"
+   526→          sub={`${stats?.activeBrands ?? 0} active`}
+   527→        />
+   528→        <StatCard
+   529→          label="Active Users"
+   530→          value={stats?.totalUsers ?? 0}
+   531→          icon={Users}
+   532→          color="#22c55e"
+   533→          sub="Across all brands"
+   534→        />
+   535→        <StatCard
+   536→          label="Pending Invites"
+   537→          value={invitations.length}
+   538→          icon={Mail}
+   539→          color="#f59e0b"
+   540→          sub="Awaiting acceptance"
+   541→        />
+   542→        <StatCard
+   543→          label="MRR Revenue"
+   544→          value="$4,850"
+   545→          icon={DollarSign}
+   546→          color="#8b5cf6"
+   547→          sub="+12.5% from last month"
+   548→        />
+   549→      </div>
+   550→
+   551→      {/* Brand List Table */}
+   552→      <motion.div {...fadeIn}>
+   553→        <Card className="border-border/50 overflow-hidden">
+   554→          <CardHeader className="pb-3">
+   555→            <div className="flex items-center justify-between">
+   556→              <div className="flex items-center gap-2">
+   557→                <CardTitle className="text-sm font-semibold">All Brands</CardTitle>
+   558→                <Badge variant="outline" className="text-[10px] bg-[#D4A843]/10 text-[#D4A843] border-[#D4A843]/20">
+   559→                  {brands.length}
+   560→                </Badge>
+   561→              </div>
+   562→              <Button
+   563→                variant="ghost"
+   564→                size="sm"
+   565→                className="h-7 text-xs text-muted-foreground hover:text-[#D4A843]"
+   566→                onClick={fetchAll}
+   567→                disabled={loading}
+   568→              >
+   569→                <RefreshCw className={`h-3 w-3 mr-1 ${loading ? 'animate-spin' : ''}`} />
+   570→                Refresh
+   571→              </Button>
+   572→            </div>
+   573→          </CardHeader>
+   574→          <CardContent className="p-0">
+   575→            <div className="overflow-x-auto">
+   576→              <table className="w-full">
+   577→                <thead>
+   578→                  <tr className="border-b border-border/50">
+   579→                    <th className="text-left text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider px-5 py-3">Brand</th>
+   580→                    <th className="text-left text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider px-5 py-3 hidden md:table-cell">Slug</th>
+   581→                    <th className="text-left text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider px-5 py-3 hidden sm:table-cell">Plan</th>
+   582→                    <th className="text-left text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider px-5 py-3 hidden lg:table-cell">Users</th>
+   583→                    <th className="text-left text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider px-5 py-3 hidden xl:table-cell">Created</th>
+   584→                    <th className="text-left text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider px-5 py-3">Status</th>
+   585→                    <th className="text-right text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider px-5 py-3">Actions</th>
+   586→                  </tr>
+   587→                </thead>
+   588→                <tbody>
+   589→                  {brands.length === 0 ? (
+   590→                    <tr>
+   591→                      <td colSpan={7} className="px-5 py-16 text-center">
+   592→                        <Building2 className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
+   593→                        <p className="text-sm text-muted-foreground/60">No brands created yet</p>
+   594→                        <Button
+   595→                          size="sm"
+   596→                          className="mt-4 gap-2 gold-gradient text-[#0a0a0a] font-semibold border-0"
+   597→                          onClick={() => { setForm({ name: '', slug: '', primaryColor: '#D4A843', logo: '', ownerEmail: '', ownerName: '', ownerPassword: '', plan: 'pro' }); setCreateOpen(true); setError(''); }}
+   598→                        >
+   599→                          <Plus className="h-3.5 w-3.5" />
+   600→                          Create your first brand
+   601→                        </Button>
+   602→                      </td>
+   603→                    </tr>
+   604→                  ) : (
+   605→                    brands.map((brand, idx) => (
+   606→                      <motion.tr
+   607→                        key={brand.id}
+   608→                        initial={{ opacity: 0, x: -10 }}
+   609→                        animate={{ opacity: 1, x: 0 }}
+   610→                        transition={{ duration: 0.2, delay: idx * 0.03 }}
+   611→                        className="border-b border-border/20 last:border-0 hover:bg-white/[0.02] transition-colors group"
+   612→                      >
+   613→                        <td className="px-5 py-3.5">
+   614→                          <div className="flex items-center gap-3">
+   615→                            <div
+   616→                              className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-[#0a0a0a] font-bold text-xs"
+   617→                              style={{
+   618→                                background: `linear-gradient(135deg, ${brand.primaryColor}, ${brand.primaryColor}99)`,
+   619→                              }}
+   620→                            >
+   621→                              {brand.logo ? (
+   622→                                <img
+   623→                                  src={brand.logo}
+   624→                                  alt={brand.name}
+   625→                                  className="h-5 w-5 object-contain"
+   626→                                  onError={(e) => {
+   627→                                    (e.target as HTMLImageElement).style.display = 'none';
+   628→                                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+   629→                                  }}
+   630→                                />
+   631→                              ) : (
+   632→                                <span className="hidden">{brand.name[0]}</span>
+   633→                              )}
+   634→                              {!brand.logo && <span>{brand.name[0]}</span>}
+   635→                            </div>
+   636→                            <div>
+   637→                              <p className="text-sm font-medium text-foreground">{brand.name}</p>
+   638→                              <p className="text-[11px] text-muted-foreground/50 md:hidden">{brand.slug}</p>
+   639→                            </div>
+   640→                          </div>
+   641→                        </td>
+   642→                        <td className="px-5 py-3.5 hidden md:table-cell">
+   643→                          <code className="text-xs text-muted-foreground/60 bg-[#1a1a1a] px-2 py-0.5 rounded">{brand.slug}</code>
+   644→                        </td>
+   645→                        <td className="px-5 py-3.5 hidden sm:table-cell">
+   646→                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${PLAN_COLORS[brand.plan] || PLAN_COLORS.free}`}>
+   647→                            {brand.plan}
+   648→                          </span>
+   649→                        </td>
+   650→                        <td className="px-5 py-3.5 hidden lg:table-cell">
+   651→                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+   652→                            <Users className="h-3 w-3" />
+   653→                            {brand.userCount}/{brand.maxUsers}
+   654→                          </div>
+   655→                        </td>
+   656→                        <td className="px-5 py-3.5 hidden xl:table-cell">
+   657→                          <span className="text-xs text-muted-foreground/60">{formatDate(brand.createdAt)}</span>
+   658→                        </td>
+   659→                        <td className="px-5 py-3.5">
+   660→                          <span
+   661→                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+   662→                              brand.isActive
+   663→                                ? 'bg-emerald-500/15 text-emerald-400'
+   664→                                : 'bg-red-500/15 text-red-400'
+   665→                            }`}
+   666→                          >
+   667→                            <span className={`h-1.5 w-1.5 rounded-full ${brand.isActive ? 'bg-emerald-400' : 'bg-red-400'}`} />
+   668→                            {brand.isActive ? 'Active' : 'Inactive'}
+   669→                          </span>
+   670→                        </td>
+   671→                        <td className="px-5 py-3.5 text-right">
+   672→                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+   673→                            <button
+   674→                              onClick={() => openEdit(brand)}
+   675→                              className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-[#D4A843] hover:bg-[#D4A843]/10 transition-colors"
+   676→                              title="Edit"
+   677→                            >
+   678→                              <Pencil className="h-3.5 w-3.5" />
+   679→                            </button>
+   680→                            <button
+   681→                              onClick={() => handleToggleActive(brand)}
+   682→                              disabled={actionLoading === `toggle-${brand.id}`}
+   683→                              className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-yellow-400 hover:bg-yellow-400/10 transition-colors disabled:opacity-50"
+   684→                              title={brand.isActive ? 'Deactivate' : 'Activate'}
+   685→                            >
+   686→                              {actionLoading === `toggle-${brand.id}` ? (
+   687→                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+   688→                              ) : brand.isActive ? (
+   689→                                <PowerOff className="h-3.5 w-3.5" />
+   690→                              ) : (
+   691→                                <Power className="h-3.5 w-3.5" />
+   692→                              )}
+   693→                            </button>
+   694→                            <button
+   695→                              onClick={() => openDelete(brand)}
+   696→                              className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
+   697→                              title="Delete"
+   698→                            >
+   699→                              <Trash2 className="h-3.5 w-3.5" />
+   700→                            </button>
+   701→                          </div>
+   702→                        </td>
+   703→                      </motion.tr>
+   704→                    ))
+   705→                  )}
+   706→                </tbody>
+   707→              </table>
+   708→            </div>
+   709→          </CardContent>
+   710→        </Card>
+   711→      </motion.div>
+   712→
+   713→      {/* Recent Invitations */}
+   714→      <motion.div {...fadeIn}>
+   715→        <Card className="border-border/50 overflow-hidden">
+   716→          <CardHeader className="pb-3">
+   717→            <div className="flex items-center justify-between">
+   718→              <div className="flex items-center gap-2">
+   719→                <CardTitle className="text-sm font-semibold">Recent Invitations</CardTitle>
+   720→                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-400 border-amber-500/20">
+   721→                  {invitations.length} pending
+   722→                </Badge>
+   723→              </div>
+   724→            </div>
+   725→          </CardHeader>
+   726→          <CardContent className="p-0">
+   727→            {invitations.length === 0 ? (
+   728→              <div className="px-5 py-12 text-center">
+   729→                <Mail className="h-8 w-8 text-muted-foreground/20 mx-auto mb-2" />
+   730→                <p className="text-sm text-muted-foreground/60">No pending invitations</p>
+   731→              </div>
+   732→            ) : (
+   733→              <div className="divide-y divide-border/20">
+   734→                {invitations.map((inv) => {
+   735→                  const isExpired = new Date(inv.expiresAt) < new Date();
+   736→                  return (
+   737→                    <div key={inv.id} className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.02] transition-colors">
+   738→                      <div className="flex items-center gap-3 min-w-0">
+   739→                        <div className="h-8 w-8 rounded-full bg-[#D4A843]/10 flex items-center justify-center shrink-0">
+   740→                          <Mail className="h-3.5 w-3.5 text-[#D4A843]" />
+   741→                        </div>
+   742→                        <div className="min-w-0">
+   743→                          <p className="text-sm text-foreground truncate">{inv.email}</p>
+   744→                          <p className="text-[11px] text-muted-foreground/60">
+   745→                            {inv.tenantName} · <span className={ROLE_COLORS[inv.role] ? '' : ''}>{ROLE_LABELS[inv.role] || inv.role}</span>
+   746→                            {inv.designation && ` · ${inv.designation}`}
+   747→                          </p>
+   748→                        </div>
+   749→                      </div>
+   750→                      <div className="flex items-center gap-2 shrink-0 ml-4">
+   751→                        <span
+   752→                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+   753→                            isExpired
+   754→                              ? 'bg-red-500/15 text-red-400'
+   755→                              : 'bg-amber-500/15 text-amber-400'
+   756→                          }`}
+   757→                        >
+   758→                          <Clock className="h-2.5 w-2.5" />
+   759→                          {isExpired ? 'Expired' : `Expires ${formatDate(inv.expiresAt)}`}
+   760→                        </span>
+   761→                        <button className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-[#D4A843] hover:bg-[#D4A843]/10 transition-colors">
+   762→                          <Send className="h-3 w-3" />
+   763→                        </button>
+   764→                      </div>
+   765→                    </div>
+   766→                  );
+   767→                })}
+   768→              </div>
+   769→            )}
+   770→          </CardContent>
+   771→        </Card>
+   772→      </motion.div>
+   773→
+   774→      {/* ═══ CREATE BRAND DIALOG ═══ */}
+   775→      <Dialog open={createOpen} onOpenChange={(open) => { setCreateOpen(open); if (!open) setError(''); }}>
+   776→        <DialogContent className="sm:max-w-lg bg-[#111] border-border/50 p-0 gap-0 max-h-[90vh] overflow-y-auto">
+   777→          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4A843]/50 to-transparent" />
+   778→          <div className="p-6 pb-0">
+   779→            <DialogHeader>
+   780→              <DialogTitle className="text-base flex items-center gap-2">
+   781→                <div className="h-7 w-7 rounded-lg gold-gradient flex items-center justify-center">
+   782→                  <Plus className="h-4 w-4 text-[#0a0a0a]" />
+   783→                </div>
+   784→                Create New Brand
+   785→              </DialogTitle>
+   786→              <DialogDescription className="text-xs text-muted-foreground">
+   787→                Set up a new brand on the Laxree platform. The owner will receive full access.
+   788→              </DialogDescription>
+   789→            </DialogHeader>
+   790→          </div>
+   791→
+   792→          <div className="p-6 space-y-4">
+   793→            {error && (
+   794→              <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-400">{error}</div>
+   795→            )}
+   796→
+   797→            <div className="grid grid-cols-2 gap-4">
+   798→              <div className="space-y-1.5 col-span-2">
+   799→                <label className="text-xs text-muted-foreground font-medium">Brand Name *</label>
+   800→                <Input
+   801→                  value={form.name}
+   802→                  onChange={(e) => handleNameChange(e.target.value)}
+   803→                  placeholder="e.g. Acme Corp"
+   804→                  className="h-9 bg-[#0a0a0a] border-border/50 text-sm"
+   805→                />
+   806→              </div>
+   807→              <div className="space-y-1.5">
+   808→                <label className="text-xs text-muted-foreground font-medium">Slug *</label>
+   809→                <code className="block text-[11px] text-muted-foreground/50 mb-1">{form.slug || 'auto-generated'}</code>
+   810→                <Input
+   811→                  value={form.slug}
+   812→                  onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
+   813→                  placeholder="brand-slug"
+   814→                  className="h-9 bg-[#0a0a0a] border-border/50 text-sm font-mono"
+   815→                />
+   816→              </div>
+   817→              <div className="space-y-1.5">
+   818→                <label className="text-xs text-muted-foreground font-medium">Primary Color</label>
+   819→                <div className="flex items-center gap-2">
+   820→                  <input
+   821→                    type="color"
+   822→                    value={form.primaryColor}
+   823→                    onChange={(e) => setForm((p) => ({ ...p, primaryColor: e.target.value }))}
+   824→                    className="h-9 w-12 rounded-lg border border-border/50 bg-transparent cursor-pointer"
+   825→                  />
+   826→                  <Input
+   827→                    value={form.primaryColor}
+   828→                    onChange={(e) => setForm((p) => ({ ...p, primaryColor: e.target.value }))}
+   829→                    placeholder="#D4A843"
+   830→                    className="h-9 bg-[#0a0a0a] border-border/50 text-sm font-mono flex-1"
+   831→                  />
+   832→                </div>
+   833→              </div>
+   834→              <div className="space-y-1.5 col-span-2">
+   835→                <label className="text-xs text-muted-foreground font-medium">Logo URL</label>
+   836→                <Input
+   837→                  value={form.logo}
+   838→                  onChange={(e) => setForm((p) => ({ ...p, logo: e.target.value }))}
+   839→                  placeholder="https://example.com/logo.svg"
+   840→                  className="h-9 bg-[#0a0a0a] border-border/50 text-sm"
+   841→                />
+   842→              </div>
+   843→            </div>
+   844→
+   845→            <Separator className="bg-border/30" />
+   846→
+   847→            <div className="space-y-1">
+   848→              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider flex items-center gap-1.5">
+   849→                <Shield className="h-3 w-3" /> Owner Account
+   850→              </p>
+   851→            </div>
+   852→
+   853→            <div className="grid grid-cols-2 gap-4">
+   854→              <div className="space-y-1.5">
+   855→                <label className="text-xs text-muted-foreground font-medium">Owner Name *</label>
+   856→                <Input
+   857→                  value={form.ownerName}
+   858→                  onChange={(e) => setForm((p) => ({ ...p, ownerName: e.target.value }))}
+   859→                  placeholder="John Doe"
+   860→                  className="h-9 bg-[#0a0a0a] border-border/50 text-sm"
+   861→                />
+   862→              </div>
+   863→              <div className="space-y-1.5">
+   864→                <label className="text-xs text-muted-foreground font-medium">Owner Email *</label>
+   865→                <Input
+   866→                  type="email"
+   867→                  value={form.ownerEmail}
+   868→                  onChange={(e) => setForm((p) => ({ ...p, ownerEmail: e.target.value }))}
+   869→                  placeholder="owner@brand.com"
+   870→                  className="h-9 bg-[#0a0a0a] border-border/50 text-sm"
+   871→                />
+   872→              </div>
+   873→              <div className="space-y-1.5 col-span-2">
+   874→                <label className="text-xs text-muted-foreground font-medium">Owner Password *</label>
+   875→                <Input
+   876→                  type="password"
+   877→                  value={form.ownerPassword}
+   878→                  onChange={(e) => setForm((p) => ({ ...p, ownerPassword: e.target.value }))}
+   879→                  placeholder="Minimum 8 characters"
+   880→                  className="h-9 bg-[#0a0a0a] border-border/50 text-sm"
+   881→                />
+   882→              </div>
+   883→              <div className="space-y-1.5">
+   884→                <label className="text-xs text-muted-foreground font-medium">Plan</label>
+   885→                <Select value={form.plan} onValueChange={(v) => setForm((p) => ({ ...p, plan: v }))}>
+   886→                  <SelectTrigger className="h-9 bg-[#0a0a0a] border-border/50 text-sm">
+   887→                    <SelectValue />
+   888→                  </SelectTrigger>
+   889→                  <SelectContent className="bg-[#111] border-border">
+   890→                    <SelectItem value="free">Free</SelectItem>
+   891→                    <SelectItem value="pro">Pro</SelectItem>
+   892→                    <SelectItem value="enterprise">Enterprise</SelectItem>
+   893→                  </SelectContent>
+   894→                </Select>
+   895→              </div>
+   896→            </div>
+   897→          </div>
+   898→
+   899→          <div className="flex items-center justify-end gap-2 p-6 pt-0">
+   900→            <Button variant="ghost" className="text-muted-foreground" onClick={() => setCreateOpen(false)}>
+   901→              Cancel
+   902→            </Button>
+   903→            <Button
+   904→              className="gap-2 gold-gradient text-[#0a0a0a] font-semibold border-0"
+   905→              onClick={handleCreate}
+   906→              disabled={actionLoading === 'create'}
+   907→            >
+   908→              {actionLoading === 'create' ? (
+   909→                <Loader2 className="h-4 w-4 animate-spin" />
+   910→              ) : (
+   911→                <Plus className="h-4 w-4" />
+   912→              )}
+   913→              Create Brand
+   914→            </Button>
+   915→          </div>
+   916→        </DialogContent>
+   917→      </Dialog>
+   918→
+   919→      {/* ═══ EDIT BRAND DIALOG ═══ */}
+   920→      <Dialog open={editOpen} onOpenChange={(open) => { setEditOpen(open); if (!open) setError(''); }}>
+   921→        <DialogContent className="sm:max-w-md bg-[#111] border-border/50 p-0 gap-0">
+   922→          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4A843]/50 to-transparent" />
+   923→          <div className="p-6 pb-0">
+   924→            <DialogHeader>
+   925→              <DialogTitle className="text-base flex items-center gap-2">
+   926→                <div className="h-7 w-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
+   927→                  <Pencil className="h-4 w-4 text-blue-400" />
+   928→                </div>
+   929→                Edit Brand
+   930→              </DialogTitle>
+   931→              <DialogDescription className="text-xs text-muted-foreground">
+   932→                Update {selectedBrand?.name} settings
+   933→              </DialogDescription>
+   934→            </DialogHeader>
+   935→          </div>
+   936→
+   937→          <div className="p-6 space-y-4">
+   938→            {error && (
+   939→              <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-400">{error}</div>
+   940→            )}
+   941→            <div className="space-y-1.5">
+   942→              <label className="text-xs text-muted-foreground font-medium">Brand Name</label>
+   943→              <Input
+   944→                value={editForm.name}
+   945→                onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
+   946→                className="h-9 bg-[#0a0a0a] border-border/50 text-sm"
+   947→              />
+   948→            </div>
+   949→            <div className="space-y-1.5">
+   950→              <label className="text-xs text-muted-foreground font-medium">Primary Color</label>
+   951→              <div className="flex items-center gap-2">
+   952→                <input
+   953→                  type="color"
+   954→                  value={editForm.primaryColor}
+   955→                  onChange={(e) => setEditForm((p) => ({ ...p, primaryColor: e.target.value }))}
+   956→                  className="h-9 w-12 rounded-lg border border-border/50 bg-transparent cursor-pointer"
+   957→                />
+   958→                <Input
+   959→                  value={editForm.primaryColor}
+   960→                  onChange={(e) => setEditForm((p) => ({ ...p, primaryColor: e.target.value }))}
+   961→                  className="h-9 bg-[#0a0a0a] border-border/50 text-sm font-mono flex-1"
+   962→                />
+   963→              </div>
+   964→            </div>
+   965→            <div className="space-y-1.5">
+   966→              <label className="text-xs text-muted-foreground font-medium">Logo URL</label>
+   967→              <Input
+   968→                value={editForm.logo}
+   969→                onChange={(e) => setEditForm((p) => ({ ...p, logo: e.target.value }))}
+   970→                className="h-9 bg-[#0a0a0a] border-border/50 text-sm"
+   971→              />
+   972→            </div>
+   973→          </div>
+   974→
+   975→          <div className="flex items-center justify-end gap-2 p-6 pt-0">
+   976→            <Button variant="ghost" className="text-muted-foreground" onClick={() => setEditOpen(false)}>
+   977→              Cancel
+   978→            </Button>
+   979→            <Button
+   980→              className="gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold border-0"
+   981→              onClick={handleEdit}
+   982→              disabled={actionLoading === 'edit'}
+   983→            >
+   984→              {actionLoading === 'edit' ? (
+   985→                <Loader2 className="h-4 w-4 animate-spin" />
+   986→              ) : (
+   987→                <Check className="h-4 w-4" />
+   988→              )}
+   989→              Save Changes
+   990→            </Button>
+   991→          </div>
+   992→        </DialogContent>
+   993→      </Dialog>
+   994→
+   995→      {/* ═══ INVITE STAFF DIALOG ═══ */}
+   996→      <Dialog open={inviteOpen} onOpenChange={(open) => { setInviteOpen(open); if (!open) setError(''); }}>
+   997→        <DialogContent className="sm:max-w-md bg-[#111] border-border/50 p-0 gap-0">
+   998→          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4A843]/50 to-transparent" />
+   999→          <div className="p-6 pb-0">
+  1000→            <DialogHeader>
+  1001→              <DialogTitle className="text-base flex items-center gap-2">
+  1002→                <div className="h-7 w-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+  1003→                  <UserPlus className="h-4 w-4 text-emerald-400" />
+  1004→                </div>
+  1005→                Invite Staff Member
+  1006→              </DialogTitle>
+  1007→              <DialogDescription className="text-xs text-muted-foreground">
+  1008→                Send an invitation to join a brand team
+  1009→              </DialogDescription>
+  1010→            </DialogHeader>
+  1011→          </div>
+  1012→
+  1013→          <div className="p-6 space-y-4">
+  1014→            {error && (
+  1015→              <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-400">{error}</div>
+  1016→            )}
+  1017→
+  1018→            <div className="space-y-1.5">
+  1019→              <label className="text-xs text-muted-foreground font-medium">Brand *</label>
+  1020→              <Select
+  1021→                value={inviteForm.brandId}
+  1022→                onValueChange={(v) => setInviteForm((p) => ({ ...p, brandId: v }))}
+  1023→              >
+  1024→                <SelectTrigger className="h-9 bg-[#0a0a0a] border-border/50 text-sm">
+  1025→                  <SelectValue placeholder="Select a brand" />
+  1026→                </SelectTrigger>
+  1027→                <SelectContent className="bg-[#111] border-border">
+  1028→                  {brands.filter((b) => b.isActive).map((b) => (
+  1029→                    <SelectItem key={b.id} value={b.id}>
+  1030→                      <div className="flex items-center gap-2">
+  1031→                        <div
+  1032→                          className="h-4 w-4 rounded"
+  1033→                          style={{ background: b.primaryColor }}
+  1034→                        />
+  1035→                        {b.name}
+  1036→                      </div>
+  1037→                    </SelectItem>
+  1038→                  ))}
+  1039→                </SelectContent>
+  1040→              </Select>
+  1041→            </div>
+  1042→            <div className="space-y-1.5">
+  1043→              <label className="text-xs text-muted-foreground font-medium">Email *</label>
+  1044→              <Input
+  1045→                type="email"
+  1046→                value={inviteForm.email}
+  1047→                onChange={(e) => setInviteForm((p) => ({ ...p, email: e.target.value }))}
+  1048→                placeholder="staff@brand.com"
+  1049→                className="h-9 bg-[#0a0a0a] border-border/50 text-sm"
+  1050→              />
+  1051→            </div>
+  1052→            <div className="grid grid-cols-2 gap-4">
+  1053→              <div className="space-y-1.5">
+  1054→                <label className="text-xs text-muted-foreground font-medium">Role</label>
+  1055→                <Select
+  1056→                  value={inviteForm.role}
+  1057→                  onValueChange={(v) => setInviteForm((p) => ({ ...p, role: v }))}
+  1058→                >
+  1059→                  <SelectTrigger className="h-9 bg-[#0a0a0a] border-border/50 text-sm">
+  1060→                    <SelectValue />
+  1061→                  </SelectTrigger>
+  1062→                  <SelectContent className="bg-[#111] border-border">
+  1063→                    <SelectItem value="admin">Admin</SelectItem>
+  1064→                    <SelectItem value="manager">Manager</SelectItem>
+  1065→                    <SelectItem value="analyst">Analyst</SelectItem>
+  1066→                    <SelectItem value="viewer">Viewer</SelectItem>
+  1067→                    <SelectItem value="staff">Staff</SelectItem>
+  1068→                  </SelectContent>
+  1069→                </Select>
+  1070→              </div>
+  1071→              <div className="space-y-1.5">
+  1072→                <label className="text-xs text-muted-foreground font-medium">Designation</label>
+  1073→                <Input
+  1074→                  value={inviteForm.designation}
+  1075→                  onChange={(e) => setInviteForm((p) => ({ ...p, designation: e.target.value }))}
+  1076→                  placeholder="Marketing Manager"
+  1077→                  className="h-9 bg-[#0a0a0a] border-border/50 text-sm"
+  1078→                />
+  1079→              </div>
+  1080→            </div>
+  1081→          </div>
+  1082→
+  1083→          <div className="flex items-center justify-end gap-2 p-6 pt-0">
+  1084→            <Button variant="ghost" className="text-muted-foreground" onClick={() => setInviteOpen(false)}>
+  1085→              Cancel
+  1086→            </Button>
+  1087→            <Button
+  1088→              className="gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold border-0"
+  1089→              onClick={handleInvite}
+  1090→              disabled={actionLoading === 'invite'}
+  1091→            >
+  1092→              {actionLoading === 'invite' ? (
+  1093→                <Loader2 className="h-4 w-4 animate-spin" />
+  1094→              ) : (
+  1095→                <Send className="h-4 w-4" />
+  1096→              )}
+  1097→              Send Invitation
+  1098→            </Button>
+  1099→          </div>
+  1100→        </DialogContent>
+  1101→      </Dialog>
+  1102→
+  1103→      {/* ═══ DELETE CONFIRMATION DIALOG ═══ */}
+  1104→      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+  1105→        <DialogContent className="sm:max-w-sm bg-[#111] border-border/50 p-0 gap-0">
+  1106→          <div className="p-6">
+  1107→            <div className="h-12 w-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+  1108→              <Trash2 className="h-6 w-6 text-red-400" />
+  1109→            </div>
+  1110→            <DialogHeader className="text-center">
+  1111→              <DialogTitle className="text-base">Delete Brand</DialogTitle>
+  1112→              <DialogDescription className="text-xs text-muted-foreground mt-2">
+  1113→                Are you sure you want to delete <strong className="text-foreground">{selectedBrand?.name}</strong>?
+  1114→                This will permanently remove the brand and all its data. This action cannot be undone.
+  1115→              </DialogDescription>
+  1116→            </DialogHeader>
+  1117→          </div>
+  1118→          <div className="flex items-center justify-end gap-2 p-6 pt-0">
+  1119→            <Button variant="ghost" className="text-muted-foreground" onClick={() => setDeleteOpen(false)}>
+  1120→              Cancel
+  1121→            </Button>
+  1122→            <Button
+  1123→              className="gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold border-0"
+  1124→              onClick={handleDelete}
+  1125→              disabled={actionLoading === 'delete'}
+  1126→            >
+  1127→              {actionLoading === 'delete' ? (
+  1128→                <Loader2 className="h-4 w-4 animate-spin" />
+  1129→              ) : (
+  1130→                <Trash2 className="h-4 w-4" />
+  1131→              )}
+  1132→              Delete Brand
+  1133→            </Button>
+  1134→          </div>
+  1135→        </DialogContent>
+  1136→      </Dialog>
+  1137→    </motion.div>
+  1138→  );
+  1139→}

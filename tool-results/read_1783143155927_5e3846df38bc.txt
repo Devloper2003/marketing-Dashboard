@@ -1,0 +1,851 @@
+     1→'use client';
+     2→
+     3→import { useState, useEffect, useCallback } from 'react';
+     4→import {
+     5→  Users,
+     6→  UserPlus,
+     7→  Pencil,
+     8→  Trash2,
+     9→  Shield,
+    10→  ShieldCheck,
+    11→  ShieldAlert,
+    12→  Mail,
+    13→  Clock,
+    14→  Check,
+    15→  X,
+    16→  Loader2,
+    17→  Ban,
+    18→  UserCheck,
+    19→  MoreHorizontal,
+    20→  Eye,
+    21→} from 'lucide-react';
+    22→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+    23→import { Button } from '@/components/ui/button';
+    24→import { Input } from '@/components/ui/input';
+    25→import { Badge } from '@/components/ui/badge';
+    26→import {
+    27→  Dialog,
+    28→  DialogContent,
+    29→  DialogHeader,
+    30→  DialogTitle,
+    31→  DialogDescription,
+    32→  DialogFooter,
+    33→} from '@/components/ui/dialog';
+    34→import {
+    35→  Select,
+    36→  SelectContent,
+    37→  SelectItem,
+    38→  SelectTrigger,
+    39→  SelectValue,
+    40→} from '@/components/ui/select';
+    41→import { Separator } from '@/components/ui/separator';
+    42→import { motion, AnimatePresence } from 'framer-motion';
+    43→
+    44→/* ─── Types ──────────────────────────────────────────────────── */
+    45→interface SessionUser {
+    46→  id: string;
+    47→  email: string;
+    48→  name: string;
+    49→  role: string;
+    50→  tenant: {
+    51→    id: string;
+    52→    name: string;
+    53→    slug: string;
+    54→    logo: string | null;
+    55→    primaryColor: string;
+    56→  };
+    57→}
+    58→
+    59→interface TeamMember {
+    60→  id: string;
+    61→  email: string;
+    62→  name: string;
+    63→  role: string;
+    64→  designation: string | null;
+    65→  avatar: string | null;
+    66→  isActive: boolean;
+    67→  lastLoginAt: string | null;
+    68→  createdAt: string;
+    69→  isOwner?: boolean;
+    70→}
+    71→
+    72→/* ─── Helpers ────────────────────────────────────────────────── */
+    73→function getSession(): SessionUser | null {
+    74→  if (typeof window === 'undefined') return null;
+    75→  try {
+    76→    const s = sessionStorage.getItem('dashboard_session');
+    77→    if (!s) return null;
+    78→    return JSON.parse(s);
+    79→  } catch {
+    80→    return null;
+    81→  }
+    82→}
+    83→
+    84→function formatDate(d: string) {
+    85→  return new Date(d).toLocaleDateString('en-US', {
+    86→    month: 'short',
+    87→    day: 'numeric',
+    88→    year: 'numeric',
+    89→  });
+    90→}
+    91→
+    92→function formatRelativeTime(d: string | null): string {
+    93→  if (!d) return 'Never';
+    94→  const now = new Date();
+    95→  const date = new Date(d);
+    96→  const diffMs = now.getTime() - date.getTime();
+    97→  const diffMins = Math.floor(diffMs / 60000);
+    98→  const diffHours = Math.floor(diffMs / 3600000);
+    99→  const diffDays = Math.floor(diffMs / 86400000);
+   100→
+   101→  if (diffMins < 1) return 'Just now';
+   102→  if (diffMins < 60) return `${diffMins}m ago`;
+   103→  if (diffHours < 24) return `${diffHours}h ago`;
+   104→  if (diffDays < 7) return `${diffDays}d ago`;
+   105→  return formatDate(d);
+   106→}
+   107→
+   108→const ROLE_COLORS: Record<string, string> = {
+   109→  owner: 'bg-[#D4A843]/15 text-[#D4A843] border-[#D4A843]/20',
+   110→  admin: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
+   111→  manager: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+   112→  analyst: 'bg-orange-500/15 text-orange-400 border-orange-500/20',
+   113→  viewer: 'bg-gray-500/15 text-gray-400 border-gray-500/20',
+   114→  staff: 'bg-gray-500/15 text-gray-400 border-gray-500/20',
+   115→};
+   116→
+   117→const ROLE_LABELS: Record<string, string> = {
+   118→  owner: 'Owner',
+   119→  admin: 'Admin',
+   120→  manager: 'Manager',
+   121→  analyst: 'Analyst',
+   122→  viewer: 'Viewer',
+   123→  staff: 'Staff',
+   124→};
+   125→
+   126→const ROLE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+   127→  owner: Shield,
+   128→  admin: ShieldCheck,
+   129→  manager: ShieldAlert,
+   130→  analyst: Eye,
+   131→  viewer: Eye,
+   132→  staff: Users,
+   133→};
+   134→
+   135→/* ─── Animation variants ─────────────────────────────────────── */
+   136→const fadeIn = {
+   137→  initial: { opacity: 0, y: 16 },
+   138→  animate: { opacity: 1, y: 0 },
+   139→  transition: { duration: 0.3 },
+   140→};
+   141→
+   142→const stagger = {
+   143→  animate: { transition: { staggerChildren: 0.04 } },
+   144→};
+   145→
+   146→/* ─── Main Component ─────────────────────────────────────────── */
+   147→export default function StaffManagementTab() {
+   148→  const [session] = useState<SessionUser | null>(() => getSession());
+   149→  const [members, setMembers] = useState<TeamMember[]>([]);
+   150→  const [loading, setLoading] = useState(true);
+   151→  const [actionLoading, setActionLoading] = useState('');
+   152→
+   153→  // Dialog states
+   154→  const [inviteOpen, setInviteOpen] = useState(false);
+   155→  const [editOpen, setEditOpen] = useState(false);
+   156→  const [removeOpen, setRemoveOpen] = useState(false);
+   157→  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+   158→
+   159→  // Form states
+   160→  const [inviteForm, setInviteForm] = useState({
+   161→    email: '',
+   162→    role: 'staff',
+   163→    designation: '',
+   164→  });
+   165→  const [editForm, setEditForm] = useState({
+   166→    role: '',
+   167→    designation: '',
+   168→  });
+   169→  const [error, setError] = useState('');
+   170→  const [success, setSuccess] = useState('');
+   171→
+   172→  const tenantId = session?.tenant?.id;
+   173→  const isOwnerOrAdmin = session?.role === 'owner' || session?.role === 'admin' || session?.role === 'platform_admin';
+   174→  const accentColor = session?.tenant?.primaryColor || '#D4A843';
+   175→
+   176→  /* ── Fetch team members ─────────────────────────────────────── */
+   177→  const fetchMembers = useCallback(async () => {
+   178→    if (!tenantId) return;
+   179→    setLoading(true);
+   180→    try {
+   181→      const res = await fetch(`/api/tenant/brands/${tenantId}`);
+   182→      if (res.ok) {
+   183→        const data = await res.json();
+   184→        if (data.success && data.brand?.users) {
+   185→          setMembers(
+   186→            data.brand.users.map((u: TeamMember & { role: string }) => ({
+   187→              ...u,
+   188→              isOwner: u.role === 'owner',
+   189→            }))
+   190→          );
+   191→        }
+   192→      }
+   193→    } catch (err) {
+   194→      console.error('Failed to fetch team members:', err);
+   195→    } finally {
+   196→      setLoading(false);
+   197→    }
+   198→  }, [tenantId]);
+   199→
+   200→  useEffect(() => {
+   201→    fetchMembers();
+   202→  }, [fetchMembers]);
+   203→
+   204→  /* ── Invite team member ─────────────────────────────────────── */
+   205→  const handleInvite = async () => {
+   206→    setError('');
+   207→    if (!tenantId || !inviteForm.email) {
+   208→      setError('Email is required');
+   209→      return;
+   210→    }
+   211→    setActionLoading('invite');
+   212→    try {
+   213→      const res = await fetch(`/api/tenant/brands/${tenantId}/invite`, {
+   214→        method: 'POST',
+   215→        headers: { 'Content-Type': 'application/json', 'x-user-id': session?.id || '' },
+   216→        body: JSON.stringify({
+   217→          email: inviteForm.email,
+   218→          role: inviteForm.role,
+   219→          designation: inviteForm.designation || undefined,
+   220→        }),
+   221→      });
+   222→      const data = await res.json();
+   223→      if (!res.ok) throw new Error(data.error || 'Failed to send invitation');
+   224→      setInviteOpen(false);
+   225→      setInviteForm({ email: '', role: 'staff', designation: '' });
+   226→      setSuccess('Invitation sent successfully!');
+   227→      setTimeout(() => setSuccess(''), 3000);
+   228→      fetchMembers();
+   229→    } catch (err) {
+   230→      setError(err instanceof Error ? err.message : 'Failed to send invitation');
+   231→    } finally {
+   232→      setActionLoading('');
+   233→    }
+   234→  };
+   235→
+   236→  /* ── Edit member ────────────────────────────────────────────── */
+   237→  const openEdit = (member: TeamMember) => {
+   238→    setSelectedMember(member);
+   239→    setEditForm({ role: member.role, designation: member.designation || '' });
+   240→    setEditOpen(true);
+   241→    setError('');
+   242→  };
+   243→
+   244→  const handleEdit = async () => {
+   245→    setError('');
+   246→    if (!selectedMember || !tenantId) return;
+   247→    setActionLoading('edit');
+   248→    try {
+   249→      const res = await fetch(`/api/tenant/brands/${tenantId}/users/${selectedMember.id}`, {
+   250→        method: 'PATCH',
+   251→        headers: { 'Content-Type': 'application/json', 'x-user-id': session?.id || '' },
+   252→        body: JSON.stringify({
+   253→          role: editForm.role,
+   254→          designation: editForm.designation || undefined,
+   255→        }),
+   256→      });
+   257→      const data = await res.json();
+   258→      if (!res.ok) throw new Error(data.error || 'Failed to update member');
+   259→      setEditOpen(false);
+   260→      setSuccess('Member updated successfully!');
+   261→      setTimeout(() => setSuccess(''), 3000);
+   262→      fetchMembers();
+   263→    } catch (err) {
+   264→      setError(err instanceof Error ? err.message : 'Failed to update member');
+   265→    } finally {
+   266→      setActionLoading('');
+   267→    }
+   268→  };
+   269→
+   270→  /* ── Toggle active/suspended ────────────────────────────────── */
+   271→  const handleToggleActive = async (member: TeamMember) => {
+   272→    if (!tenantId || member.isOwner) return;
+   273→    setActionLoading(`toggle-${member.id}`);
+   274→    try {
+   275→      const res = await fetch(`/api/tenant/brands/${tenantId}/users/${member.id}`, {
+   276→        method: 'PATCH',
+   277→        headers: { 'Content-Type': 'application/json', 'x-user-id': session?.id || '' },
+   278→        body: JSON.stringify({ isActive: !member.isActive }),
+   279→      });
+   280→      if (!res.ok) {
+   281→        const data = await res.json().catch(() => ({}));
+   282→        throw new Error(data.error || 'Failed to update member status');
+   283→      }
+   284→      fetchMembers();
+   285→    } catch (err) {
+   286→      setError(err instanceof Error ? err.message : 'Failed to update member');
+   287→      setTimeout(() => setError(''), 3000);
+   288→    } finally {
+   289→      setActionLoading('');
+   290→    }
+   291→  };
+   292→
+   293→  /* ── Remove member ──────────────────────────────────────────── */
+   294→  const openRemove = (member: TeamMember) => {
+   295→    setSelectedMember(member);
+   296→    setRemoveOpen(true);
+   297→  };
+   298→
+   299→  const handleRemove = async () => {
+   300→    if (!selectedMember || !tenantId) return;
+   301→    setActionLoading('remove');
+   302→    try {
+   303→      const res = await fetch(`/api/tenant/brands/${tenantId}/users/${selectedMember.id}`, {
+   304→        method: 'DELETE',
+   305→        headers: { 'Content-Type': 'application/json', 'x-user-id': session?.id || '' },
+   306→      });
+   307→      const data = await res.json();
+   308→      if (!res.ok) throw new Error(data.error || 'Failed to remove member');
+   309→      setRemoveOpen(false);
+   310→      setSuccess('Member removed successfully!');
+   311→      setTimeout(() => setSuccess(''), 3000);
+   312→      fetchMembers();
+   313→    } catch (err) {
+   314→      setError(err instanceof Error ? err.message : 'Failed to remove member');
+   315→      setTimeout(() => setError(''), 3000);
+   316→    } finally {
+   317→      setActionLoading('');
+   318→    }
+   319→  };
+   320→
+   321→  /* ── Stats ──────────────────────────────────────────────────── */
+   322→  const activeMembers = members.filter((m) => m.isActive).length;
+   323→  const totalSlots = 10; // Default max users
+   324→
+   325→  /* ── Loading state ──────────────────────────────────────────── */
+   326→  if (loading) {
+   327→    return (
+   328→      <div className="space-y-6">
+   329→        <div className="flex items-center gap-3">
+   330→          <div className="h-8 w-8 rounded-lg bg-[#D4A843]/10 flex items-center justify-center">
+   331→            <Users className="h-4 w-4 text-[#D4A843] animate-pulse" />
+   332→          </div>
+   333→          <div>
+   334→            <div className="h-5 w-40 bg-[#1a1a1a] rounded animate-pulse" />
+   335→            <div className="h-3 w-56 bg-[#1a1a1a] rounded animate-pulse mt-1" />
+   336→          </div>
+   337→        </div>
+   338→        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+   339→          {[...Array(3)].map((_, i) => (
+   340→            <div key={i} className="h-24 rounded-xl bg-[#1a1a1a] animate-pulse" />
+   341→          ))}
+   342→        </div>
+   343→        <div className="h-80 rounded-xl bg-[#1a1a1a] animate-pulse" />
+   344→      </div>
+   345→    );
+   346→  }
+   347→
+   348→  /* ── Render ────────────────────────────────────────────────── */
+   349→  return (
+   350→    <motion.div
+   351→      variants={stagger}
+   352→      initial="initial"
+   353→      animate="animate"
+   354→      className="space-y-6"
+   355→    >
+   356→      {/* Header */}
+   357→      <motion.div {...fadeIn} className="flex items-center justify-between">
+   358→        <div className="flex items-center gap-3">
+   359→          <div
+   360→            className="h-10 w-10 rounded-xl flex items-center justify-center"
+   361→            style={{ background: `${accentColor}15` }}
+   362→          >
+   363→            <Users className="h-5 w-5" style={{ color: accentColor }} />
+   364→          </div>
+   365→          <div>
+   366→            <h2 className="text-lg font-bold text-foreground">
+   367→              Team Management
+   368→            </h2>
+   369→            <p className="text-xs text-muted-foreground/60">
+   370→              Manage team members for {session?.tenant?.name || 'your brand'}
+   371→            </p>
+   372→          </div>
+   373→        </div>
+   374→        {isOwnerOrAdmin && (
+   375→          <Button
+   376→            size="sm"
+   377→            className="gap-2 border-0 font-semibold"
+   378→            style={{
+   379→              background: `linear-gradient(135deg, ${accentColor}, ${accentColor}bb)`,
+   380→              color: '#0a0a0a',
+   381→            }}
+   382→            onClick={() => { setInviteForm({ email: '', role: 'staff', designation: '' }); setInviteOpen(true); setError(''); }}
+   383→          >
+   384→            <UserPlus className="h-4 w-4" />
+   385→            <span className="hidden sm:inline">Invite Member</span>
+   386→          </Button>
+   387→        )}
+   388→      </motion.div>
+   389→
+   390→      {/* Success / Error Toast */}
+   391→      <AnimatePresence>
+   392→        {success && (
+   393→          <motion.div
+   394→            initial={{ opacity: 0, y: -10, height: 0 }}
+   395→            animate={{ opacity: 1, y: 0, height: 'auto' }}
+   396→            exit={{ opacity: 0, y: -10, height: 0 }}
+   397→            className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-4 py-3 text-sm text-emerald-400 flex items-center gap-2"
+   398→          >
+   399→            <Check className="h-4 w-4 shrink-0" />
+   400→            {success}
+   401→          </motion.div>
+   402→        )}
+   403→        {error && !inviteOpen && !editOpen && !removeOpen && (
+   404→          <motion.div
+   405→            initial={{ opacity: 0, y: -10, height: 0 }}
+   406→            animate={{ opacity: 1, y: 0, height: 'auto' }}
+   407→            exit={{ opacity: 0, y: -10, height: 0 }}
+   408→            className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-sm text-red-400 flex items-center gap-2"
+   409→          >
+   410→            <X className="h-4 w-4 shrink-0" />
+   411→            {error}
+   412→          </motion.div>
+   413→        )}
+   414→      </AnimatePresence>
+   415→
+   416→      {/* Stats Cards */}
+   417→      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+   418→        <motion.div {...fadeIn}>
+   419→          <Card className="border-border/50 overflow-hidden relative">
+   420→            <div
+   421→              className="absolute top-0 left-0 right-0 h-[2px]"
+   422→              style={{ background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)` }}
+   423→            />
+   424→            <CardContent className="p-5">
+   425→              <div className="flex items-start justify-between">
+   426→                <div>
+   427→                  <p className="text-xs text-muted-foreground/70 font-medium uppercase tracking-wider">Team Size</p>
+   428→                  <p className="text-2xl font-bold text-foreground mt-1.5">{activeMembers}</p>
+   429→                  <p className="text-[11px] text-muted-foreground/60 mt-1">of {totalSlots} seats</p>
+   430→                </div>
+   431→                <div
+   432→                  className="h-10 w-10 rounded-xl flex items-center justify-center"
+   433→                  style={{ background: `${accentColor}15` }}
+   434→                >
+   435→                  <Users className="h-5 w-5" style={{ color: accentColor }} />
+   436→                </div>
+   437→              </div>
+   438→              {/* Usage bar */}
+   439→              <div className="mt-3 h-1.5 rounded-full bg-[#1a1a1a] overflow-hidden">
+   440→                <div
+   441→                  className="h-full rounded-full transition-all duration-500"
+   442→                  style={{
+   443→                    width: `${Math.min((activeMembers / totalSlots) * 100, 100)}%`,
+   444→                    background: `linear-gradient(90deg, ${accentColor}, ${accentColor}99)`,
+   445→                  }}
+   446→                />
+   447→              </div>
+   448→            </CardContent>
+   449→          </Card>
+   450→        </motion.div>
+   451→
+   452→        <motion.div {...fadeIn}>
+   453→          <Card className="border-border/50 overflow-hidden relative">
+   454→            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
+   455→            <CardContent className="p-5">
+   456→              <div className="flex items-start justify-between">
+   457→                <div>
+   458→                  <p className="text-xs text-muted-foreground/70 font-medium uppercase tracking-wider">Active Now</p>
+   459→                  <p className="text-2xl font-bold text-foreground mt-1.5">
+   460→                    {members.filter((m) => m.isActive && m.lastLoginAt && (Date.now() - new Date(m.lastLoginAt).getTime()) < 86400000).length}
+   461→                  </p>
+   462→                  <p className="text-[11px] text-muted-foreground/60 mt-1">Logged in today</p>
+   463→                </div>
+   464→                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+   465→                  <UserCheck className="h-5 w-5 text-emerald-500" />
+   466→                </div>
+   467→              </div>
+   468→            </CardContent>
+   469→          </Card>
+   470→        </motion.div>
+   471→
+   472→        <motion.div {...fadeIn}>
+   473→          <Card className="border-border/50 overflow-hidden relative">
+   474→            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+   475→            <CardContent className="p-5">
+   476→              <div className="flex items-start justify-between">
+   477→                <div>
+   478→                  <p className="text-xs text-muted-foreground/70 font-medium uppercase tracking-wider">Invited</p>
+   479→                  <p className="text-2xl font-bold text-foreground mt-1.5">
+   480→                    {members.length - activeMembers}
+   481→                  </p>
+   482→                  <p className="text-[11px] text-muted-foreground/60 mt-1">Awaiting acceptance</p>
+   483→                </div>
+   484→                <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+   485→                  <Mail className="h-5 w-5 text-amber-500" />
+   486→                </div>
+   487→              </div>
+   488→            </CardContent>
+   489→          </Card>
+   490→        </motion.div>
+   491→      </div>
+   492→
+   493→      {/* Team Members List */}
+   494→      <motion.div {...fadeIn}>
+   495→        <Card className="border-border/50 overflow-hidden">
+   496→          <CardHeader className="pb-3">
+   497→            <div className="flex items-center justify-between">
+   498→              <div className="flex items-center gap-2">
+   499→                <CardTitle className="text-sm font-semibold">Team Members</CardTitle>
+   500→                <Badge variant="outline" className="text-[10px] border-border/50" style={{ color: accentColor, borderColor: `${accentColor}30`, background: `${accentColor}10` }}>
+   501→                  {members.length} members
+   502→                </Badge>
+   503→              </div>
+   504→            </div>
+   505→          </CardHeader>
+   506→          <CardContent className="p-0">
+   507→            <div className="divide-y divide-border/20">
+   508→              {members.length === 0 ? (
+   509→                <div className="px-5 py-16 text-center">
+   510→                  <Users className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
+   511→                  <p className="text-sm text-muted-foreground/60">No team members yet</p>
+   512→                  {isOwnerOrAdmin && (
+   513→                    <Button
+   514→                      size="sm"
+   515→                      className="mt-4 gap-2 border-0 font-semibold"
+   516→                      style={{
+   517→                        background: `linear-gradient(135deg, ${accentColor}, ${accentColor}bb)`,
+   518→                        color: '#0a0a0a',
+   519→                      }}
+   520→                      onClick={() => { setInviteForm({ email: '', role: 'staff', designation: '' }); setInviteOpen(true); setError(''); }}
+   521→                    >
+   522→                      <UserPlus className="h-3.5 w-3.5" />
+   523→                      Invite your first team member
+   524→                    </Button>
+   525→                  )}
+   526→                </div>
+   527→              ) : (
+   528→                members.map((member, idx) => {
+   529→                  const RoleIcon = ROLE_ICONS[member.role] || Users;
+   530→                  return (
+   531→                    <motion.div
+   532→                      key={member.id}
+   533→                      initial={{ opacity: 0, x: -10 }}
+   534→                      animate={{ opacity: 1, x: 0 }}
+   535→                      transition={{ duration: 0.2, delay: idx * 0.03 }}
+   536→                      className="flex items-center justify-between px-5 py-3.5 hover:bg-white/[0.02] transition-colors group"
+   537→                    >
+   538→                      <div className="flex items-center gap-3 min-w-0">
+   539→                        {/* Avatar */}
+   540→                        <div
+   541→                          className="h-9 w-9 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
+   542→                          style={{
+   543→                            background: `${accentColor}20`,
+   544→                            color: accentColor,
+   545→                          }}
+   546→                        >
+   547→                          {member.name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+   548→                        </div>
+   549→                        {/* Info */}
+   550→                        <div className="min-w-0">
+   551→                          <div className="flex items-center gap-2">
+   552→                            <p className="text-sm font-medium text-foreground truncate">
+   553→                              {member.name}
+   554→                              {member.id === session?.id && (
+   555→                                <span className="ml-1.5 text-[10px] text-muted-foreground/50 font-normal">(you)</span>
+   556→                              )}
+   557→                            </p>
+   558→                          </div>
+   559→                          <div className="flex items-center gap-2 mt-0.5">
+   560→                            <p className="text-[11px] text-muted-foreground/60 truncate">{member.email}</p>
+   561→                            {member.designation && (
+   562→                              <>
+   563→                                <span className="text-muted-foreground/30">·</span>
+   564→                                <p className="text-[11px] text-muted-foreground/50 truncate">{member.designation}</p>
+   565→                              </>
+   566→                            )}
+   567→                          </div>
+   568→                        </div>
+   569→                      </div>
+   570→
+   571→                      <div className="flex items-center gap-3 shrink-0 ml-4">
+   572→                        {/* Role Badge */}
+   573→                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${ROLE_COLORS[member.role] || ROLE_COLORS.staff}`}>
+   574→                          <RoleIcon className="h-2.5 w-2.5" />
+   575→                          {ROLE_LABELS[member.role] || member.role}
+   576→                        </span>
+   577→
+   578→                        {/* Last login */}
+   579→                        <span className="text-[11px] text-muted-foreground/50 hidden lg:flex items-center gap-1">
+   580→                          <Clock className="h-3 w-3" />
+   581→                          {formatRelativeTime(member.lastLoginAt)}
+   582→                        </span>
+   583→
+   584→                        {/* Status */}
+   585→                        <span
+   586→                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+   587→                            member.isActive
+   588→                              ? 'bg-emerald-500/15 text-emerald-400'
+   589→                              : 'bg-red-500/15 text-red-400'
+   590→                          }`}
+   591→                        >
+   592→                          <span className={`h-1.5 w-1.5 rounded-full ${member.isActive ? 'bg-emerald-400' : 'bg-red-400'}`} />
+   593→                          {member.isActive ? 'Active' : 'Suspended'}
+   594→                        </span>
+   595→
+   596→                        {/* Actions */}
+   597→                        {isOwnerOrAdmin && !member.isOwner && member.id !== session?.id && (
+   598→                          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+   599→                            <button
+   600→                              onClick={() => openEdit(member)}
+   601→                              className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-blue-400 hover:bg-blue-400/10 transition-colors"
+   602→                              title="Edit"
+   603→                            >
+   604→                              <Pencil className="h-3.5 w-3.5" />
+   605→                            </button>
+   606→                            <button
+   607→                              onClick={() => handleToggleActive(member)}
+   608→                              disabled={actionLoading === `toggle-${member.id}`}
+   609→                              className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-amber-400 hover:bg-amber-400/10 transition-colors disabled:opacity-50"
+   610→                              title={member.isActive ? 'Suspend' : 'Activate'}
+   611→                            >
+   612→                              {actionLoading === `toggle-${member.id}` ? (
+   613→                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+   614→                              ) : member.isActive ? (
+   615→                                <Ban className="h-3.5 w-3.5" />
+   616→                              ) : (
+   617→                                <UserCheck className="h-3.5 w-3.5" />
+   618→                              )}
+   619→                            </button>
+   620→                            <button
+   621→                              onClick={() => openRemove(member)}
+   622→                              className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors"
+   623→                              title="Remove"
+   624→                            >
+   625→                              <Trash2 className="h-3.5 w-3.5" />
+   626→                            </button>
+   627→                          </div>
+   628→                        )}
+   629→                      </div>
+   630→                    </motion.div>
+   631→                  );
+   632→                })
+   633→              )}
+   634→            </div>
+   635→          </CardContent>
+   636→        </Card>
+   637→      </motion.div>
+   638→
+   639→      {/* ═══ INVITE DIALOG ═══ */}
+   640→      <Dialog open={inviteOpen} onOpenChange={(open) => { setInviteOpen(open); if (!open) setError(''); }}>
+   641→        <DialogContent className="sm:max-w-md bg-[#111] border-border/50 p-0 gap-0">
+   642→          <div
+   643→            className="absolute top-0 left-0 right-0 h-[2px]"
+   644→            style={{ background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)` }}
+   645→          />
+   646→          <div className="p-6 pb-0">
+   647→            <DialogHeader>
+   648→              <DialogTitle className="text-base flex items-center gap-2">
+   649→                <div
+   650→                  className="h-7 w-7 rounded-lg flex items-center justify-center"
+   651→                  style={{ background: `${accentColor}15` }}
+   652→                >
+   653→                  <UserPlus className="h-4 w-4" style={{ color: accentColor }} />
+   654→                </div>
+   655→                Invite Team Member
+   656→              </DialogTitle>
+   657→              <DialogDescription className="text-xs text-muted-foreground">
+   658→                Send an invitation to join {session?.tenant?.name || 'your brand'}
+   659→              </DialogDescription>
+   660→            </DialogHeader>
+   661→          </div>
+   662→
+   663→          <div className="p-6 space-y-4">
+   664→            {error && (
+   665→              <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-400">{error}</div>
+   666→            )}
+   667→
+   668→            <div className="space-y-1.5">
+   669→              <label className="text-xs text-muted-foreground font-medium">Email Address *</label>
+   670→              <Input
+   671→                type="email"
+   672→                value={inviteForm.email}
+   673→                onChange={(e) => setInviteForm((p) => ({ ...p, email: e.target.value }))}
+   674→                placeholder="colleague@company.com"
+   675→                className="h-9 bg-[#0a0a0a] border-border/50 text-sm"
+   676→              />
+   677→            </div>
+   678→            <div className="grid grid-cols-2 gap-4">
+   679→              <div className="space-y-1.5">
+   680→                <label className="text-xs text-muted-foreground font-medium">Role</label>
+   681→                <Select
+   682→                  value={inviteForm.role}
+   683→                  onValueChange={(v) => setInviteForm((p) => ({ ...p, role: v }))}
+   684→                >
+   685→                  <SelectTrigger className="h-9 bg-[#0a0a0a] border-border/50 text-sm">
+   686→                    <SelectValue />
+   687→                  </SelectTrigger>
+   688→                  <SelectContent className="bg-[#111] border-border">
+   689→                    <SelectItem value="admin">Admin</SelectItem>
+   690→                    <SelectItem value="manager">Manager</SelectItem>
+   691→                    <SelectItem value="analyst">Analyst</SelectItem>
+   692→                    <SelectItem value="viewer">Viewer</SelectItem>
+   693→                    <SelectItem value="staff">Staff</SelectItem>
+   694→                  </SelectContent>
+   695→                </Select>
+   696→              </div>
+   697→              <div className="space-y-1.5">
+   698→                <label className="text-xs text-muted-foreground font-medium">Designation</label>
+   699→                <Input
+   700→                  value={inviteForm.designation}
+   701→                  onChange={(e) => setInviteForm((p) => ({ ...p, designation: e.target.value }))}
+   702→                  placeholder="Marketing Manager"
+   703→                  className="h-9 bg-[#0a0a0a] border-border/50 text-sm"
+   704→                />
+   705→              </div>
+   706→            </div>
+   707→          </div>
+   708→
+   709→          <div className="flex items-center justify-end gap-2 p-6 pt-0">
+   710→            <Button variant="ghost" className="text-muted-foreground" onClick={() => setInviteOpen(false)}>
+   711→              Cancel
+   712→            </Button>
+   713→            <Button
+   714→              className="gap-2 font-semibold border-0 text-[#0a0a0a]"
+   715→              style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}bb)` }}
+   716→              onClick={handleInvite}
+   717→              disabled={actionLoading === 'invite'}
+   718→            >
+   719→              {actionLoading === 'invite' ? (
+   720→                <Loader2 className="h-4 w-4 animate-spin" />
+   721→              ) : (
+   722→                <Mail className="h-4 w-4" />
+   723→              )}
+   724→              Send Invitation
+   725→            </Button>
+   726→          </div>
+   727→        </DialogContent>
+   728→      </Dialog>
+   729→
+   730→      {/* ═══ EDIT MEMBER DIALOG ═══ */}
+   731→      <Dialog open={editOpen} onOpenChange={(open) => { setEditOpen(open); if (!open) setError(''); }}>
+   732→        <DialogContent className="sm:max-w-md bg-[#111] border-border/50 p-0 gap-0">
+   733→          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent" />
+   734→          <div className="p-6 pb-0">
+   735→            <DialogHeader>
+   736→              <DialogTitle className="text-base flex items-center gap-2">
+   737→                <div className="h-7 w-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
+   738→                  <Pencil className="h-4 w-4 text-blue-400" />
+   739→                </div>
+   740→                Edit Team Member
+   741→              </DialogTitle>
+   742→              <DialogDescription className="text-xs text-muted-foreground">
+   743→                Update role and designation for {selectedMember?.name}
+   744→              </DialogDescription>
+   745→            </DialogHeader>
+   746→          </div>
+   747→
+   748→          <div className="p-6 space-y-4">
+   749→            {error && (
+   750→              <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-400">{error}</div>
+   751→            )}
+   752→
+   753→            <div className="flex items-center gap-3 p-3 rounded-lg bg-[#0a0a0a] border border-border/30">
+   754→              <div
+   755→                className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold"
+   756→                style={{ background: `${accentColor}20`, color: accentColor }}
+   757→              >
+   758→                {selectedMember?.name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+   759→              </div>
+   760→              <div>
+   761→                <p className="text-sm font-medium text-foreground">{selectedMember?.name}</p>
+   762→                <p className="text-[11px] text-muted-foreground/60">{selectedMember?.email}</p>
+   763→              </div>
+   764→            </div>
+   765→
+   766→            <div className="space-y-1.5">
+   767→              <label className="text-xs text-muted-foreground font-medium">Role</label>
+   768→              <Select
+   769→                value={editForm.role}
+   770→                onValueChange={(v) => setEditForm((p) => ({ ...p, role: v }))}
+   771→              >
+   772→                <SelectTrigger className="h-9 bg-[#0a0a0a] border-border/50 text-sm">
+   773→                  <SelectValue />
+   774→                </SelectTrigger>
+   775→                <SelectContent className="bg-[#111] border-border">
+   776→                  <SelectItem value="admin">Admin</SelectItem>
+   777→                  <SelectItem value="manager">Manager</SelectItem>
+   778→                  <SelectItem value="analyst">Analyst</SelectItem>
+   779→                  <SelectItem value="viewer">Viewer</SelectItem>
+   780→                  <SelectItem value="staff">Staff</SelectItem>
+   781→                </SelectContent>
+   782→              </Select>
+   783→            </div>
+   784→            <div className="space-y-1.5">
+   785→              <label className="text-xs text-muted-foreground font-medium">Designation</label>
+   786→              <Input
+   787→                value={editForm.designation}
+   788→                onChange={(e) => setEditForm((p) => ({ ...p, designation: e.target.value }))}
+   789→                placeholder="Marketing Manager"
+   790→                className="h-9 bg-[#0a0a0a] border-border/50 text-sm"
+   791→              />
+   792→            </div>
+   793→          </div>
+   794→
+   795→          <div className="flex items-center justify-end gap-2 p-6 pt-0">
+   796→            <Button variant="ghost" className="text-muted-foreground" onClick={() => setEditOpen(false)}>
+   797→              Cancel
+   798→            </Button>
+   799→            <Button
+   800→              className="gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold border-0"
+   801→              onClick={handleEdit}
+   802→              disabled={actionLoading === 'edit'}
+   803→            >
+   804→              {actionLoading === 'edit' ? (
+   805→                <Loader2 className="h-4 w-4 animate-spin" />
+   806→              ) : (
+   807→                <Check className="h-4 w-4" />
+   808→              )}
+   809→              Save Changes
+   810→            </Button>
+   811→          </div>
+   812→        </DialogContent>
+   813→      </Dialog>
+   814→
+   815→      {/* ═══ REMOVE CONFIRMATION DIALOG ═══ */}
+   816→      <Dialog open={removeOpen} onOpenChange={setRemoveOpen}>
+   817→        <DialogContent className="sm:max-w-sm bg-[#111] border-border/50 p-0 gap-0">
+   818→          <div className="p-6">
+   819→            <div className="h-12 w-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+   820→              <Trash2 className="h-6 w-6 text-red-400" />
+   821→            </div>
+   822→            <DialogHeader className="text-center">
+   823→              <DialogTitle className="text-base">Remove Team Member</DialogTitle>
+   824→              <DialogDescription className="text-xs text-muted-foreground mt-2">
+   825→                Are you sure you want to remove <strong className="text-foreground">{selectedMember?.name}</strong> ({selectedMember?.email}) from the team?
+   826→                They will lose access to the dashboard immediately.
+   827→              </DialogDescription>
+   828→            </DialogHeader>
+   829→          </div>
+   830→          <div className="flex items-center justify-end gap-2 p-6 pt-0">
+   831→            <Button variant="ghost" className="text-muted-foreground" onClick={() => setRemoveOpen(false)}>
+   832→              Cancel
+   833→            </Button>
+   834→            <Button
+   835→              className="gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold border-0"
+   836→              onClick={handleRemove}
+   837→              disabled={actionLoading === 'remove'}
+   838→            >
+   839→              {actionLoading === 'remove' ? (
+   840→                <Loader2 className="h-4 w-4 animate-spin" />
+   841→              ) : (
+   842→                <Trash2 className="h-4 w-4" />
+   843→              )}
+   844→              Remove Member
+   845→            </Button>
+   846→          </div>
+   847→        </DialogContent>
+   848→      </Dialog>
+   849→    </motion.div>
+   850→  );
+   851→}
