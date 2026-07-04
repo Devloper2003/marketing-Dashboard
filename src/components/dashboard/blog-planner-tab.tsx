@@ -424,7 +424,7 @@ export default function BlogPlannerTab() {
 
   const handleDelete = async (post: BlogPost) => {
     // The API doesn't have DELETE, so we just inform the user
-    toast.info('Delete is not available in this demo');
+    toast.info('Delete functionality coming soon');
   };
 
   // ─── Render ────────────────────────────────────────────────────────

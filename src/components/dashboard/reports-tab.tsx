@@ -124,58 +124,25 @@ const reportTemplates = [
   { type: 'budget' as ReportType, title: 'Budget Analysis', description: 'Spend allocation, utilization, and ROI breakdown', icon: Wallet, accent: 'from-red-500/15 to-red-500/5', border: 'border-red-500/20 hover:border-red-500/50', iconColor: 'text-red-400' },
 ];
 
-// ── Mock Chart Data Generators ───────────────────────────
+// ── Chart Data Generators ────────────────────────────────
 function getWeeklyChartData() {
-  return [
-    { day: 'Mon', visits: 3200, conversions: 89, revenue: 52000 },
-    { day: 'Tue', visits: 3800, conversions: 102, revenue: 61000 },
-    { day: 'Wed', visits: 4100, conversions: 118, revenue: 71000 },
-    { day: 'Thu', visits: 3900, conversions: 108, revenue: 64000 },
-    { day: 'Fri', visits: 4500, conversions: 132, revenue: 82000 },
-    { day: 'Sat', visits: 5200, conversions: 156, revenue: 98000 },
-    { day: 'Sun', visits: 4700, conversions: 138, revenue: 88000 },
-  ];
+  return [];
 }
 
 function getCampaignChartData() {
-  return [
-    { channel: 'Google Ads', impressions: 420000, clicks: 18400, conversions: 184 },
-    { channel: 'Meta (FB)', impressions: 310000, clicks: 9300, conversions: 112 },
-    { channel: 'Instagram', impressions: 280000, clicks: 16800, conversions: 95 },
-    { channel: 'YouTube', impressions: 190000, clicks: 5700, conversions: 42 },
-  ];
+  return [];
 }
 
 function getSeoChartData() {
-  return [
-    { position: 'Top 3', count: 24 },
-    { position: '4-10', count: 38 },
-    { position: '11-20', count: 52 },
-    { position: '21-50', count: 41 },
-    { position: '51-100', count: 28 },
-  ];
+  return [];
 }
 
 function getSocialChartData() {
-  return [
-    { name: 'Likes', value: 42000, color: GOLD },
-    { name: 'Comments', value: 18500, color: GOLD_LIGHT },
-    { name: 'Shares', value: 12400, color: GOLD_DARK },
-    { name: 'Saves', value: 9800, color: 'rgba(212,168,67,0.5)' },
-  ];
+  return [];
 }
 
 function getBudgetChartData() {
-  return [
-    { category: 'Paid Ads', allocated: 340000, spent: 298000 },
-    { category: 'Social Media', allocated: 120000, spent: 115000 },
-    { category: 'Content', allocated: 85000, spent: 72000 },
-    { category: 'Email', allocated: 45000, spent: 42000 },
-    { category: 'SEO', allocated: 60000, spent: 48000 },
-    { category: 'Influencer', allocated: 95000, spent: 102000 },
-    { category: 'Events', allocated: 40000, spent: 28000 },
-    { category: 'Video', allocated: 30000, spent: 19000 },
-  ];
+  return [];
 }
 
 // ── Chart Tooltip ────────────────────────────────────────
@@ -342,12 +309,7 @@ function ReportCharts({ type }: { type: ReportType }) {
   }
 
   // Default for quarterly/competitor
-  const defaultData = [
-    { day: 'W1', visits: 18200, conversions: 510, revenue: 360000 },
-    { day: 'W2', visits: 21400, conversions: 620, revenue: 420000 },
-    { day: 'W3', visits: 19800, conversions: 580, revenue: 390000 },
-    { day: 'W4', visits: 24600, conversions: 710, revenue: 480000 },
-  ];
+  const defaultData: { day: string; visits: number; conversions: number; revenue: number }[] = [];
   return (
     <div>
       <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">

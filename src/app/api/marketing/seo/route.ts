@@ -13,31 +13,25 @@ export async function GET() {
     const improved = keywords.filter(k => k.change > 0).length;
     const declined = keywords.filter(k => k.change < 0).length;
 
-    // Page speed & technical SEO (mock data)
+    // Technical SEO
     const technicalSeo = {
-      pageSpeed: 87,
-      mobileFriendly: true,
-      httpsEnabled: true,
-      coreWebVitals: { lcp: 2.1, fid: 45, cls: 0.08 },
-      crawlErrors: 3,
-      indexedPages: 156,
-      sitemapStatus: 'healthy',
-      robotsTxtStatus: 'healthy',
+      pageSpeed: 0,
+      mobileFriendly: false,
+      httpsEnabled: false,
+      coreWebVitals: { lcp: 0, fid: 0, cls: 0 },
+      crawlErrors: 0,
+      indexedPages: 0,
+      sitemapStatus: 'unknown' as string,
+      robotsTxtStatus: 'unknown' as string,
     };
 
-    // Backlink profile (mock)
+    // Backlink profile
     const backlinks = {
-      total: 1240,
-      referringDomains: 340,
-      dofollow: 890,
-      nofollow: 350,
-      topReferrers: [
-        { domain: 'jewellerytimes.com', links: 45, da: 68 },
-        { domain: 'fashionindia.com', links: 32, da: 72 },
-        { domain: 'weddingplanner.in', links: 28, da: 65 },
-        { domain: 'lifestylemag.com', links: 22, da: 71 },
-        { domain: 'indiatimes.com', links: 18, da: 85 },
-      ],
+      total: 0,
+      referringDomains: 0,
+      dofollow: 0,
+      nofollow: 0,
+      topReferrers: [] as { domain: string; links: number; da: number }[],
     };
 
     return NextResponse.json({

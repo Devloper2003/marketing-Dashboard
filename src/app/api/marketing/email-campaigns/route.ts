@@ -20,17 +20,8 @@ export async function GET() {
     ? sentCampaigns.reduce((sum, c) => sum + c.bounceRate, 0) / sentCampaigns.length
     : 0;
 
-  // Mock weekly trend data
-  const weeklyTrend = [
-    { week: 'W1', openRate: 30.2, clickRate: 6.8 },
-    { week: 'W2', openRate: 33.5, clickRate: 7.2 },
-    { week: 'W3', openRate: 36.1, clickRate: 8.1 },
-    { week: 'W4', openRate: 34.8, clickRate: 7.5 },
-    { week: 'W5', openRate: 39.2, clickRate: 9.3 },
-    { week: 'W6', openRate: 41.5, clickRate: 10.1 },
-    { week: 'W7', openRate: 43.8, clickRate: 11.5 },
-    { week: 'W8', openRate: avgOpenRate, clickRate: avgClickRate },
-  ];
+  // Weekly trend
+  const weeklyTrend: { week: string; openRate: number; clickRate: number }[] = [];
 
   // Engagement funnel
   const totalOpens = Math.round(totalSent * (avgOpenRate / 100));

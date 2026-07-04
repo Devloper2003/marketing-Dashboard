@@ -102,28 +102,28 @@ const PLATFORM_CONFIG: Record<
     icon: <Instagram className="size-4" />,
     color: '#E1306C',
     bgClass: 'bg-gradient-to-br from-[#f09433] via-[#e6683c] to-[#bc1888] text-white',
-    followers: '135K',
+    followers: '0',
     handle: '@laxree.jewels',
   },
   facebook: {
     icon: <Facebook className="size-4" />,
     color: '#1877F2',
     bgClass: 'bg-[#1877F2] text-white',
-    followers: '28.9K',
+    followers: '0',
     handle: 'Laxree Jewels',
   },
   twitter: {
     icon: <Twitter className="size-4" />,
     color: '#D4A843',
     bgClass: 'bg-[#1a1a1a] border border-[#D4A843] text-[#D4A843]',
-    followers: '45K',
+    followers: '0',
     handle: '@laxree',
   },
   pinterest: {
     icon: <Megaphone className="size-4" />,
     color: '#E60023',
     bgClass: 'bg-[#E60023] text-white',
-    followers: '12.8K',
+    followers: '0',
     handle: 'LaxreeJewels',
   },
 };
@@ -200,10 +200,10 @@ export default function SocialPlannerTab() {
     const stats: Record<string, { posts: number; engagement: number; rate: string }> = {};
     const keys = ['instagram', 'facebook', 'twitter', 'pinterest'];
     const followers: Record<string, number> = {
-      instagram: 135000,
-      facebook: 28900,
-      twitter: 45000,
-      pinterest: 12800,
+      instagram: 0,
+      facebook: 0,
+      twitter: 0,
+      pinterest: 0,
     };
 
     keys.forEach((key) => {
@@ -568,7 +568,7 @@ export default function SocialPlannerTab() {
                         variant="ghost"
                         size="sm"
                         className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-red-400 ml-auto"
-                        onClick={() => toast.info('Delete is not available in this demo')}
+                        onClick={() => toast.info('Delete functionality coming soon')}
                       >
                         <Trash2 className="size-3" /> Delete
                       </Button>

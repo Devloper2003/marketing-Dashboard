@@ -280,16 +280,9 @@ export default function OverviewTab() {
         },
       ];
 
-  // ─── Spend by channel (static mock) ──────────────────────────────────────
+  // ─── Spend by channel ──────────────────────────────────────────────────
 
-  const spendByChannel = [
-    { channel: 'Google Ads', spend: 28500 },
-    { channel: 'Instagram', spend: 22000 },
-    { channel: 'YouTube', spend: 12800 },
-    { channel: 'Facebook', spend: 7400 },
-    { channel: 'Email', spend: 1980 },
-    { channel: 'Organic', spend: 0 },
-  ];
+  const spendByChannel: { channel: string; spend: number }[] = [];
 
   // ─── Social platforms config ─────────────────────────────────────────────
 
